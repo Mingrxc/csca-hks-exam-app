@@ -1,0 +1,44 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/exam/index",
+    "pages/exam/paper",
+    "pages/exam/answer",
+    "pages/exam/result",
+    "pages/wrongbook/index",
+    "pages/wrongbook/detail",
+    "pages/wrongbook/redo",
+    "pages/profile/index"
+  ],
+  "window": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "留学考霸",
+    "navigationBarBackgroundColor": "#4F46E5",
+    "backgroundColor": "#F5F5F7"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#4F46E5",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/exam/index",
+        "text": "刷题"
+      },
+      {
+        "pagePath": "pages/wrongbook/index",
+        "text": "错题本"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "usingComponents": {}
+}

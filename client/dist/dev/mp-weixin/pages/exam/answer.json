@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "答题中",
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "c-countdown-bar": "../../components/CountdownBar/index",
+    "c-question-item": "../../components/QuestionItem/index",
+    "c-answer-card": "../../components/AnswerCard/index"
+  }
+}

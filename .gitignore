@@ -1,0 +1,41 @@
+# Codex memory
+CODEX_MEMORY.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+server/.venv/
+
+# Node / uni-app
+node_modules/
+client/node_modules/
+client/dist/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+server/.env
+client/.env
+client/.env.*
+
+# IDE / OS
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+

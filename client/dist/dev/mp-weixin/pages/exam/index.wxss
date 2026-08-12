@@ -1,0 +1,111 @@
+.page.data-v-b6604ac4 {
+  min-height: 100vh;
+  padding: 24rpx 0 40rpx;
+}
+.section.data-v-b6604ac4 {
+  padding: 0 24rpx;
+  margin-bottom: 32rpx;
+}
+.section-title.data-v-b6604ac4 {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1F2937;
+}
+.section-header.data-v-b6604ac4 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.section-more.data-v-b6604ac4 {
+  font-size: 24rpx;
+  color: #4F46E5;
+}
+.strategy-list.data-v-b6604ac4 {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+.strategy-card.data-v-b6604ac4 {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+.strategy-icon.data-v-b6604ac4 {
+  font-size: 44rpx;
+}
+.strategy-right.data-v-b6604ac4 {
+  flex: 1;
+  margin-left: 20rpx;
+}
+.strategy-title.data-v-b6604ac4 {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1F2937;
+}
+.strategy-desc.data-v-b6604ac4 {
+  font-size: 22rpx;
+  color: #9CA3AF;
+  margin-top: 6rpx;
+  display: block;
+}
+.strategy-arrow.data-v-b6604ac4 {
+  font-size: 28rpx;
+  color: #C7D2FE;
+}
+.paper-card.data-v-b6604ac4 {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  margin-bottom: 16rpx;
+}
+.paper-header.data-v-b6604ac4 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+.paper-name.data-v-b6604ac4 {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #1F2937;
+}
+.paper-badge.data-v-b6604ac4 {
+  font-size: 20rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+}
+.paper-badge.pass.data-v-b6604ac4 {
+  background: #D1FAE5;
+  color: #065F46;
+}
+.paper-badge.fail.data-v-b6604ac4 {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+.paper-stats.data-v-b6604ac4 {
+  display: flex;
+  gap: 24rpx;
+}
+.paper-stat.data-v-b6604ac4 {
+  font-size: 22rpx;
+  color: #9CA3AF;
+}
+.empty-state.data-v-b6604ac4 {
+  padding: 80rpx 0;
+  text-align: center;
+}
+.empty-icon.data-v-b6604ac4 {
+  font-size: 60rpx;
+  display: block;
+  margin-bottom: 16rpx;
+}
+.empty-text.data-v-b6604ac4 {
+  font-size: 26rpx;
+  color: #9CA3AF;
+}

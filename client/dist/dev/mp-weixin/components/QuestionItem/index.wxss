@@ -1,0 +1,139 @@
+.question-item.data-v-7211204f {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+.q-header.data-v-7211204f {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.q-index.data-v-7211204f {
+  font-size: 24rpx;
+  color: #9CA3AF;
+}
+.q-tags.data-v-7211204f {
+  display: flex;
+  gap: 8rpx;
+}
+.q-tag.data-v-7211204f {
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+}
+.q-tag.type.single.data-v-7211204f {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+.q-tag.type.multi.data-v-7211204f {
+  background: #FEF3C7;
+  color: #92400E;
+}
+.q-tag.type.judge.data-v-7211204f {
+  background: #D1FAE5;
+  color: #065F46;
+}
+.q-tag.type.fill.data-v-7211204f {
+  background: #EDE9FE;
+  color: #5B21B6;
+}
+.q-tag.diff.easy.data-v-7211204f {
+  background: #D1FAE5;
+  color: #065F46;
+}
+.q-tag.diff.medium.data-v-7211204f {
+  background: #FEF3C7;
+  color: #92400E;
+}
+.q-tag.diff.hard.data-v-7211204f {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+.q-stem.data-v-7211204f {
+  font-size: 28rpx;
+  line-height: 1.8;
+  color: #1F2937;
+  margin-bottom: 24rpx;
+}
+.q-options.data-v-7211204f {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+.option-item.data-v-7211204f {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 16rpx;
+  border-radius: 12rpx;
+  border: 2rpx solid #E5E7EB;
+  background: #fff;
+}
+.option-item.selected.data-v-7211204f {
+  border-color: #4F46E5;
+  background: #EEF2FF;
+}
+.option-item.correct.data-v-7211204f {
+  border-color: #10B981;
+  background: #D1FAE5;
+}
+.option-item.wrong.data-v-7211204f {
+  border-color: #EF4444;
+  background: #FEE2E2;
+}
+.option-key.data-v-7211204f {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: #F3F4F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #6B7280;
+}
+.option-item.selected .option-key.data-v-7211204f {
+  background: #4F46E5;
+  color: #fff;
+}
+.option-item.correct .option-key.data-v-7211204f {
+  background: #10B981;
+  color: #fff;
+}
+.option-item.wrong .option-key.data-v-7211204f {
+  background: #EF4444;
+  color: #fff;
+}
+.option-text.data-v-7211204f {
+  flex: 1;
+  margin-left: 12rpx;
+  font-size: 26rpx;
+  color: #1F2937;
+}
+.option-icon.data-v-7211204f {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #10B981;
+}
+.option-icon.wrong.data-v-7211204f {
+  color: #EF4444;
+}
+.analysis.data-v-7211204f {
+  margin-top: 20rpx;
+  padding: 16rpx;
+  background: #F0FDF4;
+  border-radius: 12rpx;
+}
+.analysis-label.data-v-7211204f {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #065F46;
+  display: block;
+  margin-bottom: 8rpx;
+}
+.analysis-text.data-v-7211204f {
+  font-size: 24rpx;
+  color: #374151;
+  line-height: 1.7;
+}

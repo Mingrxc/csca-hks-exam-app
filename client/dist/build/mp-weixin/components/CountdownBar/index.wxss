@@ -1,0 +1,1 @@
+.countdown-bar.data-v-d2801f1a{display:flex;align-items:center;gap:8rpx;padding:8rpx 20rpx;border-radius:20rpx;background:#f3f4f6}.timer-icon.data-v-d2801f1a{font-size:24rpx}.timer-text.data-v-d2801f1a{font-size:26rpx;font-weight:600;font-family:Menlo,monospace;color:#374151}.timer-text.warning.data-v-d2801f1a{color:#f59e0b}.timer-text.danger.data-v-d2801f1a{color:#ef4444}

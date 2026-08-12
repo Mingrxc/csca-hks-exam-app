@@ -1,0 +1,78 @@
+.answer-card.data-v-b4deaa03 {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+.card-header.data-v-b4deaa03 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+.card-title.data-v-b4deaa03 {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1F2937;
+}
+.card-stats.data-v-b4deaa03 {
+  font-size: 22rpx;
+  color: #9CA3AF;
+}
+.card-grid.data-v-b4deaa03 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  justify-content: center;
+}
+.card-item.data-v-b4deaa03 {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: #F3F4F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  color: #6B7280;
+}
+.card-item.answered.data-v-b4deaa03 {
+  background: #EEF2FF;
+  color: #4F46E5;
+}
+.card-item.current.data-v-b4deaa03 {
+  background: #4F46E5;
+  color: #fff;
+  font-weight: 600;
+}
+.card-item.marked.data-v-b4deaa03 {
+  border: 2rpx solid #F59E0B;
+}
+.card-legend.data-v-b4deaa03 {
+  display: flex;
+  justify-content: center;
+  gap: 32rpx;
+  margin-top: 20rpx;
+}
+.legend-item.data-v-b4deaa03 {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 20rpx;
+  color: #9CA3AF;
+}
+.dot.data-v-b4deaa03 {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #F3F4F6;
+}
+.dot.answered.data-v-b4deaa03 {
+  background: #EEF2FF;
+}
+.dot.current.data-v-b4deaa03 {
+  background: #4F46E5;
+}
+.dot.marked.data-v-b4deaa03 {
+  background: #FEF3C7;
+  border: 2rpx solid #F59E0B;
+}

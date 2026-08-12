@@ -1,0 +1,99 @@
+{
+  "pages": [
+    {
+      "path": "src/pages/index/index",
+      "style": {
+        "navigationBarTitleText": "留学考霸"
+      }
+    },
+    {
+      "path": "src/pages/exam/index",
+      "style": {
+        "navigationBarTitleText": "刷题"
+      }
+    },
+    {
+      "path": "src/pages/exam/paper",
+      "style": {
+        "navigationBarTitleText": "组卷"
+      }
+    },
+    {
+      "path": "src/pages/exam/answer",
+      "style": {
+        "navigationBarTitleText": "答题中",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "src/pages/exam/result",
+      "style": {
+        "navigationBarTitleText": "成绩报告"
+      }
+    },
+    {
+      "path": "src/pages/wrongbook/index",
+      "style": {
+        "navigationBarTitleText": "错题本"
+      }
+    },
+    {
+      "path": "src/pages/wrongbook/detail",
+      "style": {
+        "navigationBarTitleText": "错题详情"
+      }
+    },
+    {
+      "path": "src/pages/wrongbook/redo",
+      "style": {
+        "navigationBarTitleText": "错题重做",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "src/pages/profile/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "留学考霸",
+    "navigationBarBackgroundColor": "#4F46E5",
+    "backgroundColor": "#F5F5F7"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#4F46E5",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "src/pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "src/pages/exam/index",
+        "text": "刷题"
+      },
+      {
+        "pagePath": "src/pages/wrongbook/index",
+        "text": "错题本"
+      },
+      {
+        "pagePath": "src/pages/profile/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^c-question-item$": "@/components/QuestionItem/index.vue",
+      "^c-countdown-bar$": "@/components/CountdownBar/index.vue",
+      "^c-answer-card$": "@/components/AnswerCard/index.vue",
+      "^c-ring-chart$": "@/components/RingChart/index.vue"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+.countdown-bar.data-v-d75bb204 {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  background: #F3F4F6;
+}
+.timer-icon.data-v-d75bb204 {
+  font-size: 24rpx;
+}
+.timer-text.data-v-d75bb204 {
+  font-size: 26rpx;
+  font-weight: 600;
+  font-family: "Menlo", monospace;
+  color: #374151;
+}
+.timer-text.warning.data-v-d75bb204 {
+  color: #F59E0B;
+}
+.timer-text.danger.data-v-d75bb204 {
+  color: #EF4444;
+}

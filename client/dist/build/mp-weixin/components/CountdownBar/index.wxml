@@ -1,0 +1,1 @@
+<view class="countdown-bar data-v-d2801f1a"><view class="timer-icon data-v-d2801f1a">⏱</view><text class="{{['timer-text', 'data-v-d2801f1a', b && 'warning', c && 'danger']}}">{{a}}</text></view>

@@ -1,0 +1,220 @@
+.page.data-v-168bbcdb {
+  min-height: 100vh;
+  padding-bottom: 120rpx;
+  background: #F5F5F7;
+}
+.filter-bar.data-v-168bbcdb {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #E5E7EB;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.filter-tabs.data-v-168bbcdb {
+  display: flex;
+  gap: 8rpx;
+}
+.filter-tab.data-v-168bbcdb {
+  padding: 8rpx 24rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  background: #F3F4F6;
+  color: #6B7280;
+}
+.filter-tab.active.data-v-168bbcdb {
+  background: #EEF2FF;
+  color: #4F46E5;
+  font-weight: 600;
+}
+.filter-more.data-v-168bbcdb {
+  font-size: 24rpx;
+  color: #4F46E5;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+.filter-arrow.data-v-168bbcdb {
+  font-size: 20rpx;
+}
+.filter-dropdown.data-v-168bbcdb {
+  background: #fff;
+  padding: 24rpx;
+  border-bottom: 1rpx solid #E5E7EB;
+}
+.dropdown-section.data-v-168bbcdb {
+  margin-bottom: 20rpx;
+}
+.dropdown-title.data-v-168bbcdb {
+  font-size: 24rpx;
+  color: #9CA3AF;
+  display: block;
+  margin-bottom: 12rpx;
+}
+.dropdown-tags.data-v-168bbcdb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+.dropdown-tag.data-v-168bbcdb {
+  padding: 8rpx 24rpx;
+  border-radius: 16rpx;
+  font-size: 22rpx;
+  background: #F3F4F6;
+  color: #6B7280;
+}
+.dropdown-tag.active.data-v-168bbcdb {
+  background: #EEF2FF;
+  color: #4F46E5;
+}
+.dropdown-actions.data-v-168bbcdb {
+  display: flex;
+  gap: 16rpx;
+}
+.dropdown-btn.data-v-168bbcdb {
+  flex: 1;
+  border-radius: 24rpx;
+  font-size: 26rpx;
+  padding: 12rpx 0;
+  border: none;
+  text-align: center;
+}
+.dropdown-btn.reset.data-v-168bbcdb {
+  background: #F3F4F6;
+  color: #374151;
+}
+.dropdown-btn.confirm.data-v-168bbcdb {
+  background: #4F46E5;
+  color: #fff;
+}
+.stats-bar.data-v-168bbcdb {
+  display: flex;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+  font-size: 22rpx;
+  color: #9CA3AF;
+}
+.list.data-v-168bbcdb {
+  padding: 0 24rpx;
+}
+.wrong-card.data-v-168bbcdb {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
+}
+.card-header.data-v-168bbcdb {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.card-tags.data-v-168bbcdb {
+  display: flex;
+  gap: 8rpx;
+}
+.card-tag.data-v-168bbcdb {
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+}
+.card-tag.type.data-v-168bbcdb {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+.card-tag.diff.data-v-168bbcdb {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+.card-tag.diff.hard.data-v-168bbcdb {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+.card-tag.point.data-v-168bbcdb {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+.card-status.data-v-168bbcdb {
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 12rpx;
+  background: #FEE2E2;
+  color: #991B1B;
+}
+.card-status.mastered.data-v-168bbcdb {
+  background: #D1FAE5;
+  color: #065F46;
+}
+.card-stem.data-v-168bbcdb {
+  font-size: 26rpx;
+  color: #1F2937;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-footer.data-v-168bbcdb {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16rpx;
+}
+.card-date.data-v-168bbcdb {
+  font-size: 22rpx;
+  color: #9CA3AF;
+}
+.card-action.data-v-168bbcdb {
+  font-size: 22rpx;
+  color: #4F46E5;
+}
+.empty-state.data-v-168bbcdb {
+  padding: 120rpx 0;
+  text-align: center;
+}
+.empty-icon.data-v-168bbcdb {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 20rpx;
+}
+.empty-title.data-v-168bbcdb {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1F2937;
+  display: block;
+  margin-bottom: 8rpx;
+}
+.empty-desc.data-v-168bbcdb {
+  font-size: 24rpx;
+  color: #9CA3AF;
+}
+.footer-actions.data-v-168bbcdb {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20rpx 24rpx 40rpx;
+  background: #fff;
+  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.06);
+  display: flex;
+  gap: 16rpx;
+}
+.footer-btn.data-v-168bbcdb {
+  flex: 1;
+  border-radius: 48rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  padding: 20rpx 0;
+  border: none;
+  text-align: center;
+  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  color: #fff;
+}
+.footer-btn.outline.data-v-168bbcdb {
+  background: #fff;
+  color: #4F46E5;
+  border: 2rpx solid #4F46E5;
+}

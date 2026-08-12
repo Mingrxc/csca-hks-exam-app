@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "错题重做",
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "c-question-item": "../../components/QuestionItem/index"
+  }
+}
