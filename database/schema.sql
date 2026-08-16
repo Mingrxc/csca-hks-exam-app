@@ -25,8 +25,8 @@ CREATE TABLE users (
     created_at      DATETIME        DEFAULT CURRENT_TIMESTAMP   COMMENT '注册时间',
     updated_at      DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    INDEX idx_openid (openid),
-    INDEX idx_created (created_at)
+    INDEX idx_users_openid (openid),
+    INDEX idx_users_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
 
@@ -53,12 +53,12 @@ CREATE TABLE questions (
     created_at      DATETIME        DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    INDEX idx_exam_type (exam_type),
-    INDEX idx_subject (subject),
-    INDEX idx_knowledge (knowledge_point),
-    INDEX idx_difficulty (difficulty),
-    INDEX idx_type (question_type),
-    INDEX idx_wrong_rate (wrong_rate)
+    INDEX idx_questions_exam_type (exam_type),
+    INDEX idx_questions_subject (subject),
+    INDEX idx_questions_knowledge (knowledge_point),
+    INDEX idx_questions_difficulty (difficulty),
+    INDEX idx_questions_type (question_type),
+    INDEX idx_questions_wrong_rate (wrong_rate)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='题目表';
 
 
@@ -78,9 +78,9 @@ CREATE TABLE papers (
     finished_at     DATETIME        DEFAULT NULL                COMMENT '完成时间',
     created_at      DATETIME        DEFAULT CURRENT_TIMESTAMP,
 
-    INDEX idx_user (user_id),
-    INDEX idx_exam_type (exam_type),
-    INDEX idx_strategy (strategy)
+    INDEX idx_papers_user (user_id),
+    INDEX idx_papers_exam_type (exam_type),
+    INDEX idx_papers_strategy (strategy)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='试卷表';
 
 
@@ -97,6 +97,7 @@ CREATE TABLE answer_records (
     created_at      DATETIME        DEFAULT CURRENT_TIMESTAMP   COMMENT '答题时间',
 
     INDEX idx_user_paper (user_id, paper_id),
+    UNIQUE KEY uk_user_paper_question (user_id, paper_id, question_id),
     INDEX idx_question (question_id),
     INDEX idx_correct (is_correct),
     INDEX idx_wrong_reason (wrong_reason)
@@ -118,9 +119,10 @@ CREATE TABLE wrong_book (
     updated_at      DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     UNIQUE KEY uk_user_question (user_id, question_id),
-    INDEX idx_user (user_id),
-    INDEX idx_mastered (is_mastered),
-    INDEX idx_last_wrong (last_wrong_at)
+    INDEX idx_wrongbook_user (user_id),
+    INDEX idx_wrongbook_question (question_id),
+    INDEX idx_wrongbook_mastered (is_mastered),
+    INDEX idx_wrongbook_last_wrong (last_wrong_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='错题本表';
 
 
@@ -135,8 +137,8 @@ CREATE TABLE knowledge_stats (
     correct_rate    FLOAT           DEFAULT 0                   COMMENT '正确率',
     updated_at      DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    UNIQUE KEY uk_user_exam_knowledge (user_id, exam_type, knowledge_point),
-    INDEX idx_user_exam (user_id, exam_type)
+    UNIQUE KEY uk_user_exam_point (user_id, exam_type, knowledge_point),
+    INDEX idx_knowledge_user_exam (user_id, exam_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='知识点统计表';
 
 
@@ -149,6 +151,6 @@ CREATE TABLE streak_records (
     created_at      DATETIME        DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE KEY uk_user_date (user_id, streak_date),
-    INDEX idx_user (user_id),
-    INDEX idx_date (streak_date)
+    INDEX idx_streak_user (user_id),
+    INDEX idx_streak_date (streak_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='打卡记录表';

@@ -221,10 +221,16 @@ def test_get_result_aggregates_records_and_unanswered_questions(db_session):
 
     result = get_result(db_session, user.id, paper.id)
 
+    assert result["paper"]["exam_type"] == "CSCA"
     assert result["total_count"] == 2
     assert result["correct_count"] == 1
     assert result["correct_rate"] == 50
     assert result["time_used"] == 8
     assert len(result["wrong_questions"]) == 1
     assert result["wrong_questions"][0]["id"] == unanswered_question.id
+    assert len(result["review_questions"]) == 2
+    assert result["review_questions"][0]["user_answer"] == "A"
+    assert result["review_questions"][0]["is_correct"] is True
+    assert result["review_questions"][1]["user_answer"] == ""
+    assert result["review_questions"][1]["correct_answer"] == "B"
     assert paper.finished_at is not None

@@ -4,7 +4,7 @@
 
 - Project: 留学考霸 - CSCA & HKS exam-prep WeChat mini-program.
 - Workspace: `E:\Deng\csca-hks-exam-app`
-- Current date: 2026-08-12.
+- Current date: 2026-08-17.
 - Paper: none provided. All decisions are engineering decisions, not paper claims.
 
 ## Product Goal
@@ -58,41 +58,37 @@ Build a complete learning loop:
 
 ## Known Risks
 
-- Frontend API base URL is configured through `client/.env.development`.
-- WeChat login is still development-mode login using `dev-openid`.
-- Dashboard, profile, history, and wrongbook redo still contain mock-driven areas.
-- Wrongbook PDF export returns HTTP 501.
+- Real WeChat login still needs WeChat DevTools and physical-device regression with valid `WX_APPID` and `WX_SECRET`.
+- Database foreign keys are intentionally deferred; the read-only integrity audit is currently clean, but application-level ownership checks remain important.
+- The database contains 5 legacy sample questions in addition to the 2562 imported questions.
+- The real-API smoke test left one legitimate development paper/answer/wrongbook record under the configured development user.
 - Sass emits legacy API deprecation warnings; this is non-blocking.
-- PowerShell may display UTF-8 API text as mojibake even when the data is valid.
+- `python-jose` emits one third-party `datetime.utcnow()` deprecation warning during tests; this is non-blocking.
 
 ## Current Development Plan
 
-### Phase 1: Correctness and Security
+### Phase 1: Release Regression
 
-1. Hide answer and analysis fields in exam-mode paper responses. Done.
-2. Make exam result the authoritative source for correctness. Done for exam-mode submit responses.
-3. Move frontend API base URL to environment configuration. Done.
-4. Normalize API error and loading behavior. Partially done in the request layer.
-5. Add focused backend tests for paper generation and answer submission. Pending.
+1. Import `client/dist/build/mp-weixin` into WeChat DevTools and test the complete learning loop.
+2. Test real `code2session` login with valid WeChat credentials and production auth settings.
+3. Run physical-device checks for PDF download/preview, long question text, result review, and date editing.
 
-### Phase 2: Real Business Data
+### Phase 2: Deployment Hardening
 
-1. Replace dashboard mock data.
-2. Replace profile mock data.
-3. Connect history paper list.
-4. Implement real wrongbook redo paper generation.
-5. Implement real WeChat `code2session` login.
+1. Document production environment variables and startup/migration order.
+2. Decide whether to add foreign keys after reviewing deletion and retention requirements.
+3. Separate or remove the 5 legacy sample questions before production data preparation.
 
-### Phase 3: UX and Release
+### Phase 3: Product Polish
 
-1. Polish mobile layouts and empty/loading/error states.
-2. Run full WeChat DevTools regression.
-3. Add migrations, idempotent seeds, deployment notes, and release checks.
+1. Fix issues found in DevTools/device regression before adding new feature scope.
+2. Review remaining loading, empty, and error states on all main pages.
+3. Address Sass and dependency deprecations during a controlled dependency upgrade.
 
 ## Environment Rules
 
 - User handles network, proxy, or package-download issues.
-- Stop and ask the user when a network operation fails.
+- Retry an environment or network operation at most three times, then give the user a concrete action to perform.
 - Do not expose or request MySQL passwords in chat.
 - Keep backend and frontend dev servers running in separate terminals.
 - Backend command:
@@ -205,3 +201,108 @@ Fix `.env` loading so scripts can be run safely from the project root, or docume
 ### Next Immediate Action
 
 Continue replacing dashboard, profile, and history mocks with API-backed data.
+
+## Progress Update (2026-08-16, Remaining Product Features)
+
+- Added `GET /user/dashboard` with real user identity, today's answered/correct/wrong counts, unmastered wrong-question count, target date, and three recent completed papers.
+- Reworked `GET /question/papers` into completed-paper history with score, correct rate, elapsed time, pass state, and stable completion ordering. Reopening a result no longer changes `finished_at`.
+- Added daily streak persistence for each newly answered question. Resubmitting the same paper/question does not double-count the daily record or streak.
+- Removed dashboard, profile, and history mock imports. These pages now refresh from APIs on `onShow` and provide retry/empty states.
+- Fixed history/result navigation to accept both `id` and `paperId` query parameters.
+- Added full result review data and an expandable “全部解析” section with options, user answer, correct answer, correctness, and analysis for every question.
+- Added editable target exam and target date in the profile page. Removed nonfunctional achievement, report, reminder, and feedback menu entries.
+- Implemented real WeChat `code2session` exchange. Missing WeChat credentials only fall back to `DEV_OPENID` when `AUTH_ALLOW_DEV_OPENID=true`; production fails closed.
+- JWT now reads `JWT_SECRET_KEY`, algorithm, and expiry from settings, includes `exp`, and rejects missing subjects or tokens signed with another key.
+- Frontend no longer writes `mock-token`. API requests share one `uni.login` operation, persist the returned JWT, and retry once after a 401.
+- Implemented wrongbook PDF generation and the mini-program download/open-document flow. Added `reportlab==4.4.9` to backend requirements.
+- Verification: backend `pytest -q` reports 26 passed and 1 skipped. The skipped test is PDF generation because ReportLab could not be downloaded into `server/.venv` in the current network environment.
+- Verification: `npm.cmd run build:mp-weixin` succeeds. Existing Sass legacy API and `os - Alias not found` warnings remain non-blocking.
+- Real MySQL smoke testing was not rerun because `MySQL80` is stopped and cannot be opened even through the approved elevated `Start-Service` attempt.
+
+### Current Remaining Work
+
+1. Restore MySQL80 and install backend requirements, then run real API and PDF smoke tests.
+2. Add an Alembic baseline plus answer-record uniqueness and referential-integrity migrations.
+3. Replace `ORDER BY RAND()` for scalable question sampling.
+4. Run WeChat DevTools and physical-device regression with real `WX_APPID`/`WX_SECRET` and production auth settings.
+
+## Progress Update (2026-08-16, Release Hardening)
+
+- ReportLab installation was attempted three times as requested: official PyPI timed out, the Tsinghua mirror returned HTTP 403, and the Aliyun mirror succeeded. `reportlab==4.4.9`, Pillow, and charset-normalizer are installed in `server/.venv`.
+- The Chinese wrongbook PDF integration test now runs instead of skipping and validates a real `%PDF-` document.
+- MySQL80 was tested through `Start-Service`, `sc.exe start`, and `net.exe start`. All three returned Windows service-control access denied (`System error 5`). The user must start it from an administrator PowerShell before real-DB work continues.
+- Added Alembic `0001_initial_schema` and `0002_answer_record_uniqueness` revisions, a working metadata-aware `env.py`, and the missing revision template.
+- `0002` deduplicates answer records by keeping the greatest ID for each `(user_id, paper_id, question_id)`, adds the unique constraint, and renames legacy indexes to globally descriptive names.
+- Updated ORM metadata and `database/schema.sql` to match the migrated index and constraint layout.
+- Documented fresh-database, existing-database stamp/upgrade, and schema.sql stamp workflows in `database/README.md`.
+- Database foreign keys remain deliberately deferred until the real MySQL integrity audit can confirm there are no orphan rows.
+- Added `scripts/check_database_integrity.py`, a read-only audit for missing tables, Alembic version, duplicate answer keys, and orphan business rows.
+- Replaced database `ORDER BY RAND()` with ID-only candidate loading plus Python `random.sample`; progressive papers sort the sampled questions easy-to-hard.
+- Added explicit `exam|practice` request validation, configurable CORS origins, safe wildcard credential behavior, and current Pydantic settings configuration.
+- Added pytest configuration that avoids the inaccessible administrator-owned cache/temp directories and sets the asyncio fixture scope explicitly.
+- Verification: backend `pytest -q` passes 31 tests. Only the third-party `python-jose` UTC deprecation warning remains.
+- Verification: Alembic `upgrade head --sql` generates valid MySQL DDL for both revisions.
+- Verification: MP-Weixin production build succeeds; only Sass legacy JS API warnings remain.
+
+### Immediate Next Action
+
+After the user starts `MySQL80` as administrator:
+
+1. Run `server/.venv/Scripts/python scripts/check_database_integrity.py`.
+2. Back up the existing database.
+3. Run `server/.venv/Scripts/python -m alembic stamp 0001_initial_schema` from `server`.
+4. Run `server/.venv/Scripts/python -m alembic upgrade head`.
+5. Re-run the integrity audit, importer verification, API smoke tests, and PDF endpoint smoke test.
+
+## Progress Update (2026-08-16, MySQL Migration and Real Smoke Verification)
+
+- The user started `MySQL80` from an administrator PowerShell; the service is running.
+- Pre-migration integrity audit found 2567 questions, no duplicate answer natural keys, and no orphan rows across papers, answers, wrongbook, knowledge statistics, or streak records.
+- Created a pre-migration backup at `database/backups/csca_hks_exam_before_alembic_20260816_170437.sql` (1,436,753 bytes). `database/backups/` is ignored by Git.
+- Stamped the existing database at `0001_initial_schema` and upgraded it to `0002_answer_record_uniqueness`.
+- The migration added the unique constraint on `(user_id, paper_id, question_id)` and renamed legacy indexes to descriptive globally unique names.
+- Post-migration audit is clean: Alembic is at `0002_answer_record_uniqueness`, question count remains 2567, duplicate answer keys are 0, and every checked orphan count is 0.
+- Real FastAPI + MySQL smoke test passed: health HTTP 200, HKS practice-paper generation, answer submission, result review, wrongbook retrieval, and PDF export.
+- The smoke paper has ID 8 with 5 questions. The deliberately wrong answer produced one unmastered HKS wrongbook entry. PDF response was HTTP 200, `application/pdf`, 3254 bytes, with a valid `%PDF-` header.
+- Fixed ORM/MySQL metadata drift for four `TINYINT(1)` fields and table comments. The fields use SQLAlchemy dialect variants so MySQL retains `TINYINT(1)` while SQLite tests use `INTEGER`.
+- Final Alembic verification: `python -m alembic check` reports `No new upgrade operations detected`.
+- Final backend verification: `31 passed`; only the third-party `python-jose` UTC deprecation warning remains.
+- Final database verification: `scripts/check_database_integrity.py` reports `integrity=clean`.
+- Final frontend verification: MP-Weixin production build succeeds and outputs to `client/dist/build/mp-weixin`; only Sass legacy JS API warnings remain.
+
+### Immediate Next Action
+
+Run the complete mini-program workflow in WeChat DevTools against the real backend, then repeat the critical login and PDF-preview paths on a physical device with production WeChat credentials.
+
+## Progress Update (2026-08-17, WeChat DevTools Regression)
+
+- Completed a real WeChat DevTools regression against `client/dist/build/mp-weixin` and the MySQL-backed API.
+- Confirmed the local tourist-AppID login failure does not block development data access: the frontend handles `uni.login` failure and the backend's explicit `AUTH_ALLOW_DEV_OPENID=true` mode supplies the development identity. Real production login still requires valid WeChat credentials.
+- Fixed per-question wrong-reason state in the answer page. Unanswered questions no longer show the wrong-reason prompt, reasons no longer leak between questions, and a selected reason remains when returning to the original question.
+- The regression deliberately answered questions and confirmed live dashboard changes: 11 questions today, 45% correct, 6 wrong today, and 12 unmastered wrongbook entries.
+- Confirmed the wrongbook refreshes with 12 real entries and the newest circuit question appears first.
+- Confirmed wrongbook PDF export opens successfully and Chinese questions and explanations render correctly.
+- Fixed the wrongbook redo type mismatch. The `all` list no longer silently treats redo as CSCA; it now asks the user to choose CSCA or HKS. Filtered lists enter their selected type directly.
+- Profile, result, and wrongbook-detail redo entries now pass the user's target exam, the current paper exam, and the current question exam respectively.
+- Wrongbook list responses now include `exam_type`, and cards visibly identify CSCA/HKS. The redo page no longer silently defaults a missing type to CSCA.
+- Real DevTools verification confirmed HKS redo shows `1 / 1` and CSCA redo shows `1 / 11`. The console showed no business errors, only WeChat hot-reload, platform, SharedArrayBuffer, and worker capability warnings.
+- Final verification: backend `pytest -q` passes 32 tests; MP-Weixin production build succeeds; `GET /api/v1/health` returns HTTP 200.
+
+### Immediate Next Action
+
+Continue the remaining profile regression: verify accumulated question count, total correct rate, streak, target exam/date editing, and the target-specific redo entry. Then run the critical login and PDF-preview paths on a physical device with production WeChat credentials.
+
+## Progress Update (2026-08-17, Profile and Target Regression)
+
+- Completed the remaining profile regression in WeChat DevTools against the real MySQL-backed API.
+- Confirmed the profile displays real accumulated values: 21 answered questions, 38% total correct rate, and a 2-day streak.
+- Confirmed the profile only exposes implemented entries: paper history, wrongbook statistics, wrongbook redo, target settings, about, and logout. The old achievement, learning-report, reminder, and feedback placeholders are absent.
+- Confirmed the target-settings panel expands correctly with CSCA/HKS selection, the native date picker, and save behavior.
+- Changed the target to HKS with exam date `2026-08-18`. The profile header and menu value updated to HKS and the success notification appeared.
+- Confirmed the home page immediately synchronized the saved target and displayed the live HKS countdown (`1 day, 19 hours, 33 minutes` at verification time).
+- Confirmed the profile wrongbook-redo entry uses the saved HKS target directly and opens the HKS redo session with `1 / 1`; it does not prompt for a type or fall back to CSCA.
+- DevTools showed no business errors during the complete profile-target-home-redo workflow. Only the known hot-reload, platform API, SharedArrayBuffer, and worker-capability warnings remained.
+
+### Immediate Next Action
+
+Run the critical login and wrongbook PDF-preview workflows on a physical device with production WeChat credentials. After that, perform release configuration review and a final end-to-end acceptance pass.

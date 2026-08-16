@@ -31,12 +31,12 @@
           @select="selectOption"
         />
         <view v-else class="empty-question">试卷题目加载失败，请返回重新组卷。</view>
-        <view class="wrong-reason" v-if="showResult && !currentCorrect">
+        <view class="wrong-reason" v-if="showResult[currentIndex] && !currentCorrect">
           <text class="reason-label">这道题为什么错了？</text>
           <view class="reason-tags">
             <view
               class="reason-tag"
-              :class="{ selected: selectedReason === r }"
+              :class="{ selected: currentSelectedReason === r }"
               v-for="r in wrongReasons"
               :key="r"
               @click="selectWrongReason(r)"
@@ -84,7 +84,7 @@ const currentIndex = computed(() => examStore.currentIndex)
 const answers = computed(() => examStore.answers)
 const showResult = ref<Record<number, boolean>>({})
 const answerCorrectness = ref<Record<number, boolean>>({})
-const selectedReason = ref('')
+const selectedReasons = ref<Record<number, string>>({})
 const showSheet = ref(false)
 const isSubmitting = ref(false)
 const questionStartedAt = ref(Date.now())
@@ -96,6 +96,7 @@ const currentQuestion = computed(() => examStore.currentQuestion)
 const progressPercent = computed(() => examStore.progressPercent)
 const answeredCount = computed(() => examStore.answeredCount)
 const currentCorrect = computed(() => answerCorrectness.value[currentIndex.value] === true)
+const currentSelectedReason = computed(() => selectedReasons.value[currentIndex.value] || '')
 
 const wrongReasons = WRONG_REASONS
 
@@ -122,7 +123,7 @@ const selectOption = async (key: string) => {
       questionId: currentQuestion.value.id,
       userAnswer: key,
       timeSpent: commitElapsedTime(),
-      wrongReason: selectedReason.value || undefined,
+      wrongReason: currentSelectedReason.value || undefined,
     })
     if (typeof response.is_correct === 'boolean') {
       answerCorrectness.value[index] = response.is_correct
@@ -143,8 +144,10 @@ const selectOption = async (key: string) => {
 }
 
 const selectWrongReason = async (reason: string) => {
-  selectedReason.value = reason
-  const answer = answers.value[currentIndex.value]
+  const index = currentIndex.value
+  const previousReason = selectedReasons.value[index]
+  selectedReasons.value[index] = reason
+  const answer = answers.value[index]
   if (!answer || !currentQuestion.value || !examStore.paperId || isSubmitting.value) return
 
   isSubmitting.value = true
@@ -157,10 +160,15 @@ const selectWrongReason = async (reason: string) => {
       wrongReason: reason,
     })
     if (typeof response.is_correct === 'boolean') {
-      answerCorrectness.value[currentIndex.value] = response.is_correct
+      answerCorrectness.value[index] = response.is_correct
     }
   } catch {
     // The shared request layer already displays the error message.
+    if (previousReason == null) {
+      delete selectedReasons.value[index]
+    } else {
+      selectedReasons.value[index] = previousReason
+    }
   } finally {
     isSubmitting.value = false
   }

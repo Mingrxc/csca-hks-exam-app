@@ -10,7 +10,7 @@
         <view class="avatar">😊</view>
       </view>
       <!-- 考试倒计时 -->
-      <view class="countdown-card" v-if="targetExam">
+      <view class="countdown-card" v-if="targetDate">
         <text class="countdown-label">距 {{ targetExam }} 考试还有</text>
         <view class="countdown-nums">
           <view class="countdown-item">
@@ -29,6 +29,14 @@
           </view>
         </view>
       </view>
+      <view class="countdown-card target-empty" v-else @click="goProfile">
+        <text class="countdown-label">当前目标：{{ targetExam }}</text>
+        <text class="target-empty-text">设置考试日期，开启备考倒计时</text>
+      </view>
+    </view>
+
+    <view class="load-error" v-if="loadError" @click="loadDashboard">
+      <text>首页数据加载失败，点击重试</text>
     </view>
 
     <!-- 今日数据卡片 -->
@@ -43,7 +51,7 @@
       </view>
       <view class="stat-card warning">
         <text class="stat-num">{{ todayStats.wrongCount }}</text>
-        <text class="stat-label">错题待复习</text>
+        <text class="stat-label">今日错题</text>
       </view>
     </view>
 
@@ -100,22 +108,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { userApi } from '@/api'
+import { toDashboardData } from '@/api/contracts'
 import { PAPER_STRATEGIES } from '@/constants/exam'
-import { mockDashboard } from '@/mock/dashboard'
 import { getGreeting } from '@/utils'
 import type { PaperStrategy } from '@/types/exam'
+import type { CountdownValue, RecentPaper, TodayStats } from '@/types/user'
 
 const strategies = PAPER_STRATEGIES
-const userName = ref(mockDashboard.userName)
-const targetExam = ref(mockDashboard.targetExam)
+const userName = ref('考霸同学')
+const targetExam = ref<'CSCA' | 'HKS'>('CSCA')
+const targetDate = ref('')
+const loadError = ref(false)
 
 const greetingText = computed(() => getGreeting())
 
-const countdown = ref(mockDashboard.countdown)
-const todayStats = ref(mockDashboard.todayStats)
-const pendingWrongCount = ref(mockDashboard.pendingWrongCount)
-const recentPapers = ref(mockDashboard.recentPapers)
+const countdown = ref<CountdownValue>({ days: '0', hours: '00', minutes: '00' })
+const todayStats = ref<TodayStats>({ questionCount: 0, correctRate: 0, wrongCount: 0 })
+const pendingWrongCount = ref(0)
+const recentPapers = ref<RecentPaper[]>([])
+
+const loadDashboard = async () => {
+  loadError.value = false
+  try {
+    const data = toDashboardData(await userApi.getDashboard())
+    userName.value = data.userName
+    targetExam.value = data.targetExam
+    targetDate.value = data.targetDate
+    countdown.value = data.countdown
+    todayStats.value = data.todayStats
+    pendingWrongCount.value = data.pendingWrongCount
+    recentPapers.value = data.recentPapers
+  } catch {
+    loadError.value = true
+  }
+}
 
 const goExam = (strategy: PaperStrategy) => {
   uni.navigateTo({ url: `/pages/exam/paper?strategy=${strategy}` })
@@ -125,9 +154,15 @@ const goWrongBook = () => {
   uni.switchTab({ url: '/pages/wrongbook/index' })
 }
 
+const goProfile = () => {
+  uni.switchTab({ url: '/pages/profile/index' })
+}
+
 const goPaper = (id: number) => {
   uni.navigateTo({ url: `/pages/exam/result?id=${id}` })
 }
+
+onShow(loadDashboard)
 </script>
 
 <style lang="scss" scoped>
@@ -161,6 +196,8 @@ const goPaper = (id: number) => {
 }
 
 .countdown-label { color: rgba(255,255,255,0.8); font-size: 24rpx; }
+.target-empty { display: flex; align-items: center; justify-content: space-between; }
+.target-empty-text { color: #fff; font-size: 24rpx; }
 .countdown-nums { display: flex; align-items: baseline; margin-top: 12rpx; }
 .countdown-item { display: flex; align-items: baseline; }
 .countdown-num { color: #fff; font-size: 48rpx; font-weight: 700; font-family: 'Menlo', monospace; }
@@ -193,6 +230,7 @@ const goPaper = (id: number) => {
 .quick-actions { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .action-card {
   width: calc(50% - 8rpx);
+  box-sizing: border-box;
   background: #fff;
   border-radius: 16rpx;
   padding: 28rpx 24rpx;
@@ -232,4 +270,5 @@ const goPaper = (id: number) => {
 .empty-state { padding: 60rpx 0; text-align: center; }
 .empty-icon { font-size: 60rpx; display: block; margin-bottom: 16rpx; }
 .empty-text { font-size: 26rpx; color: #9CA3AF; }
+.load-error { margin: 24rpx; padding: 24rpx; text-align: center; color: #B91C1C; background: #FEF2F2; border-radius: 12rpx; font-size: 24rpx; }
 </style>

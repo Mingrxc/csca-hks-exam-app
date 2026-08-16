@@ -1,10 +1,13 @@
 """错题本业务逻辑."""
 
 from datetime import datetime
+from html import escape
+from io import BytesIO
 
 from sqlalchemy.orm import Session
 
 from src.common.exceptions import AppException
+from src.common.time import utc_now_naive
 from src.modules.exam.models import AnswerRecord
 from src.modules.question.models import Paper, Question
 from src.modules.question.service import serialize_paper, serialize_question
@@ -18,6 +21,17 @@ def list_wrong_questions(
     knowledge: str = "all",
     wrong_count: str = "all",
 ) -> list[dict]:
+    query = build_wrong_query(db, user_id, exam_type, knowledge, wrong_count)
+    return [serialize_wrong_item(item, question) for item, question in query.all()]
+
+
+def build_wrong_query(
+    db: Session,
+    user_id: int,
+    exam_type: str = "all",
+    knowledge: str = "all",
+    wrong_count: str = "all",
+):
     query = (
         db.query(WrongBook, Question)
         .join(Question, Question.id == WrongBook.question_id)
@@ -34,7 +48,136 @@ def list_wrong_questions(
     elif wrong_count == "2+":
         query = query.filter(WrongBook.wrong_count >= 2)
 
-    return [serialize_wrong_item(item, question) for item, question in query.all()]
+    return query
+
+
+def export_wrongbook_pdf(
+    db: Session,
+    user_id: int,
+    exam_type: str = "all",
+    knowledge: str = "all",
+    wrong_count: str = "all",
+) -> bytes:
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+    from reportlab.platypus import KeepTogether, Paragraph, SimpleDocTemplate, Spacer
+
+    rows = build_wrong_query(db, user_id, exam_type, knowledge, wrong_count).all()
+    if not rows:
+        raise AppException(40423, "没有符合条件的错题可导出", status_code=404)
+
+    question_ids = [question.id for _, question in rows]
+    records = (
+        db.query(AnswerRecord)
+        .filter(
+            AnswerRecord.user_id == user_id,
+            AnswerRecord.question_id.in_(question_ids),
+            AnswerRecord.is_correct == 0,
+        )
+        .order_by(AnswerRecord.created_at.desc(), AnswerRecord.id.desc())
+        .all()
+    )
+    latest_answers: dict[int, str] = {}
+    for record in records:
+        latest_answers.setdefault(record.question_id, record.user_answer or "未作答")
+
+    font_name = "STSong-Light"
+    if font_name not in pdfmetrics.getRegisteredFontNames():
+        pdfmetrics.registerFont(UnicodeCIDFont(font_name))
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "ChineseTitle",
+        parent=styles["Title"],
+        fontName=font_name,
+        fontSize=18,
+        leading=26,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor("#1F2937"),
+        spaceAfter=8 * mm,
+    )
+    heading_style = ParagraphStyle(
+        "QuestionHeading",
+        parent=styles["Heading3"],
+        fontName=font_name,
+        fontSize=11,
+        leading=17,
+        textColor=colors.HexColor("#3730A3"),
+        spaceAfter=3 * mm,
+    )
+    body_style = ParagraphStyle(
+        "ChineseBody",
+        parent=styles["BodyText"],
+        fontName=font_name,
+        fontSize=10,
+        leading=17,
+        textColor=colors.HexColor("#1F2937"),
+        spaceAfter=2 * mm,
+    )
+    answer_style = ParagraphStyle(
+        "AnswerBody",
+        parent=body_style,
+        backColor=colors.HexColor("#F3F4F6"),
+        borderPadding=8,
+        spaceBefore=2 * mm,
+        spaceAfter=4 * mm,
+    )
+
+    output = BytesIO()
+    document = SimpleDocTemplate(
+        output,
+        pagesize=A4,
+        rightMargin=18 * mm,
+        leftMargin=18 * mm,
+        topMargin=16 * mm,
+        bottomMargin=16 * mm,
+        title="留学考霸错题本",
+        author="留学考霸",
+    )
+    story = [
+        Paragraph("留学考霸错题本", title_style),
+        Paragraph(
+            f"导出时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}　共 {len(rows)} 道错题",
+            body_style,
+        ),
+        Spacer(1, 3 * mm),
+    ]
+
+    for index, (item, question) in enumerate(rows, start=1):
+        meta = (
+            f"第 {index} 题　{escape(question.exam_type)} / {escape(question.knowledge_point)}"
+            f"　难度：{escape(question.difficulty)}　累计错误：{item.wrong_count or 0} 次"
+        )
+        block = [
+            Paragraph(meta, heading_style),
+            Paragraph(escape(question.stem_text).replace("\n", "<br/>"), body_style),
+        ]
+        for option in question.options or []:
+            option_key = escape(str(option.get("key", "")))
+            option_text = escape(str(option.get("text", ""))).replace("\n", "<br/>")
+            block.append(Paragraph(f"{option_key}. {option_text}", body_style))
+        block.append(Paragraph(
+            f"最近答案：{escape(latest_answers.get(question.id, '未作答'))}<br/>"
+            f"正确答案：{escape(question.answer)}<br/>"
+            f"解析：{escape(question.analysis or '暂无解析').replace(chr(10), '<br/>')}",
+            answer_style,
+        ))
+        story.extend([KeepTogether(block), Spacer(1, 3 * mm)])
+
+    def add_page_number(canvas, doc):
+        canvas.saveState()
+        canvas.setFont(font_name, 9)
+        canvas.setFillColor(colors.HexColor("#6B7280"))
+        canvas.drawCentredString(A4[0] / 2, 8 * mm, f"第 {doc.page} 页")
+        canvas.restoreState()
+
+    document.build(story, onFirstPage=add_page_number, onLaterPages=add_page_number)
+    return output.getvalue()
 
 
 def get_wrong_detail(db: Session, user_id: int, wrongbook_id: int) -> dict:
@@ -94,7 +237,7 @@ def mark_mastered(db: Session, user_id: int, wrongbook_id: int) -> dict:
         raise AppException(40421, "错题记录不存在", status_code=404)
 
     item.is_mastered = 0 if item.is_mastered else 1
-    item.last_review_at = datetime.utcnow()
+    item.last_review_at = utc_now_naive()
     db.commit()
     db.refresh(item)
     return {
@@ -168,6 +311,7 @@ def serialize_wrong_item(item: WrongBook, question: Question) -> dict:
     return {
         "id": item.id,
         "question_id": question.id,
+        "exam_type": question.exam_type,
         "stem": question.stem_text,
         "type": question.question_type,
         "difficulty": question.difficulty,

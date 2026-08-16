@@ -2,10 +2,10 @@
 
 from fastapi import APIRouter
 
-from src.modules.exam import router as exam_router
-from src.modules.question import router as question_router
-from src.modules.user import router as user_router
-from src.modules.wrongbook import router as wrongbook_router
+from src.modules.exam.router import router as exam_router
+from src.modules.question.router import router as question_router
+from src.modules.user.router import router as user_router
+from src.modules.wrongbook.router import router as wrongbook_router
 
 api_router = APIRouter(prefix="/api/v1")
 

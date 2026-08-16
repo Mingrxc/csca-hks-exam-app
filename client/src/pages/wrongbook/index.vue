@@ -93,6 +93,7 @@
       <view class="wrong-card" v-for="item in wrongList" :key="item.id" @click="goDetail(item.id)">
         <view class="card-header">
           <view class="card-tags">
+            <text class="card-tag exam">{{ item.examType }}</text>
             <text class="card-tag type">{{ item.typeLabel }}</text>
             <text class="card-tag diff" :class="item.difficulty">{{ item.diffLabel }}</text>
             <text class="card-tag point">{{ item.knowledgePoint }}</text>
@@ -131,6 +132,7 @@ import { wrongBookApi } from '@/api'
 import { toWrongBookListItem } from '@/api/contracts'
 import { WRONG_BOOK_KNOWLEDGE_POINTS } from '@/constants/exam'
 import type { WrongBookListItem } from '@/types/wrongbook'
+import type { ExamType } from '@/types/exam'
 
 const activeTab = ref('all')
 const showFilters = ref(false)
@@ -204,19 +206,42 @@ const goDetail = (id: number) => {
 }
 
 const goRedo = () => {
-  const examType = filters.examType === 'HKS' ? 'HKS' : 'CSCA'
+  if (filters.examType === 'CSCA' || filters.examType === 'HKS') {
+    openRedo(filters.examType)
+    return
+  }
+
+  uni.showActionSheet({
+    itemList: ['CSCA 错题', 'HKS 错题'],
+    success: ({ tapIndex }) => openRedo(tapIndex === 0 ? 'CSCA' : 'HKS'),
+  })
+}
+
+const openRedo = (examType: ExamType) => {
   uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${examType}` })
 }
 
 const exportPdf = async () => {
+  uni.showLoading({ title: '正在生成...', mask: true })
   try {
-    await wrongBookApi.exportPdf({
+    const filePath = await wrongBookApi.exportPdf({
       examType: filters.examType,
       knowledge: filters.knowledge,
       wrongCount: filters.wrongCount,
     })
+    await new Promise<void>((resolve, reject) => {
+      uni.openDocument({
+        filePath,
+        fileType: 'pdf',
+        showMenu: true,
+        success: () => resolve(),
+        fail: reject,
+      })
+    })
   } catch {
-    // The API currently returns a clear 501 response for this planned feature.
+    uni.showToast({ title: 'PDF 导出失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
   }
 }
 
@@ -264,8 +289,9 @@ onShow(loadWrongList)
   margin-bottom: 16rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
 }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
-.card-tags { display: flex; gap: 8rpx; }
+.card-tags { display: flex; flex-wrap: wrap; gap: 8rpx; }
 .card-tag { padding: 2rpx 12rpx; border-radius: 8rpx; font-size: 20rpx; }
+.card-tag.exam { background: #ECFDF5; color: #047857; }
 .card-tag.type { background: #DBEAFE; color: #1E40AF; }
 .card-tag.diff { background: #F3F4F6; color: #6B7280; }
 .card-tag.diff.hard { background: #FEE2E2; color: #991B1B; }

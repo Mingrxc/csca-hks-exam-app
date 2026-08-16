@@ -23,6 +23,7 @@ export interface RecentPaper {
 export interface DashboardData {
   userName: string
   targetExam: ExamType
+  targetDate: string
   countdown: CountdownValue
   todayStats: TodayStats
   pendingWrongCount: number
@@ -31,7 +32,9 @@ export interface DashboardData {
 
 export interface UserProfile {
   nickname: string
+  avatarUrl: string
   targetExam: ExamType
+  targetDate: string
   totalQuestions: number
   correctRate: number
   streakDays: number

@@ -1,8 +1,53 @@
 """用户业务逻辑."""
 
+from datetime import date, datetime, time, timedelta
+
+import httpx
 from sqlalchemy.orm import Session
 
-from src.modules.user.models import User
+from src.common.exceptions import AppException
+from src.config.settings import settings
+from src.modules.exam.models import AnswerRecord
+from src.modules.question.service import list_papers
+from src.modules.user.models import StreakRecord, User
+from src.modules.wrongbook.models import WrongBook
+
+
+async def exchange_wx_code(code: str, transport=None) -> str:
+    """Exchange a WeChat login code for an OpenID, with an explicit local fallback."""
+    if not settings.WX_APPID or not settings.WX_SECRET:
+        if settings.AUTH_ALLOW_DEV_OPENID:
+            return settings.DEV_OPENID
+        raise AppException(50301, "微信登录尚未配置", status_code=503)
+
+    try:
+        async with httpx.AsyncClient(timeout=8, transport=transport) as client:
+            response = await client.get(
+                "https://api.weixin.qq.com/sns/jscode2session",
+                params={
+                    "appid": settings.WX_APPID,
+                    "secret": settings.WX_SECRET,
+                    "js_code": code,
+                    "grant_type": "authorization_code",
+                },
+            )
+            response.raise_for_status()
+            payload = response.json()
+    except (httpx.HTTPError, ValueError) as exc:
+        if settings.AUTH_ALLOW_DEV_OPENID:
+            return settings.DEV_OPENID
+        raise AppException(50201, "微信登录服务暂时不可用", status_code=502) from exc
+
+    if payload.get("errcode"):
+        if settings.AUTH_ALLOW_DEV_OPENID:
+            return settings.DEV_OPENID
+        raise AppException(40101, "微信登录凭证无效或已过期", status_code=401)
+    openid = payload.get("openid")
+    if not openid:
+        if settings.AUTH_ALLOW_DEV_OPENID:
+            return settings.DEV_OPENID
+        raise AppException(50202, "微信登录响应缺少用户标识", status_code=502)
+    return openid
 
 
 def get_or_create_user_by_openid(
@@ -38,4 +83,63 @@ def serialize_user(user: User) -> dict:
         "correct_rate": correct_rate,
         "streak_days": user.streak_days or 0,
         "created_at": user.created_at,
+    }
+
+
+def record_daily_answer(db: Session, user: User, answered_on: date | None = None) -> None:
+    """Record one newly answered question without double-counting resubmissions."""
+    streak_date = answered_on or date.today()
+    record = (
+        db.query(StreakRecord)
+        .filter(
+            StreakRecord.user_id == user.id,
+            StreakRecord.streak_date == streak_date,
+        )
+        .first()
+    )
+    if record:
+        record.question_count = (record.question_count or 0) + 1
+        return
+
+    db.add(StreakRecord(user_id=user.id, streak_date=streak_date, question_count=1))
+    if user.last_streak_at == streak_date - timedelta(days=1):
+        user.streak_days = (user.streak_days or 0) + 1
+    elif user.last_streak_at != streak_date:
+        user.streak_days = 1
+    user.last_streak_at = streak_date
+
+
+def get_dashboard(db: Session, user: User) -> dict:
+    today = date.today()
+    day_start = datetime.combine(today, time.min)
+    day_end = day_start + timedelta(days=1)
+    today_records = (
+        db.query(AnswerRecord)
+        .filter(
+            AnswerRecord.user_id == user.id,
+            AnswerRecord.created_at >= day_start,
+            AnswerRecord.created_at < day_end,
+        )
+        .all()
+    )
+    question_count = len(today_records)
+    correct_count = sum(1 for record in today_records if record.is_correct)
+    wrong_count = question_count - correct_count
+    pending_wrong_count = (
+        db.query(WrongBook)
+        .filter(WrongBook.user_id == user.id, WrongBook.is_mastered == 0)
+        .count()
+    )
+
+    return {
+        "user_name": user.nickname,
+        "target_exam": user.target_exam,
+        "target_date": user.target_date,
+        "today_stats": {
+            "question_count": question_count,
+            "correct_rate": round(correct_count / question_count * 100) if question_count else 0,
+            "wrong_count": wrong_count,
+        },
+        "pending_wrong_count": pending_wrong_count,
+        "recent_papers": list_papers(db, user.id, limit=3),
     }

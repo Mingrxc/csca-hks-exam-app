@@ -3,5 +3,10 @@
 | 脚本 | 用途 |
 |------|------|
 | `import_questions.py` | Validate and import `original_question_bank` JSON into `questions`. Defaults to dry-run; add `--apply` to write. |
-| `export_wrongbook.py` | 错题本导出 PDF（待实现） |
-| `sync_oss.py` | 图片/音频同步到阿里云 OSS（待实现） |
+| `check_database_integrity.py` | 只读检查答题重复键、业务表孤儿引用、题目量和 Alembic 版本。 |
+
+从项目根目录运行：
+
+```powershell
+server/.venv/Scripts/python scripts/check_database_integrity.py
+```

@@ -1,19 +1,16 @@
 """题库业务逻辑."""
 
-from sqlalchemy import case, func
+import random
+
 from sqlalchemy.orm import Session
 
 from src.common.exceptions import AppException
+from src.modules.exam.models import AnswerRecord
 from src.modules.question.models import Paper, Question
 from src.modules.question.schemas import GeneratePaperRequest
 
 
-DIFFICULTY_ORDER = case(
-    (Question.difficulty == "easy", 1),
-    (Question.difficulty == "medium", 2),
-    (Question.difficulty == "hard", 3),
-    else_=4,
-)
+DIFFICULTY_ORDER = {"easy": 1, "medium": 2, "hard": 3}
 
 
 def serialize_question(question: Question, include_solution: bool = True) -> dict:
@@ -47,12 +44,44 @@ def get_question(db: Session, question_id: int) -> dict:
 def list_papers(db: Session, user_id: int, limit: int = 20) -> list[dict]:
     papers = (
         db.query(Paper)
-        .filter(Paper.user_id == user_id)
-        .order_by(Paper.created_at.desc())
+        .filter(Paper.user_id == user_id, Paper.finished_at.isnot(None))
+        .order_by(Paper.finished_at.desc(), Paper.id.desc())
         .limit(limit)
         .all()
     )
-    return [serialize_paper(paper, []) for paper in papers]
+    if not papers:
+        return []
+
+    records = (
+        db.query(AnswerRecord)
+        .filter(
+            AnswerRecord.user_id == user_id,
+            AnswerRecord.paper_id.in_([paper.id for paper in papers]),
+        )
+        .all()
+    )
+    records_by_paper: dict[int, list[AnswerRecord]] = {}
+    for record in records:
+        records_by_paper.setdefault(record.paper_id, []).append(record)
+
+    result = []
+    for paper in papers:
+        paper_records = records_by_paper.get(paper.id, [])
+        question_count = len(paper.question_ids or [])
+        correct_count = sum(1 for record in paper_records if record.is_correct)
+        correct_rate = round(correct_count / question_count * 100, 2) if question_count else 0
+        result.append({
+            "id": paper.id,
+            "title": paper.title,
+            "exam_type": paper.exam_type,
+            "question_count": question_count,
+            "score": correct_rate,
+            "correct_rate": correct_rate,
+            "time_used": sum(record.time_spent or 0 for record in paper_records),
+            "passed": correct_rate >= 60,
+            "finished_at": paper.finished_at,
+        })
+    return result
 
 
 def generate_paper(db: Session, user_id: int, payload: GeneratePaperRequest) -> dict:
@@ -67,14 +96,16 @@ def generate_paper(db: Session, user_id: int, payload: GeneratePaperRequest) -> 
     if payload.strategy.value == "knowledge" and payload.knowledge_points:
         query = query.filter(Question.knowledge_point.in_(payload.knowledge_points))
 
-    if payload.strategy.value == "progressive":
-        query = query.order_by(DIFFICULTY_ORDER, func.rand())
-    else:
-        query = query.order_by(func.rand())
-
-    questions = query.limit(payload.question_count).all()
-    if not questions:
+    candidate_ids = [question_id for (question_id,) in query.with_entities(Question.id).all()]
+    if not candidate_ids:
         raise AppException(40402, "没有找到符合条件的题目", status_code=404)
+
+    selected_ids = random.sample(candidate_ids, min(payload.question_count, len(candidate_ids)))
+    selected_questions = db.query(Question).filter(Question.id.in_(selected_ids)).all()
+    question_map = {question.id: question for question in selected_questions}
+    questions = [question_map[question_id] for question_id in selected_ids]
+    if payload.strategy.value == "progressive":
+        questions.sort(key=lambda question: DIFFICULTY_ORDER.get(question.difficulty, 4))
 
     for question in questions:
         question.usage_count = (question.usage_count or 0) + 1

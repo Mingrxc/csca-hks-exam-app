@@ -7,6 +7,8 @@ __pycache__/
 *.pyo
 *.pyd
 .pytest_cache/
+.test-cache/
+.test-tmp/
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -39,3 +41,5 @@ Desktop.ini
 # Logs
 *.log
 
+# Local database backups
+database/backups/

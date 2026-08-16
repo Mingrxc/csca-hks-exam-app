@@ -1,8 +1,8 @@
 """用户模块 Pydantic 模型"""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import date, datetime
-from typing import Optional
+from typing import Literal, Optional
 
 
 class UserCreate(BaseModel):
@@ -24,7 +24,7 @@ class UserResponse(BaseModel):
 
 
 class WxLoginRequest(BaseModel):
-    code: str
+    code: str = Field(min_length=1, max_length=256)
 
 
 class WxLoginResponse(BaseModel):
@@ -36,5 +36,5 @@ class WxLoginResponse(BaseModel):
 class UserProfileUpdate(BaseModel):
     nickname: Optional[str] = None
     avatar_url: Optional[str] = None
-    target_exam: Optional[str] = None
+    target_exam: Optional[Literal["CSCA", "HKS"]] = None
     target_date: Optional[date] = None

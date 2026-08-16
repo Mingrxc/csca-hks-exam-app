@@ -6,7 +6,7 @@
 
 1. `uni-app + Vue 3`：小程序页面与交互骨架
 2. `Pinia`：客户端状态管理
-3. `TypeScript`：前端共享类型、常量和 mock 数据
+3. `TypeScript`：前端共享类型、常量和 API 数据契约
 4. `FastAPI`：后端应用入口与 API 组合
 5. `SQLAlchemy`：用户、题库、试卷、答题、错题本数据模型
 6. `MySQL`：核心业务数据存储
@@ -17,7 +17,7 @@
 ## 当前结构
 
 - `client/src/constants/`：题型、难度、组卷策略等共享配置
-- `client/src/mock/`：首页、刷题、错题本、个人中心的示例数据
+- `client/src/api/`：请求封装、自动登录和前后端数据适配
 - `client/src/types/`：前后端共享的数据类型
 - `client/src/components/`：答题卡、题目卡片、倒计时、环形图
 - `client/src/pages/`：首页、刷题、错题本、个人中心
@@ -28,13 +28,14 @@
 
 ## 现在做到哪一步
 
-- 前端页面骨架已经搭好，首页、组卷页、答题页、结果页、错题本和个人中心都已具备
+- 首页、组卷、答题、成绩、错题本、错题重做和个人中心已接入真实 API 数据
 - 前端的重复数据与标签映射已经收敛到共享类型、常量和接口适配层
 - 后端已经整理出应用工厂和统一路由入口
-- 后端已补齐最小刷题闭环接口：开发态登录、智能组卷、题目详情、答题提交、成绩汇总、错题本列表/详情/标记、举一反三
+- 后端已补齐刷题闭环接口：微信登录、首页摘要、智能组卷、答题提交、成绩与逐题解析、历史试卷、错题本、举一反三和错题重做
 - 数据库表结构和 ORM 模型已经定义好
-- 前端已接入“组卷 → 答题 → 成绩报告”以及“错题列表 → 错题详情 → 掌握标记 → 举一反三”主链路
-- 微信真实登录、错题重做专用组卷、PDF 导出和本地运行验收尚未完成
+- 前端已接入“组卷 → 答题 → 成绩报告 → 全部解析”以及“错题列表 → 错题详情 → 掌握标记 → 错题重做”主链路
+- 微信 `code2session`、JWT 自动续登、个人考试目标和错题 PDF 导出调用链已经实现
+- 后端自动化测试当前为 31 项通过，包含中文错题 PDF 生成测试
 
 ## 本地运行
 
@@ -58,12 +59,46 @@ VITE_API_BASE_URL=http://192.168.1.7:8000/api/v1
 
 ```bash
 cd server
-pip install -r requirements.txt
-uvicorn main:app --reload
+python -m venv .venv
+.venv/Scripts/python -m pip install -r requirements.txt
+Copy-Item .env.example .env
+.venv/Scripts/python -m uvicorn main:app --reload
+```
+
+`server/.env` 至少需要配置 MySQL。真实微信登录还需要填写 `WX_APPID`、`WX_SECRET`，并设置：
+
+```env
+AUTH_ALLOW_DEV_OPENID=false
+JWT_SECRET_KEY=请替换为足够长的随机密钥
+```
+
+本地开发未配置微信参数时，可保留 `AUTH_ALLOW_DEV_OPENID=true` 使用固定开发账号。
+
+## 数据初始化
+
+1. 启动 MySQL，创建空的 `csca_hks_exam` 数据库。
+2. 在 `server` 目录运行 `.venv/Scripts/python -m alembic upgrade head`。
+3. 可导入 `database/seeds/sample_questions.sql` 做最小验证。
+4. 完整题库位于工作区同级 `original_question_bank` 时，运行：
+
+```bash
+server/.venv/Scripts/python scripts/import_questions.py --apply
+server/.venv/Scripts/python scripts/import_questions.py --verify-db
 ```
 
 ## 下一步
 
-- 启动 MySQL 服务，创建数据库并导入 `database/schema.sql` 与 `database/seeds/sample_questions.sql`
-- 安装前后端依赖后启动 API 与微信小程序开发服务，完成真机或开发者工具联调
-- 实现微信 `code2session` 真实登录、错题重做专用试卷和 PDF 导出
+- 恢复本机 MySQL 服务后，应用 Alembic 迁移并审计外键前的孤儿记录
+- 在微信开发者工具中验证 `code2session`、过期 token 重试、PDF 预览与真机网络配置
+- 为首页和历史接口补充分页、限流与发布环境监控
+
+## 验证
+
+```powershell
+cd server
+.venv/Scripts/python -m pytest -q
+.venv/Scripts/python -m alembic upgrade head --sql
+
+cd ../client
+npm.cmd run build:mp-weixin
+```

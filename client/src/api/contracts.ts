@@ -1,16 +1,19 @@
 import type {
   Difficulty,
+  ExamType,
   ExamResultSummary,
   HistoryPaper,
   Question,
+  ResultReviewQuestion,
   ResultWrongQuestion,
 } from '@/types/exam'
+import type { DashboardData, UserProfile } from '@/types/user'
 import type { RelatedQuestion, WrongBookDetail, WrongBookListItem } from '@/types/wrongbook'
 import { DIFFICULTY_MAP, QUESTION_TYPE_MAP } from '@/constants/exam'
 
 export interface ApiQuestion {
   id: number
-  exam_type: string
+  exam_type: ExamType
   subject: string
   knowledge_point: string
   difficulty: Question['difficulty']
@@ -24,7 +27,7 @@ export interface ApiQuestion {
 export interface ApiPaper {
   id: number
   title: string
-  exam_type: string
+  exam_type: ExamType
   strategy: string
   question_ids: number[]
   total_score: number
@@ -32,6 +35,43 @@ export interface ApiPaper {
   mode: string
   difficulty: string
   questions: ApiQuestion[]
+}
+
+export interface ApiHistoryPaper {
+  id: number
+  title: string
+  exam_type: string
+  question_count: number
+  score: number
+  correct_rate: number
+  time_used: number
+  passed: boolean
+  finished_at: string
+}
+
+export interface ApiUser {
+  id: number
+  nickname: string
+  avatar_url?: string
+  target_exam: 'CSCA' | 'HKS'
+  target_date?: string
+  total_questions: number
+  total_correct: number
+  correct_rate: number
+  streak_days: number
+}
+
+export interface ApiDashboard {
+  user_name: string
+  target_exam: 'CSCA' | 'HKS'
+  target_date?: string
+  today_stats: {
+    question_count: number
+    correct_rate: number
+    wrong_count: number
+  }
+  pending_wrong_count: number
+  recent_papers: ApiHistoryPaper[]
 }
 
 export interface ApiSubmitAnswerResult {
@@ -45,6 +85,7 @@ export interface ApiSubmitAnswerResult {
 }
 
 export interface ApiExamResult {
+  paper: ApiPaper
   score: number
   correct_count: number
   total_count: number
@@ -58,11 +99,22 @@ export interface ApiExamResult {
     your_answer: string
     correct_answer: string
   }>
+  review_questions: Array<{
+    id: number
+    stem: string
+    type_label: string
+    options: Question['options']
+    user_answer: string
+    correct_answer: string
+    analysis: string
+    is_correct: boolean
+  }>
 }
 
 export interface ApiWrongBookItem {
   id: number
   question_id: number
+  exam_type: ExamType
   stem: string
   type: Question['type']
   difficulty: Difficulty
@@ -96,14 +148,63 @@ export function toQuestion(item: ApiQuestion): Question {
   }
 }
 
-export function toHistoryPaper(item: ApiPaper): HistoryPaper {
+export function toHistoryPaper(item: ApiHistoryPaper): HistoryPaper {
   return {
     id: item.id,
     title: item.title,
-    correctRate: 0,
-    timeUsed: '--:--',
-    date: '',
-    passed: false,
+    correctRate: item.correct_rate,
+    timeUsed: formatSeconds(item.time_used),
+    date: item.finished_at?.slice(0, 10) || '',
+    passed: item.passed,
+  }
+}
+
+export function toDashboardData(item: ApiDashboard): DashboardData {
+  return {
+    userName: item.user_name,
+    targetExam: item.target_exam,
+    targetDate: item.target_date || '',
+    countdown: calculateCountdown(item.target_date),
+    todayStats: {
+      questionCount: item.today_stats.question_count,
+      correctRate: item.today_stats.correct_rate,
+      wrongCount: item.today_stats.wrong_count,
+    },
+    pendingWrongCount: item.pending_wrong_count,
+    recentPapers: item.recent_papers.map((paper) => ({
+      id: paper.id,
+      title: paper.title,
+      questionCount: paper.question_count,
+      score: paper.score,
+      date: paper.finished_at?.slice(0, 10) || '',
+    })),
+  }
+}
+
+export function toUserProfile(item: ApiUser): UserProfile {
+  return {
+    nickname: item.nickname,
+    avatarUrl: item.avatar_url || '',
+    targetExam: item.target_exam,
+    targetDate: item.target_date || '',
+    totalQuestions: item.total_questions,
+    correctRate: item.correct_rate,
+    streakDays: item.streak_days,
+  }
+}
+
+function calculateCountdown(targetDate?: string) {
+  if (!targetDate) return { days: '0', hours: '00', minutes: '00' }
+  const [year, month, day] = targetDate.split('-').map(Number)
+  const target = new Date(year, month - 1, day, 23, 59, 59).getTime()
+  const remaining = Math.max(target - Date.now(), 0)
+  const days = Math.floor(remaining / 86400000)
+  const hours = Math.floor((remaining % 86400000) / 3600000)
+  const minutes = Math.floor((remaining % 3600000) / 60000)
+  return {
+    days: String(days),
+    hours: String(hours).padStart(2, '0'),
+    minutes: String(minutes).padStart(2, '0'),
   }
 }
 
@@ -127,9 +228,23 @@ export function toResultWrongQuestions(item: ApiExamResult): ResultWrongQuestion
   }))
 }
 
+export function toResultReviewQuestions(item: ApiExamResult): ResultReviewQuestion[] {
+  return item.review_questions.map((question) => ({
+    id: question.id,
+    stem: question.stem,
+    typeLabel: QUESTION_TYPE_MAP[question.type_label as Question['type']] || question.type_label,
+    options: question.options,
+    userAnswer: question.user_answer,
+    correctAnswer: question.correct_answer,
+    analysis: question.analysis,
+    correct: question.is_correct,
+  }))
+}
+
 export function toWrongBookListItem(item: ApiWrongBookItem): WrongBookListItem {
   return {
     id: item.id,
+    examType: item.exam_type,
     typeLabel: QUESTION_TYPE_MAP[item.type] || item.type,
     diffLabel: DIFFICULTY_MAP[item.difficulty] || item.difficulty,
     difficulty: item.difficulty,

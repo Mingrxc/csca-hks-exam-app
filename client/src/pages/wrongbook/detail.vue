@@ -138,7 +138,8 @@ const goRelated = () => {
 }
 
 const goRedo = () => {
-  uni.navigateTo({ url: '/pages/wrongbook/redo' })
+  if (!question.value) return
+  uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${question.value.examType}` })
 }
 </script>
 

@@ -1,11 +1,17 @@
 """用户模块 SQLAlchemy 模型"""
-from sqlalchemy import Column, Integer, String, Date, DateTime, Enum as SAEnum
+from sqlalchemy import Column, Date, DateTime, Index, Integer, String, UniqueConstraint
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.sql import func
 from src.config.database import Base
 
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = (
+        Index("idx_users_openid", "openid"),
+        Index("idx_users_created", "created_at"),
+        {"comment": "用户表"},
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment="用户 ID")
     openid = Column(String(64), nullable=False, unique=True, comment="微信 OpenID")
@@ -20,7 +26,7 @@ class User(Base):
     last_streak_at = Column(Date, nullable=True, comment="最近打卡日期")
     created_at = Column(DateTime, server_default=func.now(), comment="注册时间")
     updated_at = Column(
-        DateTime, server_default=func.now(), onupdate=func.now(), comment="更新时间"
+        DateTime, server_default=func.now(), onupdate=func.now()
     )
 
     def __repr__(self):
@@ -29,6 +35,12 @@ class User(Base):
 
 class StreakRecord(Base):
     __tablename__ = "streak_records"
+    __table_args__ = (
+        UniqueConstraint("user_id", "streak_date", name="uk_user_date"),
+        Index("idx_streak_user", "user_id"),
+        Index("idx_streak_date", "streak_date"),
+        {"comment": "打卡记录表"},
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment="记录 ID")
     user_id = Column(Integer, nullable=False, comment="用户 ID")

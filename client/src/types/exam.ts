@@ -64,3 +64,14 @@ export interface ResultWrongQuestion {
   yourAnswer: string
   correctAnswer: string
 }
+
+export interface ResultReviewQuestion {
+  id: number
+  stem: string
+  typeLabel: string
+  options: OptionItem[]
+  userAnswer: string
+  correctAnswer: string
+  analysis: string
+  correct: boolean
+}

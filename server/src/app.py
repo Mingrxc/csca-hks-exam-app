@@ -8,16 +8,19 @@ from src.common.exceptions import AppException, app_exception_handler, general_e
 
 
 def create_app() -> FastAPI:
+    from src.config.settings import settings
+
     app = FastAPI(
         title="留学考霸 API",
         description="CSCA & HKS 备考刷题小程序后端服务",
         version="1.0.0",
     )
 
+    cors_origins = settings.cors_origins or ["*"]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
+        allow_origins=cors_origins,
+        allow_credentials="*" not in cors_origins,
         allow_methods=["*"],
         allow_headers=["*"],
     )

@@ -3,6 +3,7 @@ import type { RelatedQuestion, WrongBookDetail, WrongBookListItem } from '@/type
 export const mockWrongBookList: WrongBookListItem[] = [
   {
     id: 1,
+    examType: 'CSCA',
     typeLabel: '单选',
     diffLabel: '中等',
     difficulty: 'medium',
@@ -14,6 +15,7 @@ export const mockWrongBookList: WrongBookListItem[] = [
   },
   {
     id: 2,
+    examType: 'HKS',
     typeLabel: '多选',
     diffLabel: '困难',
     difficulty: 'hard',
@@ -25,6 +27,7 @@ export const mockWrongBookList: WrongBookListItem[] = [
   },
   {
     id: 3,
+    examType: 'CSCA',
     typeLabel: '判断',
     diffLabel: '简单',
     difficulty: 'easy',
@@ -38,6 +41,7 @@ export const mockWrongBookList: WrongBookListItem[] = [
 
 export const mockWrongBookDetail: WrongBookDetail = {
   id: 1,
+  examType: 'CSCA',
   typeLabel: '单选',
   diffLabel: '中等',
   difficulty: 'medium',

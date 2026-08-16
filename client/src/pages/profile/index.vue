@@ -9,6 +9,10 @@
       </view>
     </view>
 
+    <view class="load-error" v-if="loadError" @click="loadProfile">
+      <text>个人资料加载失败，点击重试</text>
+    </view>
+
     <!-- 学习数据 -->
     <view class="stats-section">
       <view class="stats-card">
@@ -42,7 +46,7 @@
           <text class="menu-label">错题统计</text>
           <text class="menu-arrow">→</text>
         </view>
-        <view class="menu-item" @click="goPage('/pages/wrongbook/redo')">
+        <view class="menu-item" @click="goRedo">
           <text class="menu-icon">🔄</text>
           <text class="menu-label">错题重做</text>
           <text class="menu-arrow">→</text>
@@ -50,41 +54,25 @@
       </view>
 
       <view class="menu-group">
-        <view class="menu-item">
-          <text class="menu-icon">🏆</text>
-          <text class="menu-label">成就勋章</text>
-          <text class="menu-badge">3</text>
-          <text class="menu-arrow">→</text>
-        </view>
-        <view class="menu-item">
-          <text class="menu-icon">📊</text>
-          <text class="menu-label">学习报告</text>
-          <text class="menu-arrow">→</text>
-        </view>
-        <view class="menu-item">
-          <text class="menu-icon">⏰</text>
-          <text class="menu-label">学习提醒</text>
-          <view class="menu-switch">
-            <switch :checked="reminderOn" @change="toggleReminder" color="#4F46E5" />
-          </view>
-        </view>
-      </view>
-
-      <view class="menu-group">
-        <view class="menu-item">
+        <view class="menu-item" @click="openTargetEditor">
           <text class="menu-icon">🎯</text>
           <text class="menu-label">考试目标设置</text>
           <text class="menu-value">{{ userInfo.targetExam }}</text>
           <text class="menu-arrow">→</text>
         </view>
-        <view class="menu-item">
+        <view class="target-editor" v-if="targetEditorOpen">
+          <view class="exam-segments">
+            <view class="exam-segment" :class="{ active: targetDraftExam === 'CSCA' }" @click="targetDraftExam = 'CSCA'">CSCA</view>
+            <view class="exam-segment" :class="{ active: targetDraftExam === 'HKS' }" @click="targetDraftExam = 'HKS'">HKS</view>
+          </view>
+          <picker mode="date" :value="targetDraftDate" :start="today" @change="selectTargetDate">
+            <view class="date-picker">{{ targetDraftDate || '选择考试日期' }}</view>
+          </picker>
+          <button class="save-target" :disabled="savingTarget" @click="saveTarget">保存目标</button>
+        </view>
+        <view class="menu-item" @click="showAbout">
           <text class="menu-icon">📖</text>
           <text class="menu-label">关于留学考霸</text>
-          <text class="menu-arrow">→</text>
-        </view>
-        <view class="menu-item">
-          <text class="menu-icon">💬</text>
-          <text class="menu-label">意见反馈</text>
           <text class="menu-arrow">→</text>
         </view>
       </view>
@@ -99,24 +87,86 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { mockUserProfile } from '@/mock/user'
+import { onShow } from '@dcloudio/uni-app'
+import { userApi } from '@/api'
+import { toUserProfile } from '@/api/contracts'
 import type { UserProfile } from '@/types/user'
 
-const userInfo = ref<UserProfile>(mockUserProfile)
+const userInfo = ref<UserProfile>({
+  nickname: '考霸同学',
+  avatarUrl: '',
+  targetExam: 'CSCA',
+  targetDate: '',
+  totalQuestions: 0,
+  correctRate: 0,
+  streakDays: 0,
+})
+const loadError = ref(false)
+const targetEditorOpen = ref(false)
+const targetDraftExam = ref<'CSCA' | 'HKS'>('CSCA')
+const targetDraftDate = ref('')
+const savingTarget = ref(false)
+const now = new Date()
+const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
-const reminderOn = ref(true)
+const loadProfile = async () => {
+  loadError.value = false
+  try {
+    userInfo.value = toUserProfile(await userApi.getUserInfo())
+  } catch {
+    loadError.value = true
+  }
+}
 
-const toggleReminder = (e: any) => {
-  reminderOn.value = e.detail.value
-  uni.showToast({ title: reminderOn.value ? '已开启提醒' : '已关闭提醒', icon: 'none' })
+const openTargetEditor = () => {
+  targetDraftExam.value = userInfo.value.targetExam
+  targetDraftDate.value = userInfo.value.targetDate
+  targetEditorOpen.value = !targetEditorOpen.value
+}
+
+const selectTargetDate = (event: any) => {
+  targetDraftDate.value = event.detail.value
+}
+
+const saveTarget = async () => {
+  if (!targetDraftDate.value) {
+    uni.showToast({ title: '请选择考试日期', icon: 'none' })
+    return
+  }
+  savingTarget.value = true
+  try {
+    const updated = await userApi.updateProfile({
+      target_exam: targetDraftExam.value,
+      target_date: targetDraftDate.value,
+    })
+    userInfo.value = toUserProfile(updated)
+    targetEditorOpen.value = false
+    uni.showToast({ title: '目标已更新', icon: 'success' })
+  } catch {
+    // The shared request layer displays the failure.
+  } finally {
+    savingTarget.value = false
+  }
+}
+
+const showAbout = () => {
+  uni.showModal({
+    title: '留学考霸',
+    content: 'CSCA 与 HKS 备考刷题工具\n版本 1.0.0',
+    showCancel: false,
+  })
 }
 
 const goPage = (url: string) => {
-  if (url.startsWith('/pages/exam') || url.startsWith('/pages/wrongbook')) {
-    uni.navigateTo({ url })
-  } else {
+  if (url === '/pages/exam/index' || url === '/pages/wrongbook/index') {
     uni.switchTab({ url })
+  } else {
+    uni.navigateTo({ url })
   }
+}
+
+const goRedo = () => {
+  uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${userInfo.value.targetExam}` })
 }
 
 const handleLogout = () => {
@@ -131,6 +181,8 @@ const handleLogout = () => {
     }
   })
 }
+
+onShow(loadProfile)
 </script>
 
 <style lang="scss" scoped>
@@ -173,10 +225,18 @@ const handleLogout = () => {
 }
 .menu-arrow { font-size: 24rpx; color: #C7D2FE; }
 
+.target-editor { padding: 24rpx; border-bottom: 1rpx solid #F3F4F6; }
+.exam-segments { display: flex; background: #F3F4F6; border-radius: 8rpx; padding: 4rpx; }
+.exam-segment { flex: 1; text-align: center; padding: 14rpx 0; font-size: 24rpx; color: #6B7280; border-radius: 6rpx; }
+.exam-segment.active { background: #fff; color: #4F46E5; font-weight: 600; }
+.date-picker { margin-top: 16rpx; padding: 20rpx; border: 1rpx solid #E5E7EB; border-radius: 8rpx; font-size: 24rpx; color: #374151; }
+.save-target { margin-top: 16rpx; background: #4F46E5; color: #fff; border-radius: 8rpx; font-size: 26rpx; padding: 16rpx 0; }
+
 .logout-section { padding: 24rpx; }
 .logout-btn {
   background: #fff; border-radius: 48rpx; font-size: 28rpx;
   color: #EF4444; text-align: center; padding: 20rpx 0; border: none;
   box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
 }
+.load-error { margin: 24rpx; padding: 24rpx; text-align: center; color: #B91C1C; background: #FEF2F2; border-radius: 12rpx; font-size: 24rpx; }
 </style>

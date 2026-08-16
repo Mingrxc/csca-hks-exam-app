@@ -1,7 +1,7 @@
 """题库模块 Pydantic 模型"""
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
-from typing import Optional, List
+from typing import List, Literal, Optional
 from enum import Enum
 
 
@@ -48,7 +48,7 @@ class GeneratePaperRequest(BaseModel):
         None,
         validation_alias=AliasChoices("knowledge_points", "knowledgePoints"),
     )
-    mode: str = "practice"
+    mode: Literal["exam", "practice"] = "practice"
     time_limit: int = Field(0, ge=0, validation_alias=AliasChoices("time_limit", "timeLimit"))
 
 

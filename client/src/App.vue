@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 onLaunch(() => {
-  console.log('留学考霸 App Launch')
-  const token = uni.getStorageSync('token')
-  if (!token) {
-    console.log('未登录，后续将跳转登录页')
-  }
+  userStore.login().catch(() => {
+    // API requests can still use explicit development auth in local H5 mode.
+  })
 })
 
 onShow(() => {

@@ -1,26 +1,53 @@
-"""Alembic 迁移环境配置"""
+"""Alembic migration environment."""
 
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config, pool
+from urllib.parse import quote_plus
+
 from alembic import context
+from sqlalchemy import engine_from_config, pool
+
+from src.config.database import Base
+from src.config.settings import settings
+
+# Register all tables on Base.metadata before Alembic compares schemas.
+from src.modules.exam.models import AnswerRecord  # noqa: F401
+from src.modules.question.models import Paper, Question  # noqa: F401
+from src.modules.user.models import StreakRecord, User  # noqa: F401
+from src.modules.wrongbook.models import KnowledgeStat, WrongBook  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = None  # 后续接入 SQLAlchemy Base 后替换
+target_metadata = Base.metadata
+config.set_main_option(
+    "sqlalchemy.url",
+    "mysql+pymysql://"
+    f"{quote_plus(settings.MYSQL_USER)}:{quote_plus(settings.MYSQL_PASSWORD)}"
+    f"@{settings.MYSQL_HOST}:{settings.MYSQL_PORT}/{settings.MYSQL_DATABASE}"
+    "?charset=utf8mb4",
+)
 
 
 def run_migrations_offline():
-    context.configure(url=config.get_main_option("sqlalchemy.url"), target_metadata=target_metadata, literal_binds=True)
+    context.configure(
+        url=config.get_main_option("sqlalchemy.url"),
+        target_metadata=target_metadata,
+        literal_binds=True,
+        compare_type=True,
+    )
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations_online():
-    connectable = engine_from_config(config.get_section(config.config_ini_section), prefix="sqlalchemy.", poolclass=pool.NullPool)
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
         with context.begin_transaction():
             context.run_migrations()
 

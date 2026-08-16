@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { ensureLogin, userApi } from '@/api'
 
 export const useUserStore = defineStore('user', () => {
-  const token = ref('')
+  const token = ref(uni.getStorageSync('token') || '')
   const openid = ref('')
   const userInfo = ref({
     id: 0,
@@ -26,17 +27,21 @@ export const useUserStore = defineStore('user', () => {
     uni.setStorageSync('token', t)
   }
 
-  function login() {
-    // 微信登录逻辑
-    return new Promise<void>((resolve) => {
-      uni.login({
-        success: () => {
-          // 调用后端 wxLogin 接口换取 token
-          setToken('mock-token')
-          resolve()
-        }
-      })
-    })
+  async function login(force = false) {
+    const result = await ensureLogin(force)
+    setToken(result.token)
+    openid.value = result.openid
+    const profile = result.user || await userApi.getUserInfo()
+    userInfo.value = {
+      id: profile.id,
+      nickname: profile.nickname,
+      avatarUrl: profile.avatar_url || '',
+      targetExam: profile.target_exam,
+      targetDate: profile.target_date || '',
+      totalQuestions: profile.total_questions,
+      totalCorrect: profile.total_correct,
+      streakDays: profile.streak_days,
+    }
   }
 
   function logout() {

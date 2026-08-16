@@ -1,12 +1,17 @@
 """错题本模块路由"""
 
+from datetime import datetime
+from io import BytesIO
+
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from src.common.deps import get_current_user_id
-from src.common.response import fail, success
+from src.common.response import success
 from src.config.database import get_db
 from src.modules.wrongbook.service import generate_redo_paper as generate_redo_paper_service
+from src.modules.wrongbook.service import export_wrongbook_pdf as export_wrongbook_pdf_service
 from src.modules.wrongbook.service import get_related as get_related_service
 from src.modules.wrongbook.service import get_wrong_detail as get_wrong_detail_service
 from src.modules.wrongbook.service import get_wrong_detail_by_question as get_wrong_detail_by_question_service
@@ -34,10 +39,22 @@ async def get_related(question_id: int, db: Session = Depends(get_db)):
     return success(get_related_service(db, question_id))
 
 
-@router.post("/export-pdf")
-async def export_pdf():
+@router.get("/export-pdf")
+async def export_pdf(
+    exam_type: str = Query("all", alias="examType"),
+    knowledge: str = "all",
+    wrong_count: str = Query("all", alias="wrongCount"),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
     """导出错题 PDF"""
-    return fail(code=501, message="错题 PDF 导出尚未实现")
+    content = export_wrongbook_pdf_service(db, user_id, exam_type, knowledge, wrong_count)
+    filename = f"wrongbook-{datetime.now().strftime('%Y%m%d')}.pdf"
+    return StreamingResponse(
+        BytesIO(content),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.post("/redo-paper")

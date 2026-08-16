@@ -69,9 +69,36 @@
       </view>
     </view>
 
+    <view class="section" id="all-review" v-if="showReview">
+      <text class="section-title">全部解析（{{ reviewQuestions.length }}题）</text>
+      <view class="review-list">
+        <view class="review-item" v-for="(question, index) in reviewQuestions" :key="question.id">
+          <view class="review-header">
+            <text class="review-index">第 {{ index + 1 }} 题 · {{ question.typeLabel }}</text>
+            <text class="review-status" :class="question.correct ? 'correct' : 'wrong'">
+              {{ question.correct ? '正确' : '错误' }}
+            </text>
+          </view>
+          <text class="review-stem">{{ question.stem }}</text>
+          <view class="review-options" v-if="question.options.length">
+            <text class="review-option" v-for="option in question.options" :key="option.key">
+              {{ option.key }}. {{ option.text }}
+            </text>
+          </view>
+          <view class="review-answer-row">
+            <text>你的答案：{{ question.userAnswer || '未作答' }}</text>
+            <text class="review-correct-answer">正确答案：{{ question.correctAnswer }}</text>
+          </view>
+          <view class="review-analysis">{{ question.analysis }}</view>
+        </view>
+      </view>
+    </view>
+
     <!-- 操作按钮 -->
     <view class="actions">
-      <button class="action-btn secondary" @click="reviewAll">查看全部解析</button>
+      <button class="action-btn secondary" @click="reviewAll">
+        {{ showReview ? '收起全部解析' : '查看全部解析' }}
+      </button>
       <button class="action-btn primary" @click="goHome">返回首页</button>
       <button class="action-btn accent" @click="retryWrong">错题重做</button>
     </view>
@@ -79,12 +106,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { examApi } from '@/api'
-import { toExamResultSummary, toResultWrongQuestions } from '@/api/contracts'
+import { toExamResultSummary, toResultReviewQuestions, toResultWrongQuestions } from '@/api/contracts'
 import { useExamStore } from '@/stores/exam'
-import type { ExamResultSummary, ResultWrongQuestion } from '@/types/exam'
+import type { ExamResultSummary, ExamType, ResultReviewQuestion, ResultWrongQuestion } from '@/types/exam'
 
 const examStore = useExamStore()
 const result = ref<ExamResultSummary>({
@@ -96,10 +123,13 @@ const result = ref<ExamResultSummary>({
 })
 const knowledgeAnalysis = ref<Record<string, { total: number; correct: number; correct_rate: number }>>({})
 const isLoading = ref(false)
+const showReview = ref(false)
+const paperExamType = ref<ExamType>(examStore.config.examType)
 
 const passed = computed(() => result.value.correctRate >= 60)
 
 const wrongQuestions = ref<ResultWrongQuestion[]>([])
+const reviewQuestions = ref<ResultReviewQuestion[]>([])
 const knowledgeItems = computed(() =>
   Object.entries(knowledgeAnalysis.value).map(([name, value]) => ({
     name,
@@ -122,7 +152,9 @@ const loadResult = async (paperId: number) => {
     const payload = await examApi.getResult(paperId)
     result.value = toExamResultSummary(payload)
     wrongQuestions.value = toResultWrongQuestions(payload)
+    reviewQuestions.value = toResultReviewQuestions(payload)
     knowledgeAnalysis.value = payload.knowledge_analysis
+    paperExamType.value = payload.paper.exam_type
   } catch {
     // The shared request layer already displays the error message.
   } finally {
@@ -131,7 +163,7 @@ const loadResult = async (paperId: number) => {
 }
 
 onLoad((query) => {
-  const paperId = Number(query?.paperId || examStore.paperId)
+  const paperId = Number(query?.paperId || query?.id || examStore.paperId)
   if (!Number.isInteger(paperId) || paperId <= 0) {
     uni.showToast({ title: '未找到试卷结果', icon: 'none' })
     setTimeout(() => uni.navigateBack(), 300)
@@ -144,9 +176,17 @@ const goDetail = (id: number) => {
   uni.navigateTo({ url: `/pages/wrongbook/detail?questionId=${id}` })
 }
 
-const reviewAll = () => console.log('查看全部解析')
+const reviewAll = async () => {
+  showReview.value = !showReview.value
+  if (showReview.value) {
+    await nextTick()
+    uni.pageScrollTo({ selector: '#all-review', duration: 250 })
+  }
+}
 const goHome = () => uni.switchTab({ url: '/pages/index/index' })
-const retryWrong = () => uni.navigateTo({ url: '/pages/wrongbook/redo' })
+const retryWrong = () => {
+  uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${paperExamType.value}` })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -204,6 +244,20 @@ const retryWrong = () => uni.navigateTo({ url: '/pages/wrongbook/redo' })
 .wrong-type { font-size: 20rpx; color: #9CA3AF; }
 .wrong-your { font-size: 20rpx; color: #EF4444; }
 .wrong-correct { font-size: 20rpx; color: #10B981; }
+
+.review-list { display: flex; flex-direction: column; gap: 16rpx; }
+.review-item { background: #fff; border-radius: 16rpx; padding: 24rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03); }
+.review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.review-index { font-size: 22rpx; color: #6B7280; }
+.review-status { font-size: 20rpx; padding: 4rpx 14rpx; border-radius: 8rpx; }
+.review-status.correct { color: #047857; background: #D1FAE5; }
+.review-status.wrong { color: #B91C1C; background: #FEE2E2; }
+.review-stem { display: block; font-size: 26rpx; color: #1F2937; line-height: 1.65; }
+.review-options { margin-top: 16rpx; display: flex; flex-direction: column; gap: 8rpx; }
+.review-option { font-size: 23rpx; color: #4B5563; line-height: 1.5; }
+.review-answer-row { margin-top: 18rpx; padding-top: 16rpx; border-top: 1rpx solid #E5E7EB; display: flex; flex-direction: column; gap: 8rpx; font-size: 22rpx; color: #DC2626; }
+.review-correct-answer { color: #059669; }
+.review-analysis { margin-top: 16rpx; padding: 18rpx; background: #F9FAFB; border-radius: 8rpx; font-size: 23rpx; color: #4B5563; line-height: 1.6; }
 
 .actions { padding: 32rpx 24rpx; display: flex; flex-direction: column; gap: 16rpx; }
 .action-btn { border-radius: 48rpx; font-size: 30rpx; font-weight: 600; padding: 20rpx 0; border: none; text-align: center; }

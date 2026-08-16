@@ -1,7 +1,8 @@
 """题库模块 SQLAlchemy 模型"""
 
-from sqlalchemy import Column, Integer, String, Float, Text, DateTime, JSON
+from sqlalchemy import Column, DateTime, Float, Index, Integer, JSON, String, Text
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.sql import func
 
 from src.config.database import Base
@@ -9,6 +10,15 @@ from src.config.database import Base
 
 class Question(Base):
     __tablename__ = "questions"
+    __table_args__ = (
+        Index("idx_questions_exam_type", "exam_type"),
+        Index("idx_questions_subject", "subject"),
+        Index("idx_questions_knowledge", "knowledge_point"),
+        Index("idx_questions_difficulty", "difficulty"),
+        Index("idx_questions_type", "question_type"),
+        Index("idx_questions_wrong_rate", "wrong_rate"),
+        {"comment": "题目表"},
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment="题目 ID")
     exam_type = Column(SAEnum("CSCA", "HKS"), nullable=False, comment="考试类型")
@@ -29,7 +39,11 @@ class Question(Base):
     correct_count = Column(Integer, default=0, comment="正确作答次数")
     wrong_count = Column(Integer, default=0, comment="错误作答次数")
     wrong_rate = Column(Float, default=0, comment="历史错误率")
-    is_active = Column(Integer, default=1, comment="是否启用")
+    is_active = Column(
+        Integer().with_variant(TINYINT(display_width=1), "mysql"),
+        default=1,
+        comment="是否启用",
+    )
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -39,6 +53,12 @@ class Question(Base):
 
 class Paper(Base):
     __tablename__ = "papers"
+    __table_args__ = (
+        Index("idx_papers_user", "user_id"),
+        Index("idx_papers_exam_type", "exam_type"),
+        Index("idx_papers_strategy", "strategy"),
+        {"comment": "试卷表"},
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment="试卷 ID")
     user_id = Column(Integer, nullable=False, comment="创建者")
@@ -58,7 +78,11 @@ class Paper(Base):
     difficulty = Column(
         SAEnum("all", "easy", "medium", "hard"), default="all", comment="难度筛选"
     )
-    is_public = Column(Integer, default=0, comment="是否公开分享")
+    is_public = Column(
+        Integer().with_variant(TINYINT(display_width=1), "mysql"),
+        default=0,
+        comment="是否公开分享",
+    )
     finished_at = Column(DateTime, nullable=True, comment="完成时间")
     created_at = Column(DateTime, server_default=func.now())
 

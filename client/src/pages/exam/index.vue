@@ -21,7 +21,10 @@
     <view class="section">
       <view class="section-header">
         <text class="section-title">历史试卷</text>
-        <text class="section-more" @click="viewAll">查看全部</text>
+        <text class="section-more" v-if="canViewAll" @click="viewAll">查看全部</text>
+      </view>
+      <view class="load-error" v-if="loadError" @click="loadHistory(historyLimit)">
+        <text>历史试卷加载失败，点击重试</text>
       </view>
       <view class="paper-card" v-for="paper in historyPapers" :key="paper.id" @click="goResult(paper.id)">
         <view class="paper-header">
@@ -36,7 +39,7 @@
           <text class="paper-stat">{{ paper.date }}</text>
         </view>
       </view>
-      <view class="empty-state" v-if="historyPapers.length === 0">
+      <view class="empty-state" v-if="!loading && !loadError && historyPapers.length === 0">
         <text class="empty-icon">📝</text>
         <text class="empty-text">还没有答题记录</text>
       </view>
@@ -45,14 +48,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { questionApi } from '@/api'
+import { toHistoryPaper } from '@/api/contracts'
 import { PAPER_STRATEGIES } from '@/constants/exam'
-import { mockHistoryPapers } from '@/mock/exam'
-import type { PaperStrategy } from '@/types/exam'
+import type { HistoryPaper, PaperStrategy } from '@/types/exam'
 
 const strategies = ref(PAPER_STRATEGIES)
 
-const historyPapers = ref(mockHistoryPapers)
+const historyPapers = ref<HistoryPaper[]>([])
+const historyLimit = ref(5)
+const loading = ref(false)
+const loadError = ref(false)
+const canViewAll = computed(() => historyLimit.value === 5 && historyPapers.value.length === 5)
+
+const loadHistory = async (limit: number) => {
+  loading.value = true
+  loadError.value = false
+  try {
+    const items = await questionApi.getPapers({ limit })
+    historyPapers.value = items.map(toHistoryPaper)
+    historyLimit.value = limit
+  } catch {
+    loadError.value = true
+  } finally {
+    loading.value = false
+  }
+}
 
 const goPaper = (strategy: PaperStrategy) => {
   uni.navigateTo({ url: `/pages/exam/paper?strategy=${strategy}` })
@@ -63,8 +86,10 @@ const goResult = (id: number) => {
 }
 
 const viewAll = () => {
-  console.log('查看全部历史试卷')
+  loadHistory(100)
 }
+
+onShow(() => loadHistory(historyLimit.value))
 </script>
 
 <style lang="scss" scoped>
@@ -101,4 +126,5 @@ const viewAll = () => {
 .empty-state { padding: 80rpx 0; text-align: center; }
 .empty-icon { font-size: 60rpx; display: block; margin-bottom: 16rpx; }
 .empty-text { font-size: 26rpx; color: #9CA3AF; }
+.load-error { margin-top: 16rpx; padding: 24rpx; text-align: center; color: #B91C1C; background: #FEF2F2; border-radius: 12rpx; font-size: 24rpx; }
 </style>

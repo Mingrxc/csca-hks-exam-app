@@ -1,9 +1,12 @@
+import pytest
+
 from src.modules.exam.schemas import SubmitAnswerRequest
 from src.modules.exam.service import submit_answer
 from src.modules.question.models import Paper, Question
 from src.modules.user.models import User
 from src.modules.wrongbook.models import WrongBook
 from src.modules.wrongbook.service import (
+    export_wrongbook_pdf,
     generate_redo_paper,
     get_related,
     list_wrong_questions,
@@ -170,3 +173,27 @@ def test_generate_redo_paper_uses_unmastered_wrong_questions_for_exam_type(db_se
     assert paper["strategy"] == "knowledge"
     assert paper["question_ids"] == [csca_question.id]
     assert paper["questions"][0]["answer"] == "B"
+
+    hks_paper = generate_redo_paper(db_session, user.id, "HKS", limit=10)
+    assert hks_paper["exam_type"] == "HKS"
+    assert hks_paper["question_ids"] == [hks_question.id]
+
+
+def test_export_wrongbook_pdf_creates_pdf_document(db_session):
+    pytest.importorskip("reportlab")
+    user = User(openid="wrongbook-pdf")
+    question = make_question("中文错题导出测试", answer="B")
+    question.analysis = "这是一段中文解析。"
+    db_session.add_all([user, question])
+    db_session.commit()
+    paper = make_paper(db_session, user.id, question.id, "pdf wrong attempt")
+    submit_answer(
+        db_session,
+        user.id,
+        SubmitAnswerRequest(paper_id=paper.id, question_id=question.id, user_answer="A"),
+    )
+
+    content = export_wrongbook_pdf(db_session, user.id)
+
+    assert content.startswith(b"%PDF-")
+    assert len(content) > 1000

@@ -1,11 +1,11 @@
 """考试业务逻辑."""
 
 from collections import defaultdict
-from datetime import datetime
 
 from sqlalchemy.orm import Session
 
 from src.common.exceptions import AppException
+from src.common.time import utc_now_naive
 from src.modules.exam.models import AnswerRecord
 from src.modules.exam.schemas import SubmitAnswerRequest
 from src.modules.question.models import Paper, Question
@@ -60,6 +60,7 @@ def submit_answer(db: Session, user_id: int, payload: SubmitAnswerRequest) -> di
 
     if recorded_new:
         update_user_counters(db, user_id, is_correct)
+        update_user_streak(db, user_id)
         update_question_counters(db, question, is_correct)
         update_wrong_book(db, user_id, question, is_correct)
         update_knowledge_stat(db, user_id, paper.exam_type, question, is_correct)
@@ -107,6 +108,7 @@ def get_result(db: Session, user_id: int, paper_id: int) -> dict:
     time_used = 0
     knowledge_analysis = defaultdict(lambda: {"total": 0, "correct": 0})
     wrong_questions = []
+    review_questions = []
 
     for question_id in question_ids:
         question = question_map.get(question_id)
@@ -128,6 +130,16 @@ def get_result(db: Session, user_id: int, paper_id: int) -> dict:
                     "correct_answer": question.answer,
                 }
             )
+        review_questions.append({
+            "id": question.id,
+            "stem": question.stem_text,
+            "type_label": question.question_type,
+            "options": question.options or [],
+            "user_answer": record.user_answer if record else "",
+            "correct_answer": question.answer,
+            "analysis": question.analysis or "暂无解析",
+            "is_correct": is_correct,
+        })
         bucket = knowledge_analysis[question.knowledge_point]
         bucket["total"] += 1
         bucket["correct"] += 1 if is_correct else 0
@@ -141,7 +153,8 @@ def get_result(db: Session, user_id: int, paper_id: int) -> dict:
         for point, data in knowledge_analysis.items()
     }
 
-    paper.finished_at = datetime.utcnow()
+    if paper.finished_at is None:
+        paper.finished_at = utc_now_naive()
     db.commit()
 
     correct_rate = round(correct_count / total_count * 100, 2) if total_count else 0
@@ -154,6 +167,7 @@ def get_result(db: Session, user_id: int, paper_id: int) -> dict:
         "time_used": time_used,
         "knowledge_analysis": knowledge_payload,
         "wrong_questions": wrong_questions,
+        "review_questions": review_questions,
     }
 
 
@@ -166,6 +180,15 @@ def update_user_counters(db: Session, user_id: int, is_correct: bool) -> None:
     user.total_questions = (user.total_questions or 0) + 1
     if is_correct:
         user.total_correct = (user.total_correct or 0) + 1
+
+
+def update_user_streak(db: Session, user_id: int) -> None:
+    from src.modules.user.models import User
+    from src.modules.user.service import record_daily_answer
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if user:
+        record_daily_answer(db, user)
 
 
 def adjust_user_counters(db: Session, user_id: int, previous_correct: bool, is_correct: bool) -> None:
@@ -215,7 +238,7 @@ def update_wrong_book(db: Session, user_id: int, question: Question, is_correct:
             item.correct_count = (item.correct_count or 0) + 1
             if item.correct_count >= 3:
                 item.is_mastered = 1
-                item.last_review_at = datetime.utcnow()
+                item.last_review_at = utc_now_naive()
         return
 
     if not item:
@@ -226,7 +249,7 @@ def update_wrong_book(db: Session, user_id: int, question: Question, is_correct:
 
     item.correct_count = 0
     item.is_mastered = 0
-    item.last_wrong_at = datetime.utcnow()
+    item.last_wrong_at = utc_now_naive()
 
 
 def adjust_wrong_book(
@@ -249,12 +272,12 @@ def adjust_wrong_book(
         item.wrong_count = (item.wrong_count or 0) + 1
         item.correct_count = 0
         item.is_mastered = 0
-        item.last_wrong_at = datetime.utcnow()
+        item.last_wrong_at = utc_now_naive()
     elif not previous_correct and is_correct:
         item.correct_count = (item.correct_count or 0) + 1
         if item.correct_count >= 3:
             item.is_mastered = 1
-            item.last_review_at = datetime.utcnow()
+            item.last_review_at = utc_now_naive()
 
 
 def update_knowledge_stat(db: Session, user_id: int, exam_type: str, question: Question, is_correct: bool) -> None:

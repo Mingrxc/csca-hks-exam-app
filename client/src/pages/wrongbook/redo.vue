@@ -162,9 +162,20 @@ const finishRedo = () => {
   uni.redirectTo({ url: `/pages/exam/result?paperId=${paperId.value}` })
 }
 
+const chooseExamType = () => {
+  uni.showActionSheet({
+    itemList: ['CSCA 错题', 'HKS 错题'],
+    success: ({ tapIndex }) => loadRedoPaper(tapIndex === 0 ? 'CSCA' : 'HKS'),
+    fail: () => uni.navigateBack(),
+  })
+}
+
 onLoad((query) => {
-  const examType = query?.examType === 'HKS' ? 'HKS' : 'CSCA'
-  loadRedoPaper(examType)
+  if (query?.examType === 'CSCA' || query?.examType === 'HKS') {
+    loadRedoPaper(query.examType)
+    return
+  }
+  chooseExamType()
 })
 </script>
 

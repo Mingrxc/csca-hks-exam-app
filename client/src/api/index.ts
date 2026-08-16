@@ -1,9 +1,12 @@
 import type {
   ApiExamResult,
+  ApiDashboard,
+  ApiHistoryPaper,
   ApiPaper,
   ApiQuestion,
   ApiRelatedQuestion,
   ApiSubmitAnswerResult,
+  ApiUser,
   ApiWrongBookDetail,
   ApiWrongBookItem,
 } from './contracts'
@@ -20,15 +23,58 @@ interface RequestOptions {
   showLoading?: boolean
 }
 
+interface LoginResult {
+  token: string
+  openid: string
+  user?: ApiUser
+}
+
+let loginPromise: Promise<LoginResult> | null = null
+
+export function ensureLogin(force = false): Promise<LoginResult> {
+  const storedToken = uni.getStorageSync('token')
+  if (storedToken && !force) {
+    return Promise.resolve({ token: storedToken, openid: '' })
+  }
+  if (loginPromise) return loginPromise
+
+  loginPromise = new Promise((resolve, reject) => {
+    uni.login({
+      success: (loginResult: any) => {
+        if (!loginResult.code) {
+          reject(new Error('微信登录未返回临时凭证'))
+          return
+        }
+        uni.request({
+          url: BASE_URL + '/user/wx-login',
+          method: 'POST',
+          data: { code: loginResult.code },
+          header: { 'Content-Type': 'application/json' },
+          success: (response: any) => {
+            const payload = response.data
+            if (response.statusCode === 200 && payload?.code === 0) {
+              uni.setStorageSync('token', payload.data.token)
+              resolve(payload.data)
+            } else {
+              reject(payload || new Error('登录失败'))
+            }
+          },
+          fail: reject,
+        })
+      },
+      fail: reject,
+    })
+  }).finally(() => {
+    loginPromise = null
+  })
+
+  return loginPromise
+}
+
 // 请求拦截
 function request<T = any>(options: RequestOptions): Promise<T> {
-  const token = uni.getStorageSync('token')
-  const header: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...options.header,
-  }
-  if (token) {
-    header.Authorization = `Bearer ${token}`
+  const finishLoading = () => {
+    if (options.showLoading !== false) uni.hideLoading()
   }
 
   return new Promise((resolve, reject) => {
@@ -36,51 +82,105 @@ function request<T = any>(options: RequestOptions): Promise<T> {
       uni.showLoading({ title: '加载中...', mask: true })
     }
 
-    uni.request({
-      url: BASE_URL + options.url,
-      method: options.method || 'GET',
-      data: options.data,
-      header,
-      success: (res: any) => {
-        const { statusCode, data } = res
-        if (statusCode === 200 && data.code === 0) {
-          resolve(data.data)
-        } else if (statusCode === 401) {
-          uni.removeStorageSync('token')
-          uni.showToast({ title: '请先登录', icon: 'none' })
+    const send = (token: string, allowRetry: boolean) => {
+      const header: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...options.header,
+      }
+      if (token) header.Authorization = `Bearer ${token}`
+
+      uni.request({
+        url: BASE_URL + options.url,
+        method: options.method || 'GET',
+        data: options.data,
+        header,
+        success: async (res: any) => {
+          const { statusCode, data } = res
+          if (statusCode === 200 && data.code === 0) {
+            finishLoading()
+            resolve(data.data)
+            return
+          }
+          if (statusCode === 401 && allowRetry && options.url !== '/user/wx-login') {
+            uni.removeStorageSync('token')
+            try {
+              const login = await ensureLogin(true)
+              send(login.token, false)
+              return
+            } catch {
+              // Fall through to the shared unauthorized state.
+            }
+          }
+
+          finishLoading()
+          if (statusCode === 401) {
+            uni.removeStorageSync('token')
+            uni.showToast({ title: '登录已失效，请重试', icon: 'none' })
+          } else {
+            uni.showToast({ title: data?.message || data?.detail || '请求失败', icon: 'none' })
+          }
           reject(data)
+        },
+        fail: (err) => {
+          finishLoading()
+          uni.showToast({ title: '网络异常', icon: 'none' })
+          reject(err)
+        },
+      })
+    }
+
+    const storedToken = uni.getStorageSync('token')
+    if (storedToken || options.url === '/user/wx-login') {
+      send(storedToken, true)
+      return
+    }
+    ensureLogin()
+      .then((login) => send(login.token, true))
+      .catch(() => send('', true))
+  })
+}
+
+async function download(url: string): Promise<string> {
+  let token = uni.getStorageSync('token')
+  if (!token) {
+    try {
+      token = (await ensureLogin()).token
+    } catch {
+      // Local H5 development may continue through explicit backend dev auth.
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    uni.downloadFile({
+      url: BASE_URL + url,
+      header: token ? { Authorization: `Bearer ${token}` } : {},
+      success: (response: any) => {
+        if (response.statusCode === 200) {
+          resolve(response.tempFilePath)
         } else {
-          uni.showToast({ title: data?.message || data?.detail || '请求失败', icon: 'none' })
-          reject(data)
+          reject(new Error(`PDF download failed with status ${response.statusCode}`))
         }
       },
-      fail: (err) => {
-        uni.showToast({ title: '网络异常', icon: 'none' })
-        reject(err)
-      },
-      complete: () => {
-        if (options.showLoading !== false) {
-          uni.hideLoading()
-        }
-      },
+      fail: reject,
     })
   })
 }
 
 // ==================== 用户模块 ====================
 export const userApi = {
-  wxLogin: (code: string) => request<{ token: string; openid: string }>({
+  wxLogin: (code: string) => request<LoginResult>({
     url: '/user/wx-login',
     method: 'POST',
     data: { code },
   }),
-  getUserInfo: () => request({ url: '/user/info' }),
-  updateProfile: (data: any) => request({ url: '/user/profile', method: 'PUT', data }),
+  getDashboard: () => request<ApiDashboard>({ url: '/user/dashboard' }),
+  getUserInfo: () => request<ApiUser>({ url: '/user/info' }),
+  updateProfile: (data: any) => request<ApiUser>({ url: '/user/profile', method: 'PUT', data }),
 }
 
 // ==================== 题库模块 ====================
 export const questionApi = {
-  getPapers: (params: any) => request<ApiPaper[]>({ url: '/question/papers', data: params }),
+  getPapers: (params: any) => request<ApiHistoryPaper[]>({ url: '/question/papers', data: params }),
   generatePaper: (config: any) => request<ApiPaper>({
     url: '/question/generate-paper',
     method: 'POST',
@@ -116,11 +216,12 @@ export const wrongBookApi = {
     url: `/wrongbook/redo-paper?examType=${params.examType}&limit=${params.limit || 20}`,
     method: 'POST',
   }),
-  exportPdf: (params: any) => request({
-    url: '/wrongbook/export-pdf',
-    method: 'POST',
-    data: params,
-  }),
+  exportPdf: (params: Record<string, string>) => {
+    const query = Object.entries(params)
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join('&')
+    return download(`/wrongbook/export-pdf?${query}`)
+  },
 }
 
 export default { userApi, questionApi, examApi, wrongBookApi }

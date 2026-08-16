@@ -1,24 +1,32 @@
 """JWT 认证中间件"""
 
-from fastapi import Request, HTTPException
-from jose import JWTError, jwt
-import os
+from datetime import datetime, timedelta, timezone
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "csca-hks-dev-secret")
-ALGORITHM = "HS256"
+from fastapi import HTTPException, Request
+from jose import JWTError, jwt
+
+from src.config.settings import settings
 
 
 def create_token(openid: str) -> str:
     """生成 JWT"""
-    payload = {"sub": openid}
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=settings.JWT_EXPIRE_HOURS)
+    payload = {"sub": openid, "exp": expires_at}
+    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
 def decode_token(token: str) -> str:
     """解析 JWT，返回 openid"""
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload.get("sub")
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
+        openid = payload.get("sub")
+        if not openid:
+            raise JWTError("missing subject")
+        return openid
     except JWTError:
         raise HTTPException(status_code=401, detail="无效的认证令牌")
 
