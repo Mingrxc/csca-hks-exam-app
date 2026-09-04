@@ -17,9 +17,11 @@ class UserResponse(BaseModel):
     avatar_url: Optional[str]
     target_exam: Optional[str]
     target_date: Optional[date]
+    target_dates: dict[Literal["CSCA", "HKS"], date] = Field(default_factory=dict)
     total_questions: int
     total_correct: int
     streak_days: int
+    favorite_count: int
     created_at: datetime
 
 
@@ -38,3 +40,4 @@ class UserProfileUpdate(BaseModel):
     avatar_url: Optional[str] = None
     target_exam: Optional[Literal["CSCA", "HKS"]] = None
     target_date: Optional[date] = None
+    target_dates: Optional[dict[Literal["CSCA", "HKS"], Optional[date]]] = None

@@ -33,6 +33,26 @@ class User(Base):
         return f"<User(id={self.id}, nickname={self.nickname})>"
 
 
+class UserExamTarget(Base):
+    __tablename__ = "user_exam_targets"
+    __table_args__ = (
+        UniqueConstraint("user_id", "exam_type", name="uk_user_exam_target"),
+        Index("idx_user_exam_target_user", "user_id"),
+        Index("idx_user_exam_target_exam", "exam_type"),
+        {"comment": "用户各考试目标日期"},
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True, comment="记录 ID")
+    user_id = Column(Integer, nullable=False, comment="用户 ID")
+    exam_type = Column(SAEnum("CSCA", "HKS"), nullable=False, comment="考试类型")
+    target_date = Column(Date, nullable=False, comment="该考试日期")
+    created_at = Column(DateTime, server_default=func.now(), comment="创建时间")
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    def __repr__(self):
+        return f"<UserExamTarget(user_id={self.user_id}, exam_type={self.exam_type})>"
+
+
 class StreakRecord(Base):
     __tablename__ = "streak_records"
     __table_args__ = (

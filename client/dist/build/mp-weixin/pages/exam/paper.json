@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "组卷",
-  "usingComponents": {}
+  "usingComponents": {
+    "t-button": "../../node-modules/@tdesign/uniapp/dist/button/button"
+  }
 }

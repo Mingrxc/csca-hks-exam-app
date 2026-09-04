@@ -4,6 +4,7 @@ export const mockWrongBookList: WrongBookListItem[] = [
   {
     id: 1,
     examType: 'CSCA',
+    subject: '文科中文',
     typeLabel: '单选',
     diffLabel: '中等',
     difficulty: 'medium',
@@ -16,6 +17,7 @@ export const mockWrongBookList: WrongBookListItem[] = [
   {
     id: 2,
     examType: 'HKS',
+    subject: '阅读',
     typeLabel: '多选',
     diffLabel: '困难',
     difficulty: 'hard',
@@ -28,6 +30,7 @@ export const mockWrongBookList: WrongBookListItem[] = [
   {
     id: 3,
     examType: 'CSCA',
+    subject: '数学',
     typeLabel: '判断',
     diffLabel: '简单',
     difficulty: 'easy',
@@ -42,6 +45,7 @@ export const mockWrongBookList: WrongBookListItem[] = [
 export const mockWrongBookDetail: WrongBookDetail = {
   id: 1,
   examType: 'CSCA',
+  subject: '文科中文',
   typeLabel: '单选',
   diffLabel: '中等',
   difficulty: 'medium',

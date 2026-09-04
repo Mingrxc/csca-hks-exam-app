@@ -1,4 +1,9 @@
 {
   "navigationBarTitleText": "成绩报告",
-  "usingComponents": {}
+  "usingComponents": {
+    "t-tag": "../../node-modules/@tdesign/uniapp/dist/tag/tag",
+    "c-ring-chart": "../../components/RingChart/index",
+    "t-empty": "../../node-modules/@tdesign/uniapp/dist/empty/empty",
+    "t-button": "../../node-modules/@tdesign/uniapp/dist/button/button"
+  }
 }

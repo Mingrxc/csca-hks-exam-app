@@ -1,1 +1,1 @@
-<view class="countdown-bar data-v-d75bb204"><view class="timer-icon data-v-d75bb204">⏱</view><text class="{{['timer-text', 'data-v-d75bb204', b && 'warning', c && 'danger']}}">{{a}}</text></view>
+<view class="countdown-bar data-v-d75bb204"><view class="timer-icon data-v-d75bb204"><view class="timer-core data-v-d75bb204"></view></view><text class="{{['timer-text', 'data-v-d75bb204', b && 'warning', c && 'danger']}}">{{a}}</text></view>

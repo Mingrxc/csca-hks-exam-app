@@ -4,16 +4,20 @@ const constants_exam = require("../../constants/exam.js");
 const api_index = require("../../api/index.js");
 const stores_exam = require("../../stores/exam.js");
 if (!Array) {
+  const _easycom_t_button2 = common_vendor.resolveComponent("t-button");
   const _easycom_c_countdown_bar2 = common_vendor.resolveComponent("c-countdown-bar");
+  const _easycom_t_tag2 = common_vendor.resolveComponent("t-tag");
   const _easycom_c_question_item2 = common_vendor.resolveComponent("c-question-item");
   const _easycom_c_answer_card2 = common_vendor.resolveComponent("c-answer-card");
-  (_easycom_c_countdown_bar2 + _easycom_c_question_item2 + _easycom_c_answer_card2)();
+  (_easycom_t_button2 + _easycom_c_countdown_bar2 + _easycom_t_tag2 + _easycom_c_question_item2 + _easycom_c_answer_card2)();
 }
+const _easycom_t_button = () => "../../node-modules/@tdesign/uniapp/dist/button/button.js";
 const _easycom_c_countdown_bar = () => "../../components/CountdownBar/index.js";
+const _easycom_t_tag = () => "../../node-modules/@tdesign/uniapp/dist/tag/tag.js";
 const _easycom_c_question_item = () => "../../components/QuestionItem/index.js";
 const _easycom_c_answer_card = () => "../../components/AnswerCard/index.js";
 if (!Math) {
-  (_easycom_c_countdown_bar + _easycom_c_question_item + _easycom_c_answer_card)();
+  (_easycom_t_button + _easycom_c_countdown_bar + _easycom_t_tag + _easycom_c_question_item + _easycom_c_answer_card)();
 }
 const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
   __name: "answer",
@@ -24,7 +28,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const answers = common_vendor.computed(() => examStore.answers);
     const showResult = common_vendor.ref({});
     const answerCorrectness = common_vendor.ref({});
-    const selectedReason = common_vendor.ref("");
+    const selectedReasons = common_vendor.ref({});
     const showSheet = common_vendor.ref(false);
     const isSubmitting = common_vendor.ref(false);
     const questionStartedAt = common_vendor.ref(Date.now());
@@ -35,7 +39,18 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
     const progressPercent = common_vendor.computed(() => examStore.progressPercent);
     const answeredCount = common_vendor.computed(() => examStore.answeredCount);
     const currentCorrect = common_vendor.computed(() => answerCorrectness.value[currentIndex.value] === true);
+    const currentSelectedReason = common_vendor.computed(() => selectedReasons.value[currentIndex.value] || "");
     const wrongReasons = constants_exam.WRONG_REASONS;
+    const toggleFavorite = async () => {
+      if (!currentQuestion.value)
+        return;
+      try {
+        const status = await api_index.favoriteApi.toggle(currentQuestion.value.id);
+        currentQuestion.value.isFavorite = status.is_favorite;
+        common_vendor.index.showToast({ title: status.is_favorite ? "已收藏" : "已取消收藏", icon: "none" });
+      } catch {
+      }
+    };
     const commitElapsedTime = () => {
       const index = currentIndex.value;
       const elapsed = Math.max(0, Math.floor((Date.now() - questionStartedAt.value) / 1e3));
@@ -58,7 +73,7 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           questionId: currentQuestion.value.id,
           userAnswer: key,
           timeSpent: commitElapsedTime(),
-          wrongReason: selectedReason.value || void 0
+          wrongReason: currentSelectedReason.value || void 0
         });
         if (typeof response.is_correct === "boolean") {
           answerCorrectness.value[index] = response.is_correct;
@@ -77,8 +92,10 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       }
     };
     const selectWrongReason = async (reason) => {
-      selectedReason.value = reason;
-      const answer = answers.value[currentIndex.value];
+      const index = currentIndex.value;
+      const previousReason = selectedReasons.value[index];
+      selectedReasons.value[index] = reason;
+      const answer = answers.value[index];
       if (!answer || !currentQuestion.value || !examStore.paperId || isSubmitting.value)
         return;
       isSubmitting.value = true;
@@ -91,9 +108,14 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
           wrongReason: reason
         });
         if (typeof response.is_correct === "boolean") {
-          answerCorrectness.value[currentIndex.value] = response.is_correct;
+          answerCorrectness.value[index] = response.is_correct;
         }
       } catch {
+        if (previousReason == null) {
+          delete selectedReasons.value[index];
+        } else {
+          selectedReasons.value[index] = previousReason;
+        }
       } finally {
         isSubmitting.value = false;
       }
@@ -159,65 +181,102 @@ const _sfc_main = /* @__PURE__ */ common_vendor.defineComponent({
       setTimeout(() => common_vendor.index.navigateBack(), 300);
     }
     return (_ctx, _cache) => {
+      var _a;
       return common_vendor.e({
-        a: common_vendor.o(confirmExit, "38"),
-        b: common_vendor.t(currentIndex.value + 1),
-        c: common_vendor.t(questions.value.length),
-        d: mode.value === "exam"
+        a: common_vendor.o(confirmExit, "f1"),
+        b: common_vendor.p({
+          theme: "default",
+          variant: "text",
+          size: "small",
+          shape: "round"
+        }),
+        c: common_vendor.t(currentIndex.value + 1),
+        d: common_vendor.t(questions.value.length),
+        e: mode.value === "exam"
       }, mode.value === "exam" ? {
-        e: common_vendor.o(($event) => submitExam(true), "fd"),
-        f: common_vendor.p({
+        f: common_vendor.o(($event) => submitExam(true), "97"),
+        g: common_vendor.p({
           seconds: remainingSeconds.value
         })
       } : {}, {
-        g: common_vendor.t(mode.value === "exam" ? "考试模式" : "练习模式"),
-        h: common_vendor.n(mode.value),
-        i: progressPercent.value + "%",
-        j: currentQuestion.value
+        h: common_vendor.t(mode.value === "exam" ? "考试模式" : "练习模式"),
+        i: common_vendor.p({
+          theme: mode.value === "exam" ? "danger" : "success",
+          variant: "light",
+          shape: "round"
+        }),
+        j: progressPercent.value + "%",
+        k: currentQuestion.value
       }, currentQuestion.value ? {
-        k: common_vendor.o(selectOption, "e7"),
-        l: common_vendor.p({
+        l: common_vendor.o(selectOption, "03"),
+        m: common_vendor.o(toggleFavorite, "60"),
+        n: common_vendor.p({
           question: currentQuestion.value,
           index: currentIndex.value,
           ["user-answer"]: answers.value[currentIndex.value] || "",
-          ["show-result"]: !!showResult.value[currentIndex.value]
+          ["show-result"]: !!showResult.value[currentIndex.value],
+          ["is-favorite"]: (_a = currentQuestion.value) == null ? void 0 : _a.isFavorite
         })
       } : {}, {
-        m: showResult.value && !currentCorrect.value
-      }, showResult.value && !currentCorrect.value ? {
-        n: common_vendor.f(common_vendor.unref(wrongReasons), (r, k0, i0) => {
+        o: showResult.value[currentIndex.value] && !currentCorrect.value
+      }, showResult.value[currentIndex.value] && !currentCorrect.value ? {
+        p: common_vendor.f(common_vendor.unref(wrongReasons), (r, k0, i0) => {
           return {
             a: common_vendor.t(r),
-            b: selectedReason.value === r ? 1 : "",
+            b: currentSelectedReason.value === r ? 1 : "",
             c: r,
             d: common_vendor.o(($event) => selectWrongReason(r), r)
           };
         })
       } : {}, {
-        o: "q-" + currentIndex.value,
-        p: "q-" + currentIndex.value,
-        q: showSheet.value
+        q: "q-" + currentIndex.value,
+        r: "q-" + currentIndex.value,
+        s: showSheet.value
       }, showSheet.value ? {
-        r: common_vendor.o(jumpToAndClose, "a0"),
-        s: common_vendor.p({
+        t: common_vendor.o(jumpToAndClose, "3b"),
+        v: common_vendor.p({
           items: answerSheetItems.value,
           total: questions.value.length,
           ["answered-count"]: answeredCount.value,
           current: currentIndex.value
         }),
-        t: common_vendor.o(($event) => showSheet.value = false, "e9"),
-        v: common_vendor.o(() => {
-        }, "37"),
-        w: common_vendor.o(($event) => showSheet.value = false, "8d")
+        w: common_vendor.o(($event) => showSheet.value = false, "8f"),
+        x: common_vendor.p({
+          block: true,
+          theme: "default",
+          variant: "outline",
+          shape: "round"
+        }),
+        y: common_vendor.o(() => {
+        }, "59"),
+        z: common_vendor.o(($event) => showSheet.value = false, "99")
       } : {}, {
-        x: common_vendor.o(($event) => showSheet.value = true, "d2"),
-        y: currentIndex.value === 0,
-        z: common_vendor.o(prevQuestion, "28"),
-        A: currentIndex.value < questions.value.length - 1
+        A: common_vendor.o(($event) => showSheet.value = true, "5b"),
+        B: common_vendor.p({
+          theme: "default",
+          variant: "outline",
+          shape: "round"
+        }),
+        C: common_vendor.o(prevQuestion, "ad"),
+        D: common_vendor.p({
+          theme: "default",
+          variant: "outline",
+          shape: "round",
+          disabled: currentIndex.value === 0
+        }),
+        E: currentIndex.value < questions.value.length - 1
       }, currentIndex.value < questions.value.length - 1 ? {
-        B: common_vendor.o(nextQuestion, "0f")
+        F: common_vendor.o(nextQuestion, "3b"),
+        G: common_vendor.p({
+          theme: "primary",
+          shape: "round"
+        })
       } : {
-        C: common_vendor.o(submitExam, "2f")
+        H: common_vendor.o(($event) => submitExam(), "a8"),
+        I: common_vendor.p({
+          theme: "primary",
+          shape: "round"
+        })
       });
     };
   }

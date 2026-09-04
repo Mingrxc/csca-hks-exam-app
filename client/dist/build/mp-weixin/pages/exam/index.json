@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "刷题",
-  "usingComponents": {}
+  "usingComponents": {
+    "t-tag": "../../node-modules/@tdesign/uniapp/dist/tag/tag",
+    "t-icon": "../../node-modules/@tdesign/uniapp/dist/icon/icon"
+  }
 }

@@ -1,7 +1,7 @@
 "use strict";
-const _export_sfc = (sfc, props) => {
+const _export_sfc = (sfc, props2) => {
   const target = sfc.__vccOpts || sfc;
-  for (const [key, val] of props) {
+  for (const [key, val] of props2) {
     target[key] = val;
   }
   return target;
@@ -32,23 +32,23 @@ const remove = (arr, el) => {
 };
 const hasOwnProperty$1 = Object.prototype.hasOwnProperty;
 const hasOwn = (val, key) => hasOwnProperty$1.call(val, key);
-const isArray = Array.isArray;
+const isArray$1 = Array.isArray;
 const isMap = (val) => toTypeString(val) === "[object Map]";
 const isSet = (val) => toTypeString(val) === "[object Set]";
 const isFunction = (val) => typeof val === "function";
-const isString = (val) => typeof val === "string";
+const isString$2 = (val) => typeof val === "string";
 const isSymbol = (val) => typeof val === "symbol";
-const isObject = (val) => val !== null && typeof val === "object";
+const isObject$2 = (val) => val !== null && typeof val === "object";
 const isPromise = (val) => {
-  return (isObject(val) || isFunction(val)) && isFunction(val.then) && isFunction(val.catch);
+  return (isObject$2(val) || isFunction(val)) && isFunction(val.then) && isFunction(val.catch);
 };
 const objectToString = Object.prototype.toString;
 const toTypeString = (value) => objectToString.call(value);
 const toRawType = (value) => {
   return toTypeString(value).slice(8, -1);
 };
-const isPlainObject$1 = (val) => toTypeString(val) === "[object Object]";
-const isIntegerKey = (key) => isString(key) && key !== "NaN" && key[0] !== "-" && "" + parseInt(key, 10) === key;
+const isPlainObject$2 = (val) => toTypeString(val) === "[object Object]";
+const isIntegerKey = (key) => isString$2(key) && key !== "NaN" && key[0] !== "-" && "" + parseInt(key, 10) === key;
 const isReservedProp = /* @__PURE__ */ makeMap(
   // the leading comma is intentional so empty string "" is also included
   ",key,ref,ref_for,ref_key,onVnodeBeforeMount,onVnodeMounted,onVnodeBeforeUpdate,onVnodeUpdated,onVnodeBeforeUnmount,onVnodeUnmounted"
@@ -68,15 +68,15 @@ const camelize = cacheStringFunction((str) => {
   return str.replace(camelizeRE, (_, c) => c ? c.toUpperCase() : "");
 });
 const hyphenateRE = /\B([A-Z])/g;
-const hyphenate = cacheStringFunction(
+const hyphenate$1 = cacheStringFunction(
   (str) => str.replace(hyphenateRE, "-$1").toLowerCase()
 );
 const capitalize = cacheStringFunction((str) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 });
 const toHandlerKey = cacheStringFunction((str) => {
-  const s = str ? `on${capitalize(str)}` : ``;
-  return s;
+  const s2 = str ? `on${capitalize(str)}` : ``;
+  return s2;
 });
 const hasChanged = (value, oldValue) => !Object.is(value, oldValue);
 const invokeArrayFns$1 = (fns, arg) => {
@@ -95,18 +95,48 @@ const looseToNumber = (val) => {
   const n2 = parseFloat(val);
   return isNaN(n2) ? val : n2;
 };
+function normalizeStyle(value) {
+  if (isArray$1(value)) {
+    const res = {};
+    for (let i = 0; i < value.length; i++) {
+      const item = value[i];
+      const normalized = isString$2(item) ? parseStringStyle(item) : normalizeStyle(item);
+      if (normalized) {
+        for (const key in normalized) {
+          res[key] = normalized[key];
+        }
+      }
+    }
+    return res;
+  } else if (isString$2(value) || isObject$2(value)) {
+    return value;
+  }
+}
+const listDelimiterRE = /;(?![^(]*\))/g;
+const propertyDelimiterRE = /:([^]+)/;
+const styleCommentRE = /\/\*[^]*?\*\//g;
+function parseStringStyle(cssText) {
+  const ret = {};
+  cssText.replace(styleCommentRE, "").split(listDelimiterRE).forEach((item) => {
+    if (item) {
+      const tmp = item.split(propertyDelimiterRE);
+      tmp.length > 1 && (ret[tmp[0].trim()] = tmp[1].trim());
+    }
+  });
+  return ret;
+}
 function normalizeClass(value) {
   let res = "";
-  if (isString(value)) {
+  if (isString$2(value)) {
     res = value;
-  } else if (isArray(value)) {
+  } else if (isArray$1(value)) {
     for (let i = 0; i < value.length; i++) {
       const normalized = normalizeClass(value[i]);
       if (normalized) {
         res += normalized + " ";
       }
     }
-  } else if (isObject(value)) {
+  } else if (isObject$2(value)) {
     for (const name in value) {
       if (value[name]) {
         res += name + " ";
@@ -116,7 +146,7 @@ function normalizeClass(value) {
   return res.trim();
 }
 const toDisplayString = (val) => {
-  return isString(val) ? val : val == null ? "" : isArray(val) || isObject(val) && (val.toString === objectToString || !isFunction(val.toString)) ? JSON.stringify(val, replacer, 2) : String(val);
+  return isString$2(val) ? val : val == null ? "" : isArray$1(val) || isObject$2(val) && (val.toString === objectToString || !isFunction(val.toString)) ? JSON.stringify(val, replacer, 2) : String(val);
 };
 const replacer = (_key, val) => {
   if (val && val.__v_isRef) {
@@ -137,7 +167,7 @@ const replacer = (_key, val) => {
     };
   } else if (isSymbol(val)) {
     return stringifySymbol(val);
-  } else if (isObject(val) && !isArray(val) && !isPlainObject$1(val)) {
+  } else if (isObject$2(val) && !isArray$1(val) && !isPlainObject$2(val)) {
     return String(val);
   }
   return val;
@@ -212,7 +242,7 @@ function once(fn, ctx = null) {
   };
 }
 function getValueByDataPath(obj, path) {
-  if (!isString(path)) {
+  if (!isString$2(path)) {
     return;
   }
   path = path.replace(/\[(\d+)\]/g, ".$1");
@@ -232,7 +262,7 @@ function stringifyQuery(obj, encodeStr = encode) {
     let val = obj[key];
     if (typeof val === void 0 || val === null) {
       val = "";
-    } else if (isPlainObject$1(val)) {
+    } else if (isPlainObject$2(val)) {
       val = JSON.stringify(val);
     }
     return encodeStr(key) + "=" + encodeStr(val);
@@ -434,8 +464,8 @@ function getLocaleLanguage$1() {
   var _a;
   let localeLanguage = "";
   {
-    const appBaseInfo = ((_a = wx.getAppBaseInfo) === null || _a === void 0 ? void 0 : _a.call(wx)) || wx.getSystemInfoSync();
-    const language = appBaseInfo && appBaseInfo.language ? appBaseInfo.language : LOCALE_EN;
+    const appBaseInfo2 = ((_a = wx.getAppBaseInfo) === null || _a === void 0 ? void 0 : _a.call(wx)) || wx.getSystemInfoSync();
+    const language = appBaseInfo2 && appBaseInfo2.language ? appBaseInfo2.language : LOCALE_EN;
     localeLanguage = normalizeLocale(language) || LOCALE_EN;
   }
   return localeLanguage;
@@ -449,7 +479,7 @@ function validateProtocol(name, data, protocol, onFail) {
   }
   for (const key in protocol) {
     const errMsg = validateProp$1(key, data[key], protocol[key], !hasOwn(data, key));
-    if (isString(errMsg)) {
+    if (isString$2(errMsg)) {
       onFail(name, errMsg);
     }
   }
@@ -458,7 +488,7 @@ function validateProtocols(name, args, protocol, onFail) {
   if (!protocol) {
     return;
   }
-  if (!isArray(protocol)) {
+  if (!isArray$1(protocol)) {
     return validateProtocol(name, args[0] || /* @__PURE__ */ Object.create(null), protocol, onFail);
   }
   const len = protocol.length;
@@ -473,7 +503,7 @@ function validateProtocols(name, args, protocol, onFail) {
   }
 }
 function validateProp$1(name, value, prop, isAbsent) {
-  if (!isPlainObject$1(prop)) {
+  if (!isPlainObject$2(prop)) {
     prop = { type: prop };
   }
   const { type, required, validator } = prop;
@@ -485,7 +515,7 @@ function validateProp$1(name, value, prop, isAbsent) {
   }
   if (type != null) {
     let isValid = false;
-    const types = isArray(type) ? type : [type];
+    const types = isArray$1(type) ? type : [type];
     const expectedTypes = [];
     for (let i = 0; i < types.length && !isValid; i++) {
       const { valid, expectedType } = assertType$1(value, types[i]);
@@ -511,9 +541,9 @@ function assertType$1(value, type) {
       valid = value instanceof type;
     }
   } else if (expectedType === "Object") {
-    valid = isObject(value);
+    valid = isObject$2(value);
   } else if (expectedType === "Array") {
-    valid = isArray(value);
+    valid = isArray$1(value);
   } else {
     {
       valid = value instanceof type;
@@ -530,7 +560,7 @@ function getInvalidTypeMessage$1(name, value, expectedTypes) {
   const receivedType = toRawType(value);
   const expectedValue = styleValue$1(value, expectedType);
   const receivedValue = styleValue$1(value, receivedType);
-  if (expectedTypes.length === 1 && isExplicable$1(expectedType) && !isBoolean$1(expectedType, receivedType)) {
+  if (expectedTypes.length === 1 && isExplicable$1(expectedType) && !isBoolean$3(expectedType, receivedType)) {
     message += ` with value ${expectedValue}`;
   }
   message += `, got ${receivedType} `;
@@ -556,7 +586,7 @@ function isExplicable$1(type) {
   const explicitTypes = ["string", "number", "boolean"];
   return explicitTypes.some((elem) => type.toLowerCase() === elem);
 }
-function isBoolean$1(...args) {
+function isBoolean$3(...args) {
   return args.some((elem) => elem.toLowerCase() === "boolean");
 }
 function tryCatch(fn) {
@@ -611,7 +641,7 @@ function normalizeErrMsg(errMsg, name) {
   return name + errMsg.substring(errMsg.indexOf(":fail"));
 }
 function createAsyncApiCallback(name, args = {}, { beforeAll, beforeSuccess } = {}) {
-  if (!isPlainObject$1(args)) {
+  if (!isPlainObject$2(args)) {
     args = {};
   }
   const { success, fail, complete } = getApiCallbacks(args);
@@ -675,7 +705,7 @@ function queue$1(hooks, data, params) {
 function wrapperOptions(interceptors2, options = {}) {
   [HOOK_SUCCESS, HOOK_FAIL, HOOK_COMPLETE].forEach((name) => {
     const hooks = interceptors2[name];
-    if (!isArray(hooks)) {
+    if (!isArray$1(hooks)) {
       return;
     }
     const oldCallback = options[name];
@@ -689,11 +719,11 @@ function wrapperOptions(interceptors2, options = {}) {
 }
 function wrapperReturnValue(method, returnValue) {
   const returnValueHooks = [];
-  if (isArray(globalInterceptors.returnValue)) {
+  if (isArray$1(globalInterceptors.returnValue)) {
     returnValueHooks.push(...globalInterceptors.returnValue);
   }
   const interceptor = scopedInterceptors[method];
-  if (interceptor && isArray(interceptor.returnValue)) {
+  if (interceptor && isArray$1(interceptor.returnValue)) {
     returnValueHooks.push(...interceptor.returnValue);
   }
   returnValueHooks.forEach((hook) => {
@@ -721,7 +751,7 @@ function getApiInterceptorHooks(method) {
 function invokeApi(method, api, options, params) {
   const interceptor = getApiInterceptorHooks(method);
   if (interceptor && Object.keys(interceptor).length) {
-    if (isArray(interceptor.invoke)) {
+    if (isArray$1(interceptor.invoke)) {
       const res = queue$1(interceptor.invoke, options);
       return res.then((options2) => {
         return api(wrapperOptions(getApiInterceptorHooks(method), options2), ...params);
@@ -733,7 +763,7 @@ function invokeApi(method, api, options, params) {
   return api(options, ...params);
 }
 function hasCallback(args) {
-  if (isPlainObject$1(args) && [API_SUCCESS, API_FAIL, API_COMPLETE].find((cb) => isFunction(args[cb]))) {
+  if (isPlainObject$2(args) && [API_SUCCESS, API_FAIL, API_COMPLETE].find((cb) => isFunction(args[cb]))) {
     return true;
   }
   return false;
@@ -789,7 +819,7 @@ function beforeInvokeApi(name, args, protocol, options) {
   }
 }
 function parseErrMsg(errMsg) {
-  if (!errMsg || isString(errMsg)) {
+  if (!errMsg || isString$2(errMsg)) {
     return errMsg;
   }
   if (errMsg.stack) {
@@ -849,10 +879,10 @@ function checkDeviceWidth() {
   let windowWidth, pixelRatio, platform;
   {
     const windowInfo = ((_a = wx.getWindowInfo) === null || _a === void 0 ? void 0 : _a.call(wx)) || wx.getSystemInfoSync();
-    const deviceInfo = ((_b = wx.getDeviceInfo) === null || _b === void 0 ? void 0 : _b.call(wx)) || wx.getSystemInfoSync();
+    const deviceInfo2 = ((_b = wx.getDeviceInfo) === null || _b === void 0 ? void 0 : _b.call(wx)) || wx.getSystemInfoSync();
     windowWidth = windowInfo.windowWidth;
     pixelRatio = windowInfo.pixelRatio;
-    platform = deviceInfo.platform;
+    platform = deviceInfo2.platform;
   }
   deviceWidth = windowWidth;
   deviceDPR = pixelRatio;
@@ -911,13 +941,13 @@ function removeInterceptorHook(interceptors2, interceptor) {
   Object.keys(interceptor).forEach((name) => {
     const hooks = interceptors2[name];
     const hook = interceptor[name];
-    if (isArray(hooks) && isFunction(hook)) {
+    if (isArray$1(hooks) && isFunction(hook)) {
       remove(hooks, hook);
     }
   });
 }
 function mergeHook(parentVal, childVal) {
-  const res = childVal ? parentVal ? parentVal.concat(childVal) : isArray(childVal) ? childVal : [childVal] : parentVal;
+  const res = childVal ? parentVal ? parentVal.concat(childVal) : isArray$1(childVal) ? childVal : [childVal] : parentVal;
   return res ? dedupeHooks(res) : res;
 }
 function dedupeHooks(hooks) {
@@ -930,20 +960,20 @@ function dedupeHooks(hooks) {
   return res;
 }
 const addInterceptor = defineSyncApi(API_ADD_INTERCEPTOR, (method, interceptor) => {
-  if (isString(method) && isPlainObject$1(interceptor)) {
+  if (isString$2(method) && isPlainObject$2(interceptor)) {
     mergeInterceptorHook(scopedInterceptors[method] || (scopedInterceptors[method] = {}), interceptor);
-  } else if (isPlainObject$1(method)) {
+  } else if (isPlainObject$2(method)) {
     mergeInterceptorHook(globalInterceptors, method);
   }
 }, AddInterceptorProtocol);
 const removeInterceptor = defineSyncApi(API_REMOVE_INTERCEPTOR, (method, interceptor) => {
-  if (isString(method)) {
-    if (isPlainObject$1(interceptor)) {
+  if (isString$2(method)) {
+    if (isPlainObject$2(interceptor)) {
       removeInterceptorHook(scopedInterceptors[method], interceptor);
     } else {
       delete scopedInterceptors[method];
     }
-  } else if (isPlainObject$1(method)) {
+  } else if (isPlainObject$2(method)) {
     removeInterceptorHook(globalInterceptors, method);
   }
 }, RemoveInterceptorProtocol);
@@ -1013,7 +1043,7 @@ const $once = defineSyncApi(API_ONCE, (name, callback) => {
   return () => eventBus.off(name, callback);
 }, OnceProtocol);
 const $off = defineSyncApi(API_OFF, (name, callback) => {
-  if (!isArray(name))
+  if (!isArray$1(name))
     name = name ? [name] : [];
   name.forEach((n2) => {
     eventBus.off(n2, callback);
@@ -1162,7 +1192,7 @@ function initWrapper(protocols2) {
     };
   }
   function processArgs(methodName, fromArgs, argsOption = {}, returnValue = {}, keepFromArgs = false) {
-    if (isPlainObject$1(fromArgs)) {
+    if (isPlainObject$2(fromArgs)) {
       const toArgs = keepFromArgs === true ? fromArgs : {};
       if (isFunction(argsOption)) {
         argsOption = argsOption(fromArgs, toArgs) || {};
@@ -1175,9 +1205,9 @@ function initWrapper(protocols2) {
           }
           if (!keyOption) {
             console.warn(`微信小程序 ${methodName} 暂不支持 ${key}`);
-          } else if (isString(keyOption)) {
+          } else if (isString$2(keyOption)) {
             toArgs[keyOption] = fromArgs[key];
-          } else if (isPlainObject$1(keyOption)) {
+          } else if (isPlainObject$2(keyOption)) {
             toArgs[keyOption.name ? keyOption.name : key] = keyOption.value;
           }
         } else if (CALLBACKS.indexOf(key) !== -1) {
@@ -1361,7 +1391,7 @@ function populateParameters(fromRes, toRes) {
   const hostLanguage = (language || "").replace(/_/g, "-");
   const parameters = {
     appId: "",
-    appName: "留学考霸",
+    appName: "老外1点通",
     appVersion: "1.0.0",
     appVersionCode: "100",
     appLanguage: getAppLanguage(hostLanguage),
@@ -1447,14 +1477,14 @@ function getHostName(fromRes) {
   }
   return _hostName;
 }
-const getSystemInfo = {
+const getSystemInfo$1 = {
   returnValue: (fromRes, toRes) => {
     addSafeAreaInsets(fromRes, toRes);
     useDeviceId()(fromRes, toRes);
     populateParameters(fromRes, toRes);
   }
 };
-const getSystemInfoSync = getSystemInfo;
+const getSystemInfoSync = getSystemInfo$1;
 const redirectTo = {};
 const previewImage = {
   args(fromArgs, toArgs) {
@@ -1463,7 +1493,7 @@ const previewImage = {
       return;
     }
     const urls = fromArgs.urls;
-    if (!isArray(urls)) {
+    if (!isArray$1(urls)) {
       return;
     }
     const len = urls.length;
@@ -1492,7 +1522,7 @@ const showActionSheet = {
     toArgs.alertText = fromArgs.title;
   }
 };
-const getDeviceInfo = {
+const getDeviceInfo$1 = {
   returnValue: (fromRes, toRes) => {
     const { brand, model, system = "", platform = "" } = fromRes;
     let deviceType = getGetDeviceType(fromRes, model);
@@ -1509,14 +1539,14 @@ const getDeviceInfo = {
     });
   }
 };
-const getAppBaseInfo = {
+const getAppBaseInfo$1 = {
   returnValue: (fromRes, toRes) => {
     const { version: version2, language, SDKVersion, theme } = fromRes;
     let _hostName = getHostName(fromRes);
     let hostLanguage = (language || "").replace(/_/g, "-");
     const parameters = {
       appId: "",
-      appName: "留学考霸",
+      appName: "老外1点通",
       appVersion: "1.0.0",
       appVersionCode: "100",
       appLanguage: getAppLanguage(hostLanguage),
@@ -1540,7 +1570,7 @@ const getAppBaseInfo = {
     extend(toRes, parameters);
   }
 };
-const getWindowInfo = {
+const getWindowInfo$1 = {
   returnValue: (fromRes, toRes) => {
     addSafeAreaInsets(fromRes, toRes);
     toRes = extend(toRes, {
@@ -1761,11 +1791,11 @@ var protocols = /* @__PURE__ */ Object.freeze({
   __proto__: null,
   compressImage,
   getAppAuthorizeSetting,
-  getAppBaseInfo,
-  getDeviceInfo,
-  getSystemInfo,
+  getAppBaseInfo: getAppBaseInfo$1,
+  getDeviceInfo: getDeviceInfo$1,
+  getSystemInfo: getSystemInfo$1,
   getSystemInfoSync,
-  getWindowInfo,
+  getWindowInfo: getWindowInfo$1,
   offError,
   onError,
   onSocketMessage,
@@ -2067,7 +2097,7 @@ function trigger(target, type, key, newValue, oldValue, oldTarget) {
   let deps = [];
   if (type === "clear") {
     deps = [...depsMap.values()];
-  } else if (key === "length" && isArray(target)) {
+  } else if (key === "length" && isArray$1(target)) {
     const newLength = Number(newValue);
     depsMap.forEach((dep, key2) => {
       if (key2 === "length" || !isSymbol(key2) && key2 >= newLength) {
@@ -2080,7 +2110,7 @@ function trigger(target, type, key, newValue, oldValue, oldTarget) {
     }
     switch (type) {
       case "add":
-        if (!isArray(target)) {
+        if (!isArray$1(target)) {
           deps.push(depsMap.get(ITERATE_KEY));
           if (isMap(target)) {
             deps.push(depsMap.get(MAP_KEY_ITERATE_KEY));
@@ -2090,7 +2120,7 @@ function trigger(target, type, key, newValue, oldValue, oldTarget) {
         }
         break;
       case "delete":
-        if (!isArray(target)) {
+        if (!isArray$1(target)) {
           deps.push(depsMap.get(ITERATE_KEY));
           if (isMap(target)) {
             deps.push(depsMap.get(MAP_KEY_ITERATE_KEY));
@@ -2186,7 +2216,7 @@ class BaseReactiveHandler {
       }
       return;
     }
-    const targetIsArray = isArray(target);
+    const targetIsArray = isArray$1(target);
     if (!isReadonly2) {
       if (targetIsArray && hasOwn(arrayInstrumentations, key)) {
         return Reflect.get(arrayInstrumentations, key, receiver);
@@ -2208,7 +2238,7 @@ class BaseReactiveHandler {
     if (isRef(res)) {
       return targetIsArray && isIntegerKey(key) ? res : res.value;
     }
-    if (isObject(res)) {
+    if (isObject$2(res)) {
       return isReadonly2 ? readonly(res) : reactive(res);
     }
     return res;
@@ -2226,7 +2256,7 @@ class MutableReactiveHandler extends BaseReactiveHandler {
         oldValue = toRaw(oldValue);
         value = toRaw(value);
       }
-      if (!isArray(target) && isRef(oldValue) && !isRef(value)) {
+      if (!isArray$1(target) && isRef(oldValue) && !isRef(value)) {
         if (isOldValueReadonly) {
           return false;
         } else {
@@ -2235,7 +2265,7 @@ class MutableReactiveHandler extends BaseReactiveHandler {
         }
       }
     }
-    const hadKey = isArray(target) && isIntegerKey(key) ? Number(key) < target.length : hasOwn(target, key);
+    const hadKey = isArray$1(target) && isIntegerKey(key) ? Number(key) < target.length : hasOwn(target, key);
     const result = Reflect.set(target, key, value, receiver);
     if (target === toRaw(receiver)) {
       if (!hadKey) {
@@ -2266,7 +2296,7 @@ class MutableReactiveHandler extends BaseReactiveHandler {
     track(
       target,
       "iterate",
-      isArray(target) ? "length" : ITERATE_KEY
+      isArray$1(target) ? "length" : ITERATE_KEY
     );
     return Reflect.ownKeys(target);
   }
@@ -2640,7 +2670,7 @@ function shallowReadonly(target) {
   );
 }
 function createReactiveObject(target, isReadonly2, baseHandlers, collectionHandlers, proxyMap) {
-  if (!isObject(target)) {
+  if (!isObject$2(target)) {
     {
       warn$2(`value cannot be made reactive: ${String(target)}`);
     }
@@ -2689,8 +2719,8 @@ function markRaw(value) {
   }
   return value;
 }
-const toReactive = (value) => isObject(value) ? reactive(value) : value;
-const toReadonly = (value) => isObject(value) ? readonly(value) : value;
+const toReactive = (value) => isObject$2(value) ? reactive(value) : value;
+const toReadonly = (value) => isObject$2(value) ? readonly(value) : value;
 const COMPUTED_SIDE_EFFECT_WARN = `Computed is still dirty after getter evaluation, likely because a computed is mutating its own dependency in its getter. State mutations in computed getters should be avoided.  Check the docs for more details: https://vuejs.org/guide/essentials/computed.html#getters-should-be-side-effect-free`;
 class ComputedRefImpl {
   constructor(getter, _setter, isReadonly2, isSSR) {
@@ -2844,7 +2874,7 @@ function toRefs(object) {
   if (!isProxy(object)) {
     warn$2(`toRefs() expects a reactive object but received a plain one.`);
   }
-  const ret = isArray(object) ? new Array(object.length) : {};
+  const ret = isArray$1(object) ? new Array(object.length) : {};
   for (const key in object) {
     ret[key] = propertyToRef(object, key);
   }
@@ -2883,7 +2913,7 @@ function toRef(source, key, defaultValue) {
     return source;
   } else if (isFunction(source)) {
     return new GetterRefImpl(source);
-  } else if (isObject(source) && arguments.length > 1) {
+  } else if (isObject$2(source) && arguments.length > 1) {
     return propertyToRef(source, key, defaultValue);
   } else {
     return ref(source);
@@ -2973,19 +3003,19 @@ function formatTraceEntry({ vnode, recurseCount }) {
   const close = `>` + postfix;
   return vnode.props ? [open, ...formatProps(vnode.props), close] : [open + close];
 }
-function formatProps(props) {
+function formatProps(props2) {
   const res = [];
-  const keys = Object.keys(props);
-  keys.slice(0, 3).forEach((key) => {
-    res.push(...formatProp(key, props[key]));
+  const keys2 = Object.keys(props2);
+  keys2.slice(0, 3).forEach((key) => {
+    res.push(...formatProp(key, props2[key]));
   });
-  if (keys.length > 3) {
+  if (keys2.length > 3) {
     res.push(` ...`);
   }
   return res;
 }
 function formatProp(key, value, raw) {
-  if (isString(value)) {
+  if (isString$2(value)) {
     value = JSON.stringify(value);
     return raw ? value : [`${key}=${value}`];
   } else if (typeof value === "number" || typeof value === "boolean" || value == null) {
@@ -3159,7 +3189,7 @@ function invalidateJob(job) {
   }
 }
 function queuePostFlushCb(cb) {
-  if (!isArray(cb)) {
+  if (!isArray$1(cb)) {
     if (!activePostFlushCbs || !activePostFlushCbs.includes(
       cb,
       cb.allowRecurse ? postFlushIndex + 1 : postFlushIndex
@@ -3377,7 +3407,7 @@ function devtoolsComponentEmit(component, event, params) {
 function emit(instance, event, ...rawArgs) {
   if (instance.isUnmounted)
     return;
-  const props = instance.vnode.props || EMPTY_OBJ;
+  const props2 = instance.vnode.props || EMPTY_OBJ;
   {
     const {
       emitsOptions,
@@ -3406,11 +3436,11 @@ function emit(instance, event, ...rawArgs) {
   let args = rawArgs;
   const isModelListener2 = event.startsWith("update:");
   const modelArg = isModelListener2 && event.slice(7);
-  if (modelArg && modelArg in props) {
+  if (modelArg && modelArg in props2) {
     const modifiersKey = `${modelArg === "modelValue" ? "model" : modelArg}Modifiers`;
-    const { number, trim } = props[modifiersKey] || EMPTY_OBJ;
+    const { number, trim } = props2[modifiersKey] || EMPTY_OBJ;
     if (trim) {
-      args = rawArgs.map((a) => isString(a) ? a.trim() : a);
+      args = rawArgs.map((a) => isString$2(a) ? a.trim() : a);
     }
     if (number) {
       args = rawArgs.map(looseToNumber);
@@ -3421,22 +3451,22 @@ function emit(instance, event, ...rawArgs) {
   }
   {
     const lowerCaseEvent = event.toLowerCase();
-    if (lowerCaseEvent !== event && props[toHandlerKey(lowerCaseEvent)]) {
+    if (lowerCaseEvent !== event && props2[toHandlerKey(lowerCaseEvent)]) {
       warn$1(
         `Event "${lowerCaseEvent}" is emitted in component ${formatComponentName(
           instance,
           instance.type
-        )} but the handler is registered for "${event}". Note that HTML attributes are case-insensitive and you cannot use v-on to listen to camelCase events when using in-DOM templates. You should probably use "${hyphenate(
+        )} but the handler is registered for "${event}". Note that HTML attributes are case-insensitive and you cannot use v-on to listen to camelCase events when using in-DOM templates. You should probably use "${hyphenate$1(
           event
         )}" instead of "${event}".`
       );
     }
   }
   let handlerName;
-  let handler = props[handlerName = toHandlerKey(event)] || // also try camelCase event handler (#2249)
-  props[handlerName = toHandlerKey(camelize(event))];
+  let handler = props2[handlerName = toHandlerKey(event)] || // also try camelCase event handler (#2249)
+  props2[handlerName = toHandlerKey(camelize(event))];
   if (!handler && isModelListener2) {
-    handler = props[handlerName = toHandlerKey(hyphenate(event))];
+    handler = props2[handlerName = toHandlerKey(hyphenate$1(event))];
   }
   if (handler) {
     callWithAsyncErrorHandling(
@@ -3446,7 +3476,7 @@ function emit(instance, event, ...rawArgs) {
       args
     );
   }
-  const onceHandler = props[handlerName + `Once`];
+  const onceHandler = props2[handlerName + `Once`];
   if (onceHandler) {
     if (!instance.emitted) {
       instance.emitted = {};
@@ -3490,17 +3520,17 @@ function normalizeEmitsOptions(comp, appContext, asMixin = false) {
     }
   }
   if (!raw && !hasExtends) {
-    if (isObject(comp)) {
+    if (isObject$2(comp)) {
       cache.set(comp, null);
     }
     return null;
   }
-  if (isArray(raw)) {
+  if (isArray$1(raw)) {
     raw.forEach((key) => normalized[key] = null);
   } else {
     extend(normalized, raw);
   }
-  if (isObject(comp)) {
+  if (isObject$2(comp)) {
     cache.set(comp, normalized);
   }
   return normalized;
@@ -3510,7 +3540,7 @@ function isEmitListener(options, key) {
     return false;
   }
   key = key.slice(2).replace(/Once$/, "");
-  return hasOwn(options, key[0].toLowerCase() + key.slice(1)) || hasOwn(options, hyphenate(key)) || hasOwn(options, key);
+  return hasOwn(options, key[0].toLowerCase() + key.slice(1)) || hasOwn(options, hyphenate$1(key)) || hasOwn(options, key);
 }
 let currentRenderingInstance = null;
 function setCurrentRenderingInstance(instance) {
@@ -3627,7 +3657,7 @@ function doWatch(source, cb, {
   } else if (isReactive(source)) {
     getter = () => reactiveGetter(source);
     forceTrigger = true;
-  } else if (isArray(source)) {
+  } else if (isArray$1(source)) {
     isMultiSource = true;
     forceTrigger = source.some((s2) => isReactive(s2) || isShallow(s2));
     getter = () => source.map((s2) => {
@@ -3737,7 +3767,7 @@ function doWatch(source, cb, {
 }
 function instanceWatch(source, value, options) {
   const publicThis = this.proxy;
-  const getter = isString(source) ? source.includes(".") ? createPathGetter(publicThis, source) : () => publicThis[source] : source.bind(publicThis, publicThis);
+  const getter = isString$2(source) ? source.includes(".") ? createPathGetter(publicThis, source) : () => publicThis[source] : source.bind(publicThis, publicThis);
   let cb;
   if (isFunction(value)) {
     cb = value;
@@ -3761,7 +3791,7 @@ function createPathGetter(ctx, path) {
   };
 }
 function traverse(value, depth, currentDepth = 0, seen) {
-  if (!isObject(value) || value["__v_skip"]) {
+  if (!isObject$2(value) || value["__v_skip"]) {
     return value;
   }
   if (depth && depth > 0) {
@@ -3777,7 +3807,7 @@ function traverse(value, depth, currentDepth = 0, seen) {
   seen.add(value);
   if (isRef(value)) {
     traverse(value.value, depth, currentDepth, seen);
-  } else if (isArray(value)) {
+  } else if (isArray$1(value)) {
     for (let i = 0; i < value.length; i++) {
       traverse(value[i], depth, currentDepth, seen);
     }
@@ -3785,7 +3815,7 @@ function traverse(value, depth, currentDepth = 0, seen) {
     value.forEach((v) => {
       traverse(v, depth, currentDepth, seen);
     });
-  } else if (isPlainObject$1(value)) {
+  } else if (isPlainObject$2(value)) {
     for (const key in value) {
       traverse(value[key], depth, currentDepth, seen);
     }
@@ -3824,7 +3854,7 @@ function createAppAPI(render, hydrate) {
     if (!isFunction(rootComponent)) {
       rootComponent = extend({}, rootComponent);
     }
-    if (rootProps != null && !isObject(rootProps)) {
+    if (rootProps != null && !isObject$2(rootProps)) {
       warn$1(`root props passed to app.mount() must be an object.`);
       rootProps = null;
     }
@@ -4108,7 +4138,7 @@ const isReservedPrefix = (key) => key === "_" || key === "$";
 const hasSetupBinding = (state, key) => state !== EMPTY_OBJ && !state.__isScriptSetup && hasOwn(state, key);
 const PublicInstanceProxyHandlers = {
   get({ _: instance }, key) {
-    const { ctx, setupState, data, props, accessCache, type, appContext } = instance;
+    const { ctx, setupState, data, props: props2, accessCache, type, appContext } = instance;
     if (key === "__isVue") {
       return true;
     }
@@ -4124,7 +4154,7 @@ const PublicInstanceProxyHandlers = {
           case 4:
             return ctx[key];
           case 3:
-            return props[key];
+            return props2[key];
         }
       } else if (hasSetupBinding(setupState, key)) {
         accessCache[key] = 1;
@@ -4138,7 +4168,7 @@ const PublicInstanceProxyHandlers = {
         (normalizedProps = instance.propsOptions[0]) && hasOwn(normalizedProps, key)
       ) {
         accessCache[key] = 3;
-        return props[key];
+        return props2[key];
       } else if (ctx !== EMPTY_OBJ && hasOwn(ctx, key)) {
         accessCache[key] = 4;
         return ctx[key];
@@ -4172,7 +4202,7 @@ const PublicInstanceProxyHandlers = {
       {
         return globalProperties[key];
       }
-    } else if (currentRenderingInstance && (!isString(key) || // #1091 avoid internal isRef/isVNode checks on component instance leading
+    } else if (currentRenderingInstance && (!isString$2(key) || // #1091 avoid internal isRef/isVNode checks on component instance leading
     // to infinite warning loop
     key.indexOf("__v") !== 0)) {
       if (data !== EMPTY_OBJ && isReservedPrefix(key[0]) && hasOwn(data, key)) {
@@ -4300,11 +4330,11 @@ function exposeSetupStateOnRenderContext(instance) {
     }
   });
 }
-function normalizePropsOrEmits(props) {
-  return isArray(props) ? props.reduce(
+function normalizePropsOrEmits(props2) {
+  return isArray$1(props2) ? props2.reduce(
     (normalized, p2) => (normalized[p2] = null, normalized),
     {}
-  ) : props;
+  ) : props2;
 }
 function createDuplicateChecker() {
   const cache = /* @__PURE__ */ Object.create(null);
@@ -4409,7 +4439,7 @@ function applyOptions$1(instance) {
         `data() returned a Promise - note data() cannot be async; If you intend to perform data fetching before component renders, use async setup() + <Suspense>.`
       );
     }
-    if (!isObject(data)) {
+    if (!isObject$2(data)) {
       warn$1(`data() should return an object.`);
     } else {
       instance.data = reactive(data);
@@ -4478,7 +4508,7 @@ function applyOptions$1(instance) {
     }
   }
   function registerLifecycleHook(register, hook) {
-    if (isArray(hook)) {
+    if (isArray$1(hook)) {
       hook.forEach((_hook) => register(_hook.bind(publicThis)));
     } else if (hook) {
       register(hook.bind(publicThis));
@@ -4496,7 +4526,7 @@ function applyOptions$1(instance) {
   registerLifecycleHook(onBeforeUnmount, beforeUnmount);
   registerLifecycleHook(onUnmounted, unmounted);
   registerLifecycleHook(onServerPrefetch, serverPrefetch);
-  if (isArray(expose)) {
+  if (isArray$1(expose)) {
     if (expose.length) {
       const exposed = instance.exposed || (instance.exposed = {});
       expose.forEach((key) => {
@@ -4524,13 +4554,13 @@ function applyOptions$1(instance) {
   }
 }
 function resolveInjections(injectOptions, ctx, checkDuplicateProperties = NOOP) {
-  if (isArray(injectOptions)) {
+  if (isArray$1(injectOptions)) {
     injectOptions = normalizeInject(injectOptions);
   }
   for (const key in injectOptions) {
     const opt = injectOptions[key];
     let injected;
-    if (isObject(opt)) {
+    if (isObject$2(opt)) {
       if ("default" in opt) {
         injected = inject(
           opt.from || key,
@@ -4560,14 +4590,14 @@ function resolveInjections(injectOptions, ctx, checkDuplicateProperties = NOOP) 
 }
 function callHook$1(hook, instance, type) {
   callWithAsyncErrorHandling(
-    isArray(hook) ? hook.map((h2) => h2.bind(instance.proxy)) : hook.bind(instance.proxy),
+    isArray$1(hook) ? hook.map((h2) => h2.bind(instance.proxy)) : hook.bind(instance.proxy),
     instance,
     type
   );
 }
 function createWatcher(raw, ctx, publicThis, key) {
   const getter = key.includes(".") ? createPathGetter(publicThis, key) : () => publicThis[key];
-  if (isString(raw)) {
+  if (isString$2(raw)) {
     const handler = ctx[raw];
     if (isFunction(handler)) {
       watch(getter, handler);
@@ -4576,8 +4606,8 @@ function createWatcher(raw, ctx, publicThis, key) {
     }
   } else if (isFunction(raw)) {
     watch(getter, raw.bind(publicThis));
-  } else if (isObject(raw)) {
-    if (isArray(raw)) {
+  } else if (isObject$2(raw)) {
+    if (isArray$1(raw)) {
       raw.forEach((r2) => createWatcher(r2, ctx, publicThis, key));
     } else {
       const handler = isFunction(raw.handler) ? raw.handler.bind(publicThis) : ctx[raw.handler];
@@ -4616,7 +4646,7 @@ function resolveMergedOptions(instance) {
     }
     mergeOptions(resolved, base, optionMergeStrategies);
   }
-  if (isObject(base)) {
+  if (isObject$2(base)) {
     cache.set(base, resolved);
   }
   return resolved;
@@ -4692,7 +4722,7 @@ function mergeInject(to, from) {
   return mergeObjectOptions(normalizeInject(to), normalizeInject(from));
 }
 function normalizeInject(raw) {
-  if (isArray(raw)) {
+  if (isArray$1(raw)) {
     const res = {};
     for (let i = 0; i < raw.length; i++) {
       res[raw[i]] = raw[i];
@@ -4709,7 +4739,7 @@ function mergeObjectOptions(to, from) {
 }
 function mergeEmitsOrPropsOptions(to, from) {
   if (to) {
-    if (isArray(to) && isArray(from)) {
+    if (isArray$1(to) && isArray$1(from)) {
       return [.../* @__PURE__ */ new Set([...to, ...from])];
     }
     return extend(
@@ -4733,25 +4763,25 @@ function mergeWatchOptions(to, from) {
   return merged;
 }
 function initProps$1(instance, rawProps, isStateful, isSSR = false) {
-  const props = {};
+  const props2 = {};
   const attrs = {};
   instance.propsDefaults = /* @__PURE__ */ Object.create(null);
-  setFullProps(instance, rawProps, props, attrs);
+  setFullProps(instance, rawProps, props2, attrs);
   for (const key in instance.propsOptions[0]) {
-    if (!(key in props)) {
-      props[key] = void 0;
+    if (!(key in props2)) {
+      props2[key] = void 0;
     }
   }
   {
-    validateProps(rawProps || {}, props, instance);
+    validateProps(rawProps || {}, props2, instance);
   }
   if (isStateful) {
-    instance.props = isSSR ? props : shallowReactive(props);
+    instance.props = isSSR ? props2 : shallowReactive(props2);
   } else {
     if (!instance.type.props) {
       instance.props = attrs;
     } else {
-      instance.props = props;
+      instance.props = props2;
     }
   }
   instance.attrs = attrs;
@@ -4760,11 +4790,11 @@ function isInHmrContext(instance) {
 }
 function updateProps(instance, rawProps, rawPrevProps, optimized) {
   const {
-    props,
+    props: props2,
     attrs,
     vnode: { patchFlag }
   } = instance;
-  const rawCurrentProps = toRaw(props);
+  const rawCurrentProps = toRaw(props2);
   const [options] = instance.propsOptions;
   let hasAttrsChanged = false;
   if (
@@ -4789,7 +4819,7 @@ function updateProps(instance, rawProps, rawPrevProps, optimized) {
             }
           } else {
             const camelizedKey = camelize(key);
-            props[camelizedKey] = resolvePropValue$1(
+            props2[camelizedKey] = resolvePropValue$1(
               options,
               rawCurrentProps,
               camelizedKey,
@@ -4807,7 +4837,7 @@ function updateProps(instance, rawProps, rawPrevProps, optimized) {
       }
     }
   } else {
-    if (setFullProps(instance, rawProps, props, attrs)) {
+    if (setFullProps(instance, rawProps, props2, attrs)) {
       hasAttrsChanged = true;
     }
     let kebabKey;
@@ -4815,12 +4845,12 @@ function updateProps(instance, rawProps, rawPrevProps, optimized) {
       if (!rawProps || // for camelCase
       !hasOwn(rawProps, key) && // it's possible the original props was passed in as kebab-case
       // and converted to camelCase (#955)
-      ((kebabKey = hyphenate(key)) === key || !hasOwn(rawProps, kebabKey))) {
+      ((kebabKey = hyphenate$1(key)) === key || !hasOwn(rawProps, kebabKey))) {
         if (options) {
           if (rawPrevProps && // for camelCase
           (rawPrevProps[key] !== void 0 || // for kebab-case
           rawPrevProps[kebabKey] !== void 0)) {
-            props[key] = resolvePropValue$1(
+            props2[key] = resolvePropValue$1(
               options,
               rawCurrentProps,
               key,
@@ -4830,7 +4860,7 @@ function updateProps(instance, rawProps, rawPrevProps, optimized) {
             );
           }
         } else {
-          delete props[key];
+          delete props2[key];
         }
       }
     }
@@ -4847,10 +4877,10 @@ function updateProps(instance, rawProps, rawPrevProps, optimized) {
     trigger(instance, "set", "$attrs");
   }
   {
-    validateProps(rawProps || {}, props, instance);
+    validateProps(rawProps || {}, props2, instance);
   }
 }
-function setFullProps(instance, rawProps, props, attrs) {
+function setFullProps(instance, rawProps, props2, attrs) {
   const [options, needCastKeys] = instance.propsOptions;
   let hasAttrsChanged = false;
   let rawCastValues;
@@ -4864,7 +4894,7 @@ function setFullProps(instance, rawProps, props, attrs) {
       if (options && hasOwn(options, camelKey = camelize(key))) {
         if (!needCastKeys || !needCastKeys.includes(camelKey)) {
           {
-            props[camelKey] = value;
+            props2[camelKey] = value;
           }
         } else {
           (rawCastValues || (rawCastValues = {}))[camelKey] = value;
@@ -4878,11 +4908,11 @@ function setFullProps(instance, rawProps, props, attrs) {
     }
   }
   if (needCastKeys) {
-    const rawCurrentProps = toRaw(props);
+    const rawCurrentProps = toRaw(props2);
     const castValues = rawCastValues || EMPTY_OBJ;
     for (let i = 0; i < needCastKeys.length; i++) {
       const key = needCastKeys[i];
-      props[key] = resolvePropValue$1(
+      props2[key] = resolvePropValue$1(
         options,
         rawCurrentProps,
         key,
@@ -4897,10 +4927,10 @@ function setFullProps(instance, rawProps, props, attrs) {
 function normalizeInheritAttrsValue(instance, key, value) {
   return value;
 }
-function resolvePropValue$1(options, props, key, value, instance, isAbsent) {
+function resolvePropValue$1(options, props2, key, value, instance, isAbsent) {
   const result = _resolvePropValue(
     options,
-    props,
+    props2,
     key,
     value,
     instance,
@@ -4908,7 +4938,7 @@ function resolvePropValue$1(options, props, key, value, instance, isAbsent) {
   );
   return result;
 }
-function _resolvePropValue(options, props, key, value, instance, isAbsent) {
+function _resolvePropValue(options, props2, key, value, instance, isAbsent) {
   const opt = options[key];
   if (opt != null) {
     const hasDefault = hasOwn(opt, "default");
@@ -4922,7 +4952,7 @@ function _resolvePropValue(options, props, key, value, instance, isAbsent) {
           const reset = setCurrentInstance(instance);
           value = propsDefaults[key] = defaultValue.call(
             null,
-            props
+            props2
           );
           reset();
         }
@@ -4939,7 +4969,7 @@ function _resolvePropValue(options, props, key, value, instance, isAbsent) {
       } else if (opt[
         1
         /* shouldCastTrue */
-      ] && (value === "" || value === hyphenate(key))) {
+      ] && (value === "" || value === hyphenate$1(key))) {
         value = true;
       }
     }
@@ -4959,10 +4989,10 @@ function normalizePropsOptions(comp, appContext, asMixin = false) {
   if (!isFunction(comp)) {
     const extendProps = (raw2) => {
       hasExtends = true;
-      const [props, keys] = normalizePropsOptions(raw2, appContext, true);
-      extend(normalized, props);
-      if (keys)
-        needCastKeys.push(...keys);
+      const [props2, keys2] = normalizePropsOptions(raw2, appContext, true);
+      extend(normalized, props2);
+      if (keys2)
+        needCastKeys.push(...keys2);
     };
     if (!asMixin && appContext.mixins.length) {
       appContext.mixins.forEach(extendProps);
@@ -4975,14 +5005,14 @@ function normalizePropsOptions(comp, appContext, asMixin = false) {
     }
   }
   if (!raw && !hasExtends) {
-    if (isObject(comp)) {
+    if (isObject$2(comp)) {
       cache.set(comp, EMPTY_ARR);
     }
     return EMPTY_ARR;
   }
-  if (isArray(raw)) {
+  if (isArray$1(raw)) {
     for (let i = 0; i < raw.length; i++) {
-      if (!isString(raw[i])) {
+      if (!isString$2(raw[i])) {
         warn$1(`props must be strings when using array syntax.`, raw[i]);
       }
       const normalizedKey = camelize(raw[i]);
@@ -4991,14 +5021,14 @@ function normalizePropsOptions(comp, appContext, asMixin = false) {
       }
     }
   } else if (raw) {
-    if (!isObject(raw)) {
+    if (!isObject$2(raw)) {
       warn$1(`invalid props options`, raw);
     }
     for (const key in raw) {
       const normalizedKey = camelize(key);
       if (validatePropName(normalizedKey)) {
         const opt = raw[key];
-        const prop = normalized[normalizedKey] = isArray(opt) || isFunction(opt) ? { type: opt } : extend({}, opt);
+        const prop = normalized[normalizedKey] = isArray$1(opt) || isFunction(opt) ? { type: opt } : extend({}, opt);
         if (prop) {
           const booleanIndex = getTypeIndex(Boolean, prop.type);
           const stringIndex = getTypeIndex(String, prop.type);
@@ -5018,7 +5048,7 @@ function normalizePropsOptions(comp, appContext, asMixin = false) {
     }
   }
   const res = [normalized, needCastKeys];
-  if (isObject(comp)) {
+  if (isObject$2(comp)) {
     cache.set(comp, res);
   }
   return res;
@@ -5047,15 +5077,15 @@ function isSameType(a, b) {
   return getType(a) === getType(b);
 }
 function getTypeIndex(type, expectedTypes) {
-  if (isArray(expectedTypes)) {
+  if (isArray$1(expectedTypes)) {
     return expectedTypes.findIndex((t2) => isSameType(t2, type));
   } else if (isFunction(expectedTypes)) {
     return isSameType(expectedTypes, type) ? 0 : -1;
   }
   return -1;
 }
-function validateProps(rawProps, props, instance) {
-  const resolvedValues = toRaw(props);
+function validateProps(rawProps, props2, instance) {
+  const resolvedValues = toRaw(props2);
   const options = instance.propsOptions[0];
   for (const key in options) {
     let opt = options[key];
@@ -5066,11 +5096,11 @@ function validateProps(rawProps, props, instance) {
       resolvedValues[key],
       opt,
       shallowReadonly(resolvedValues),
-      !hasOwn(rawProps, key) && !hasOwn(rawProps, hyphenate(key))
+      !hasOwn(rawProps, key) && !hasOwn(rawProps, hyphenate$1(key))
     );
   }
 }
-function validateProp(name, value, prop, props, isAbsent) {
+function validateProp(name, value, prop, props2, isAbsent) {
   const { type, required, validator, skipCheck } = prop;
   if (required && isAbsent) {
     warn$1('Missing required prop: "' + name + '"');
@@ -5081,7 +5111,7 @@ function validateProp(name, value, prop, props, isAbsent) {
   }
   if (type != null && type !== true && !skipCheck) {
     let isValid = false;
-    const types = isArray(type) ? type : [type];
+    const types = isArray$1(type) ? type : [type];
     const expectedTypes = [];
     for (let i = 0; i < types.length && !isValid; i++) {
       const { valid, expectedType } = assertType(value, types[i]);
@@ -5093,7 +5123,7 @@ function validateProp(name, value, prop, props, isAbsent) {
       return;
     }
   }
-  if (validator && !validator(value, props)) {
+  if (validator && !validator(value, props2)) {
     warn$1('Invalid prop: custom validator check failed for prop "' + name + '".');
   }
 }
@@ -5110,9 +5140,9 @@ function assertType(value, type) {
       valid = value instanceof type;
     }
   } else if (expectedType === "Object") {
-    valid = isObject(value);
+    valid = isObject$2(value);
   } else if (expectedType === "Array") {
-    valid = isArray(value);
+    valid = isArray$1(value);
   } else if (expectedType === "null") {
     valid = value === null;
   } else {
@@ -5132,7 +5162,7 @@ function getInvalidTypeMessage(name, value, expectedTypes) {
   const receivedType = toRawType(value);
   const expectedValue = styleValue(value, expectedType);
   const receivedValue = styleValue(value, receivedType);
-  if (expectedTypes.length === 1 && isExplicable(expectedType) && !isBoolean(expectedType, receivedType)) {
+  if (expectedTypes.length === 1 && isExplicable(expectedType) && !isBoolean$2(expectedType, receivedType)) {
     message += ` with value ${expectedValue}`;
   }
   message += `, got ${receivedType} `;
@@ -5154,7 +5184,7 @@ function isExplicable(type) {
   const explicitTypes = ["string", "number", "boolean"];
   return explicitTypes.some((elem) => type.toLowerCase() === elem);
 }
-function isBoolean(...args) {
+function isBoolean$2(...args) {
   return args.some((elem) => elem.toLowerCase() === "boolean");
 }
 let supported;
@@ -5205,10 +5235,10 @@ function isVNode(value) {
   return value ? value.__v_isVNode === true : false;
 }
 const InternalObjectKey = `__vInternal`;
-function guardReactiveProps(props) {
-  if (!props)
+function guardReactiveProps(props2) {
+  if (!props2)
     return null;
-  return isProxy(props) || InternalObjectKey in props ? extend({}, props) : props;
+  return isProxy(props2) || InternalObjectKey in props2 ? extend({}, props2) : props2;
 }
 const emptyAppContext = createAppContext();
 let uid = 0;
@@ -5347,11 +5377,11 @@ let isInSSRComponentSetup = false;
 function setupComponent(instance, isSSR = false) {
   isSSR && setInSSRSetupState(isSSR);
   const {
-    props
+    props: props2
     /*, children*/
   } = instance.vnode;
   const isStateful = isStatefulComponent(instance);
-  initProps$1(instance, props, isStateful, isSSR);
+  initProps$1(instance, props2, isStateful, isSSR);
   const setupResult = isStateful ? setupStatefulComponent(instance, isSSR) : void 0;
   isSSR && setInSSRSetupState(false);
   return setupResult;
@@ -5420,7 +5450,7 @@ function handleSetupResult(instance, setupResult, isSSR) {
     {
       instance.render = setupResult;
     }
-  } else if (isObject(setupResult)) {
+  } else if (isObject$2(setupResult)) {
     if (isVNode(setupResult)) {
       warn$1(
         `setup() should not return VNodes directly - return a render function instead.`
@@ -5502,7 +5532,7 @@ function createSetupContext(instance) {
       if (exposed != null) {
         let exposedType = typeof exposed;
         if (exposedType === "object") {
-          if (isArray(exposed)) {
+          if (isArray$1(exposed)) {
             exposedType = "array";
           } else if (isRef(exposed)) {
             exposedType = "ref";
@@ -5721,7 +5751,7 @@ function flushCallbacks(instance) {
     }
   }
 }
-function nextTick(instance, fn) {
+function nextTick$2(instance, fn) {
   const ctx = instance.ctx;
   if (!ctx.__next_tick_pending && !hasComponentEffect(instance)) {
     return nextTick$1(fn && fn.bind(instance.proxy));
@@ -5753,7 +5783,7 @@ function clone(src, seen) {
     if (typeof copy !== "undefined") {
       return copy;
     }
-    if (isArray(src)) {
+    if (isArray$1(src)) {
       const len = src.length;
       copy = new Array(len);
       seen.set(src, copy);
@@ -5778,10 +5808,10 @@ function clone(src, seen) {
 function deepCopy(src) {
   return clone(src, typeof WeakMap !== "undefined" ? /* @__PURE__ */ new WeakMap() : /* @__PURE__ */ new Map());
 }
-function getMPInstanceData(instance, keys) {
+function getMPInstanceData(instance, keys2) {
   const data = instance.data;
   const ret = /* @__PURE__ */ Object.create(null);
-  keys.forEach((key) => {
+  keys2.forEach((key) => {
     ret[key] = data[key];
   });
   return ret;
@@ -5798,8 +5828,8 @@ function patch(instance, data, oldData) {
   if (mpType === "page" || mpType === "component") {
     data.r0 = 1;
     const mpInstance = ctx.$scope;
-    const keys = Object.keys(data);
-    const diffData = diff(data, getMPInstanceData(mpInstance, keys));
+    const keys2 = Object.keys(data);
+    const diffData = diff(data, getMPInstanceData(mpInstance, keys2));
     if (Object.keys(diffData).length) {
       ctx.__next_tick_pending = true;
       mpInstance.setData(diffData, () => {
@@ -5814,7 +5844,7 @@ function patch(instance, data, oldData) {
 }
 function initAppConfig(appConfig) {
   appConfig.globalProperties.$nextTick = function $nextTick(fn) {
-    return nextTick(this.$, fn);
+    return nextTick$2(this.$, fn);
   };
 }
 function onApplyOptions(options, instance, publicThis) {
@@ -5825,13 +5855,13 @@ function onApplyOptions(options, instance, publicThis) {
   );
   const computedOptions = options.computed;
   if (computedOptions) {
-    const keys = Object.keys(computedOptions);
-    if (keys.length) {
+    const keys2 = Object.keys(computedOptions);
+    if (keys2.length) {
       const ctx = instance.ctx;
       if (!ctx.$computedKeys) {
         ctx.$computedKeys = [];
       }
-      ctx.$computedKeys.push(...keys);
+      ctx.$computedKeys.push(...keys2);
     }
   }
   delete instance.ctx.$onApplyOptions;
@@ -5892,13 +5922,13 @@ function setRef$1(instance, isUnmount = false) {
     if ($scope._$setRef) {
       $scope._$setRef(doSet);
     } else {
-      nextTick(instance, doSet);
+      nextTick$2(instance, doSet);
     }
   }
   if ($templateUniElementRefs && $templateUniElementRefs.length) {
-    nextTick(instance, () => {
+    nextTick$2(instance, () => {
       $templateUniElementRefs.forEach((templateRef) => {
-        if (isArray(templateRef.v)) {
+        if (isArray$1(templateRef.v)) {
           templateRef.v.forEach((v) => {
             setTemplateRef(templateRef, v, setupState);
           });
@@ -5910,7 +5940,7 @@ function setRef$1(instance, isUnmount = false) {
   }
 }
 function toSkip(value) {
-  if (isObject(value)) {
+  if (isObject$2(value)) {
     markRaw(value);
   }
   return value;
@@ -5932,14 +5962,14 @@ function setTemplateRef({ r: r2, f: f2 }, refValue, setupState) {
   if (isFunction(r2)) {
     r2(refValue, {});
   } else {
-    const _isString = isString(r2);
+    const _isString = isString$2(r2);
     const _isRef = isRef(r2);
     if (_isString || _isRef) {
       if (f2) {
         if (!_isRef) {
           return;
         }
-        if (!isArray(r2.value)) {
+        if (!isArray$1(r2.value)) {
           r2.value = [];
         }
         const existing = r2.value;
@@ -6033,7 +6063,7 @@ function renderComponentRoot(instance) {
     vnode,
     proxy,
     withProxy,
-    props,
+    props: props2,
     propsOptions: [propsOptions],
     slots,
     attrs,
@@ -6068,13 +6098,13 @@ function renderComponentRoot(instance) {
   const prev = setCurrentRenderingInstance(instance);
   try {
     if (vnode.shapeFlag & 4) {
-      fallthroughAttrs(inheritAttrs, props, propsOptions, attrs);
+      fallthroughAttrs(inheritAttrs, props2, propsOptions, attrs);
       const proxyToUse = withProxy || proxy;
       result = render.call(
         proxyToUse,
         proxyToUse,
         renderCache,
-        props,
+        props2,
         setupState,
         data,
         ctx
@@ -6082,13 +6112,13 @@ function renderComponentRoot(instance) {
     } else {
       fallthroughAttrs(
         inheritAttrs,
-        props,
+        props2,
         propsOptions,
         Component2.props ? attrs : getFunctionalFallthrough(attrs)
       );
       const render2 = Component2;
-      result = render2.length > 1 ? render2(props, { attrs, slots, emit: emit2 }) : render2(
-        props,
+      result = render2.length > 1 ? render2(props2, { attrs, slots, emit: emit2 }) : render2(
+        props2,
         null
         /* we know it doesn't need it */
       );
@@ -6101,22 +6131,22 @@ function renderComponentRoot(instance) {
   setCurrentRenderingInstance(prev);
   return result;
 }
-function fallthroughAttrs(inheritAttrs, props, propsOptions, fallthroughAttrs2) {
-  if (props && fallthroughAttrs2 && inheritAttrs !== false) {
-    const keys = Object.keys(fallthroughAttrs2).filter(
+function fallthroughAttrs(inheritAttrs, props2, propsOptions, fallthroughAttrs2) {
+  if (props2 && fallthroughAttrs2 && inheritAttrs !== false) {
+    const keys2 = Object.keys(fallthroughAttrs2).filter(
       (key) => key !== "class" && key !== "style"
     );
-    if (!keys.length) {
+    if (!keys2.length) {
       return;
     }
-    if (propsOptions && keys.some(isModelListener)) {
-      keys.forEach((key) => {
+    if (propsOptions && keys2.some(isModelListener)) {
+      keys2.forEach((key) => {
         if (!isModelListener(key) || !(key.slice(9) in propsOptions)) {
-          props[key] = fallthroughAttrs2[key];
+          props2[key] = fallthroughAttrs2[key];
         }
       });
     } else {
-      keys.forEach((key) => props[key] = fallthroughAttrs2[key]);
+      keys2.forEach((key) => props2[key] = fallthroughAttrs2[key]);
     }
   }
 }
@@ -6135,7 +6165,7 @@ function componentUpdateScopedSlotsFn() {
   const diffData = /* @__PURE__ */ Object.create(null);
   scopedSlotsData.forEach(({ path, index: index2, data }) => {
     const oldScopedSlotData = getValueByDataPath(oldData, path);
-    const diffPath = isString(index2) ? `${path}.${index2}` : `${path}[${index2}]`;
+    const diffPath = isString$2(index2) ? `${path}.${index2}` : `${path}[${index2}]`;
     if (typeof oldScopedSlotData === "undefined" || typeof oldScopedSlotData[index2] === "undefined") {
       diffData[diffPath] = data;
     } else {
@@ -6334,7 +6364,7 @@ function initHooks$1(options, instance, publicThis) {
   Object.keys(options).forEach((name) => {
     if (isUniLifecycleHook(name, options[name], false)) {
       const hooks = options[name];
-      if (isArray(hooks)) {
+      if (isArray$1(hooks)) {
         hooks.forEach((hook) => injectLifecycleHook(name, hook, publicThis, instance));
       } else {
         injectLifecycleHook(name, hooks, publicThis, instance);
@@ -6466,9 +6496,9 @@ function initApp(app) {
   }
 }
 const propsCaches = /* @__PURE__ */ Object.create(null);
-function renderProps(props) {
+function renderProps(props2) {
   const { uid: uid2, __counter } = getCurrentInstance();
-  const propsId = (propsCaches[uid2] || (propsCaches[uid2] = [])).push(guardReactiveProps(props)) - 1;
+  const propsId = (propsCaches[uid2] || (propsCaches[uid2] = [])).push(guardReactiveProps(props2)) - 1;
   return uid2 + "," + propsId + "," + __counter;
 }
 function pruneComponentPropsCache(uid2) {
@@ -6524,10 +6554,26 @@ function getGlobalCreateApp(method) {
 function normalizeSubpackageRoot$1(root) {
   return typeof root === "string" ? root.replace(/^\/+|\/+$/g, "") : void 0;
 }
+function stringifyStyle(value) {
+  if (isString$2(value)) {
+    return value;
+  }
+  return stringify(normalizeStyle(value));
+}
+function stringify(styles2) {
+  let ret = "";
+  if (!styles2 || isString$2(styles2)) {
+    return ret;
+  }
+  for (const key in styles2) {
+    ret += `${key.startsWith(`--`) ? key : hyphenate$1(key)}:${styles2[key]};`;
+  }
+  return ret;
+}
 function vOn(value, key) {
   const instance = getCurrentInstance();
   const ctx = instance.ctx;
-  const extraKey = typeof key !== "undefined" && (ctx.$mpPlatform === "mp-weixin" || ctx.$mpPlatform === "mp-qq" || ctx.$mpPlatform === "mp-xhs") && (isString(key) || typeof key === "number") ? "_" + key : "";
+  const extraKey = typeof key !== "undefined" && (ctx.$mpPlatform === "mp-weixin" || ctx.$mpPlatform === "mp-qq" || ctx.$mpPlatform === "mp-xhs") && (isString$2(key) || typeof key === "number") ? "_" + key : "";
   const name = "e" + instance.$ei++ + extraKey;
   const mpInstance = ctx.$scope;
   if (!value) {
@@ -6562,7 +6608,7 @@ function createInvoker(initialValue, instance) {
       setTimeout(invoke);
     } else {
       const res = invoke();
-      if (e2.type === "input" && (isArray(res) || isPromise(res))) {
+      if (e2.type === "input" && (isArray$1(res) || isPromise(res))) {
         return;
       }
       return res;
@@ -6600,16 +6646,16 @@ function patchMPEvent(event, instance) {
       event.detail = typeof event.detail === "object" ? event.detail : {};
       event.detail.markerId = event.markerId;
     }
-    if (isPlainObject$1(event.detail) && hasOwn(event.detail, "checked") && !hasOwn(event.detail, "value")) {
+    if (isPlainObject$2(event.detail) && hasOwn(event.detail, "checked") && !hasOwn(event.detail, "value")) {
       event.detail.value = event.detail.checked;
     }
-    if (isPlainObject$1(event.detail)) {
+    if (isPlainObject$2(event.detail)) {
       event.target = extend({}, event.target, event.detail);
     }
   }
 }
 function patchStopImmediatePropagation(e2, value) {
-  if (isArray(value)) {
+  if (isArray$1(value)) {
     const originalStop = e2.stopImmediatePropagation;
     e2.stopImmediatePropagation = () => {
       originalStop && originalStop.call(e2);
@@ -6622,7 +6668,7 @@ function patchStopImmediatePropagation(e2, value) {
 }
 function vFor(source, renderItem) {
   let ret;
-  if (isArray(source) || isString(source)) {
+  if (isArray$1(source) || isString$2(source)) {
     ret = new Array(source.length);
     for (let i = 0, l = source.length; i < l; i++) {
       ret[i] = renderItem(source[i], i, i);
@@ -6636,14 +6682,14 @@ function vFor(source, renderItem) {
     for (let i = 0; i < source; i++) {
       ret[i] = renderItem(i + 1, i, i);
     }
-  } else if (isObject(source)) {
+  } else if (isObject$2(source)) {
     if (source[Symbol.iterator]) {
       ret = Array.from(source, (item, i) => renderItem(item, i, i));
     } else {
-      const keys = Object.keys(source);
-      ret = new Array(keys.length);
-      for (let i = 0, l = keys.length; i < l; i++) {
-        const key = keys[i];
+      const keys2 = Object.keys(source);
+      ret = new Array(keys2.length);
+      for (let i = 0, l = keys2.length; i < l; i++) {
+        const key = keys2[i];
         ret[i] = renderItem(source[key], key, i);
       }
     }
@@ -6654,10 +6700,11 @@ function vFor(source, renderItem) {
 }
 const o = (value, key) => vOn(value, key);
 const f = (source, renderItem) => vFor(source, renderItem);
+const s = (value) => stringifyStyle(value);
 const e = (target, ...sources) => extend(target, ...sources);
 const n = (value) => normalizeClass(value);
 const t = (val) => toDisplayString(val);
-const p = (props) => renderProps(props);
+const p = (props2) => renderProps(props2);
 function createApp$1(rootComponent, rootProps = null) {
   rootComponent && (rootComponent.mpType = "app");
   return createVueApp(rootComponent, rootProps).use(plugin);
@@ -6698,7 +6745,7 @@ function initWorkletMethods(mpMethods, vueMethods) {
   }
 }
 function initWxsCallMethods(methods, wxsCallMethods) {
-  if (!isArray(wxsCallMethods)) {
+  if (!isArray$1(wxsCallMethods)) {
     return;
   }
   wxsCallMethods.forEach((callMethod) => {
@@ -6754,8 +6801,8 @@ function getLocaleLanguage() {
   var _a;
   let localeLanguage = "";
   {
-    const appBaseInfo = ((_a = wx.getAppBaseInfo) === null || _a === void 0 ? void 0 : _a.call(wx)) || wx.getSystemInfoSync();
-    const language = appBaseInfo && appBaseInfo.language ? appBaseInfo.language : LOCALE_EN;
+    const appBaseInfo2 = ((_a = wx.getAppBaseInfo) === null || _a === void 0 ? void 0 : _a.call(wx)) || wx.getSystemInfoSync();
+    const language = appBaseInfo2 && appBaseInfo2.language ? appBaseInfo2.language : LOCALE_EN;
     localeLanguage = normalizeLocale(language) || LOCALE_EN;
   }
   return localeLanguage;
@@ -6800,7 +6847,7 @@ function initBaseInstance(instance, options) {
     ctx._self = {};
   }
   instance.slots = {};
-  if (isArray(options.slots) && options.slots.length) {
+  if (isArray$1(options.slots) && options.slots.length) {
     options.slots.forEach((name) => {
       instance.slots[name] = true;
     });
@@ -6917,7 +6964,7 @@ const findMixinRuntimeHooks = /* @__PURE__ */ once(() => {
   const app = isFunction(getApp) && getApp({ allowDefault: true });
   if (app && app.$vm && app.$vm.$) {
     const mixins = app.$vm.$.appContext.mixins;
-    if (isArray(mixins)) {
+    if (isArray$1(mixins)) {
       const hooks = Object.keys(MINI_PROGRAM_PAGE_RUNTIME_HOOKS);
       mixins.forEach((mixin) => {
         hooks.forEach((hook) => {
@@ -7174,7 +7221,7 @@ function initProps(mpComponentOptions) {
 }
 const PROP_TYPES = [String, Number, Boolean, Object, Array, null];
 function parsePropType(type, defaultValue) {
-  if (isArray(type) && type.length === 1) {
+  if (isArray$1(type) && type.length === 1) {
     return type[0];
   }
   return type;
@@ -7184,17 +7231,17 @@ function normalizePropType(type, defaultValue) {
   return PROP_TYPES.indexOf(res) !== -1 ? res : null;
 }
 function initPageProps({ properties }, rawProps) {
-  if (isArray(rawProps)) {
+  if (isArray$1(rawProps)) {
     rawProps.forEach((key) => {
       properties[key] = {
         type: String,
         value: ""
       };
     });
-  } else if (isPlainObject$1(rawProps)) {
+  } else if (isPlainObject$2(rawProps)) {
     Object.keys(rawProps).forEach((key) => {
       const opts = rawProps[key];
-      if (isPlainObject$1(opts)) {
+      if (isPlainObject$2(opts)) {
         let value = opts.default;
         if (isFunction(value)) {
           value = value();
@@ -7218,7 +7265,7 @@ function findPropsData(properties, isPage2) {
 }
 function findPagePropsData(properties) {
   const propsData = {};
-  if (isPlainObject$1(properties)) {
+  if (isPlainObject$2(properties)) {
     Object.keys(properties).forEach((name) => {
       if (builtInProps.indexOf(name) === -1) {
         propsData[name] = resolvePropValue(properties[name]);
@@ -7229,7 +7276,7 @@ function findPagePropsData(properties) {
 }
 function initFormField(vm) {
   const vueOptions = vm.$options;
-  if (isArray(vueOptions.behaviors) && vueOptions.behaviors.includes("uni://form-field")) {
+  if (isArray$1(vueOptions.behaviors) && vueOptions.behaviors.includes("uni://form-field")) {
     vm.$watch("modelValue", () => {
       vm.$scope && vm.$scope.setData({
         name: vm.name,
@@ -7306,11 +7353,11 @@ function initBehaviors(vueOptions) {
     vueOptions.props = vueProps = [];
   }
   const behaviors = [];
-  if (isArray(vueBehaviors)) {
+  if (isArray$1(vueBehaviors)) {
     vueBehaviors.forEach((behavior) => {
       behaviors.push(behavior.replace("uni://", "wx://"));
       if (behavior === "uni://form-field") {
-        if (isArray(vueProps)) {
+        if (isArray$1(vueProps)) {
           vueProps.push("name");
           vueProps.push("modelValue");
         } else {
@@ -7340,9 +7387,9 @@ function parseComponent(vueOptions, { parse, mocks: mocks2, isPage: isPage2, isP
     addGlobalClass: true,
     pureDataPattern: /^uP$/
   };
-  if (isArray(vueOptions.mixins)) {
+  if (isArray$1(vueOptions.mixins)) {
     vueOptions.mixins.forEach((item) => {
-      if (isObject(item.options)) {
+      if (isObject$2(item.options)) {
         extend(options, item.options);
       }
     });
@@ -7626,7 +7673,7 @@ function del(target, key) {
 let activePinia;
 const setActivePinia = (pinia) => activePinia = pinia;
 const piniaSymbol = Symbol("pinia");
-function isPlainObject(o2) {
+function isPlainObject$1(o2) {
   return o2 && typeof o2 === "object" && Object.prototype.toString.call(o2) === "[object Object]" && typeof o2.toJSON !== "function";
 }
 var MutationType;
@@ -7726,7 +7773,7 @@ function patchObject(newState, oldState) {
       continue;
     }
     const targetValue = newState[key];
-    if (isPlainObject(targetValue) && isPlainObject(subPatch) && !isRef(subPatch) && !isReactive(subPatch)) {
+    if (isPlainObject$1(targetValue) && isPlainObject$1(subPatch) && !isRef(subPatch) && !isReactive(subPatch)) {
       newState[key] = patchObject(targetValue, subPatch);
     } else {
       {
@@ -7771,7 +7818,7 @@ function mergeReactiveObjects(target, patchToApply) {
       continue;
     const subPatch = patchToApply[key];
     const targetValue = target[key];
-    if (isPlainObject(targetValue) && isPlainObject(subPatch) && target.hasOwnProperty(key) && !isRef(subPatch) && !isReactive(subPatch)) {
+    if (isPlainObject$1(targetValue) && isPlainObject$1(subPatch) && target.hasOwnProperty(key) && !isRef(subPatch) && !isReactive(subPatch)) {
       target[key] = mergeReactiveObjects(targetValue, subPatch);
     } else {
       target[key] = subPatch;
@@ -7781,7 +7828,7 @@ function mergeReactiveObjects(target, patchToApply) {
 }
 const skipHydrateSymbol = Symbol("pinia:skipHydration");
 function shouldHydrate(obj) {
-  return !isPlainObject(obj) || !obj.hasOwnProperty(skipHydrateSymbol);
+  return !isPlainObject$1(obj) || !obj.hasOwnProperty(skipHydrateSymbol);
 }
 const { assign } = Object;
 function isComputed(o2) {
@@ -8050,7 +8097,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
         if (stateKey in store.$state) {
           const newStateTarget = newStore.$state[stateKey];
           const oldStateSource = store.$state[stateKey];
-          if (typeof newStateTarget === "object" && isPlainObject(newStateTarget) && isPlainObject(oldStateSource)) {
+          if (typeof newStateTarget === "object" && isPlainObject$1(newStateTarget) && isPlainObject$1(oldStateSource)) {
             patchObject(newStateTarget, oldStateSource);
           } else {
             newStore.$state[stateKey] = oldStateSource;
@@ -8148,9 +8195,15 @@ function defineStore(idOrOptions, setup, setupOptions) {
   let id;
   let options;
   const isSetupStore = typeof setup === "function";
-  {
+  if (typeof idOrOptions === "string") {
     id = idOrOptions;
     options = isSetupStore ? setupOptions : setup;
+  } else {
+    options = idOrOptions;
+    id = idOrOptions.id;
+    if (typeof id !== "string") {
+      throw new Error(`[🍍]: "defineStore()" must be passed a store id as its first argument.`);
+    }
   }
   function useStore(pinia, hot) {
     const hasContext = hasInjectionContext();
@@ -8212,17 +8265,1644 @@ const onHide = /* @__PURE__ */ createLifeCycleHook(
   2
   /* HookFlags.PAGE */
 );
-const onLaunch = /* @__PURE__ */ createLifeCycleHook(
-  ON_LAUNCH,
-  1
-  /* HookFlags.APP */
-);
 const onLoad = /* @__PURE__ */ createLifeCycleHook(
   ON_LOAD,
   2
   /* HookFlags.PAGE */
 );
+const prefix = "t";
+const isString$1 = (val) => typeof val === "string";
+const isNull = (value) => value === null;
+const isUndefined = (value) => value === void 0;
+function isDef(value) {
+  return !isUndefined(value) && !isNull(value);
+}
+function isNumeric(value) {
+  return !Number.isNaN(Number(value));
+}
+function isBoolean$1(value) {
+  return typeof value === "boolean";
+}
+function isObject$1(x) {
+  const type = typeof x;
+  return x !== null && (type === "object" || type === "function");
+}
+function isPlainObject(val) {
+  return val !== null && typeof val === "object" && Object.prototype.toString.call(val) === "[object Object]";
+}
+const getWindowInfo = () => index.getWindowInfo ? index.getWindowInfo() || index.getSystemInfoSync() : index.getSystemInfoSync();
+const getAppBaseInfo = () => index.getAppBaseInfo ? index.getAppBaseInfo() || index.getSystemInfoSync() : index.getSystemInfoSync();
+const getDeviceInfo = () => index.getDeviceInfo ? index.getDeviceInfo() || index.getSystemInfoSync() : index.getSystemInfoSync();
+const systemInfo$1 = getWindowInfo();
+const appBaseInfo = getAppBaseInfo();
+const deviceInfo = getDeviceInfo();
+function coalesce(...args) {
+  for (let i = 0; i < args.length; i += 1) {
+    if (args[i] !== null && args[i] !== void 0) {
+      return args[i];
+    }
+  }
+  return args[args.length - 1];
+}
+const classNames = function(...args) {
+  const hasOwn2 = {}.hasOwnProperty;
+  const classes = [];
+  args.forEach((arg) => {
+    if (!arg)
+      return;
+    const argType = typeof arg;
+    if (argType === "string" || argType === "number") {
+      classes.push(arg);
+    } else if (Array.isArray(arg) && arg.length) {
+      const inner = classNames(...arg);
+      if (inner) {
+        classes.push(inner);
+      }
+    } else if (argType === "object") {
+      for (const key in arg) {
+        if (hasOwn2.call(arg, key) && arg[key]) {
+          classes.push(key);
+        }
+      }
+    }
+  });
+  return classes.join(" ");
+};
+const styles = function(styleObj) {
+  return Object.keys(styleObj).map((styleKey) => `${styleKey}: ${styleObj[styleKey]}`).join("; ");
+};
+const getRect = function(context, selector, needAll = false, useH5Origin = false) {
+  return new Promise((resolve2, reject) => {
+    index.createSelectorQuery().in(context)[
+      // eslint-disable-next-line no-unexpected-multiline
+      needAll ? "selectAll" : "select"
+    ](selector).boundingClientRect((rect) => {
+      if (rect) {
+        resolve2(rect);
+      } else {
+        reject(rect);
+      }
+    }).exec();
+  });
+};
+(deviceInfo == null ? void 0 : deviceInfo.environment) === "wxwork";
+["mac", "windows"].includes(deviceInfo == null ? void 0 : deviceInfo.platform);
+const addUnit$1 = function(value) {
+  if (!isDef(value)) {
+    return void 0;
+  }
+  value = String(value);
+  return isNumeric(value) ? `${value}px` : value;
+};
+const getCharacterLength = (type, char, max) => {
+  const str = String(coalesce(char, ""));
+  if (str.length === 0) {
+    return {
+      length: 0,
+      characters: ""
+    };
+  }
+  if (type === "maxcharacter") {
+    let len = 0;
+    for (let i = 0; i < str.length; i += 1) {
+      let currentStringLength = 0;
+      if (str.charCodeAt(i) > 127 || str.charCodeAt(i) === 94) {
+        currentStringLength = 2;
+      } else {
+        currentStringLength = 1;
+      }
+      if (len + currentStringLength > max) {
+        return {
+          length: len,
+          characters: str.slice(0, i)
+        };
+      }
+      len += currentStringLength;
+    }
+    return {
+      length: len,
+      characters: str
+    };
+  }
+  if (type === "maxlength") {
+    const length = str.length > max ? max : str.length;
+    return {
+      length,
+      characters: str.slice(0, length)
+    };
+  }
+  return {
+    length: str.length,
+    characters: str
+  };
+};
+const setIcon = (iconName, icon, defaultIcon) => {
+  if (icon) {
+    if (typeof icon === "string") {
+      return {
+        [`${iconName}Name`]: icon,
+        [`${iconName}Data`]: {}
+      };
+    }
+    if (typeof icon === "object") {
+      return {
+        [`${iconName}Name`]: "",
+        [`${iconName}Data`]: icon
+      };
+    }
+    return {
+      [`${iconName}Name`]: defaultIcon,
+      [`${iconName}Data`]: {}
+    };
+  }
+  return {
+    [`${iconName}Name`]: "",
+    [`${iconName}Data`]: {}
+  };
+};
+const toCamel = (str) => str.replace(/-(\w)/g, (match, m1) => m1.toUpperCase());
+const toPascal = (name) => name.split("-").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join("");
+function hyphenate(str) {
+  const hyphenateRE2 = /\B([A-Z])/g;
+  return str.replace(hyphenateRE2, "-$1").toLowerCase();
+}
+const uniqueFactory = (compName) => {
+  let number = 0;
+  return () => {
+    const uniqueId = `${prefix}_${compName}_${number}`;
+    number += 1;
+    return uniqueId;
+  };
+};
+const calcIcon = (icon, defaultIcon) => {
+  if (icon && (isBoolean$1(icon) && defaultIcon || isString$1(icon))) {
+    return { name: isBoolean$1(icon) ? defaultIcon : icon };
+  }
+  if (isObject$1(icon)) {
+    return icon;
+  }
+  return null;
+};
+const nextTick = () => new Promise((resolve2) => {
+  setTimeout(() => {
+    resolve2();
+  }, 33);
+});
+let systemInfo;
+function getSystemInfo() {
+  if (systemInfo == null) {
+    systemInfo = getAppBaseInfo();
+  }
+  return systemInfo;
+}
+function compareVersion(v1, v2) {
+  if (!v1 || !v2) {
+    return 0;
+  }
+  v1 = v1.split(".");
+  v2 = v2.split(".");
+  const len = Math.max(v1.length, v2.length);
+  while (v1.length < len) {
+    v1.push("0");
+  }
+  while (v2.length < len) {
+    v2.push("0");
+  }
+  for (let i = 0; i < len; i += 1) {
+    const num1 = parseInt(v1[i], 10);
+    const num2 = parseInt(v2[i], 10);
+    if (num1 > num2) {
+      return 1;
+    }
+    if (num1 < num2) {
+      return -1;
+    }
+  }
+  return 0;
+}
+function judgeByVersion(version2) {
+  const currentSDKVersion = getSystemInfo().SDKVersion;
+  return compareVersion(currentSDKVersion, version2) >= 0;
+}
+function canUseVirtualHost() {
+  let result = false;
+  result = judgeByVersion("2.19.2");
+  return result;
+}
+const getInnerControlledValue = (key) => `data${key.replace(/^(\w)/, (e2, t2) => t2.toUpperCase())}`;
+const getDefaultKey = (key) => `default${key.replace(/^(\w)/, (e2, t2) => t2.toUpperCase())}`;
+const ARIAL_PROPS = [
+  { key: "ariaHidden", type: Boolean },
+  { key: "ariaRole", type: String },
+  { key: "ariaLabel", type: String },
+  { key: "ariaLabelledby", type: String },
+  { key: "ariaDescribedby", type: String },
+  { key: "ariaBusy", type: Boolean }
+];
+const getPropsDefault = (type, disableBoolean = false) => {
+  if (type === Boolean && !disableBoolean) {
+    return false;
+  }
+  if (type === String) {
+    return "";
+  }
+  return void 0;
+};
+const COMMON_PROPS = {
+  ...ARIAL_PROPS.reduce(
+    (acc, item) => ({
+      ...acc,
+      [item.key]: {
+        type: item.type,
+        default: getPropsDefault(item.type)
+      }
+    }),
+    {}
+  ),
+  customStyle: { type: [String, Object], default: "" }
+};
+const toComponent = function(options) {
+  if (!options.properties && options.props) {
+    options.properties = options.props;
+  }
+  if (options.properties) {
+    Object.keys(options.properties).forEach((k) => {
+      let opt = options.properties[k];
+      if (!isPlainObject(opt)) {
+        opt = { type: opt };
+      }
+      options.properties[k] = opt;
+    });
+  }
+  if (!options.methods)
+    options.methods = {};
+  if (!options.lifetimes)
+    options.lifetimes = {};
+  const oldCreated = options.created;
+  const { controlledProps = [] } = options;
+  options.created = function(...args) {
+    if (oldCreated) {
+      oldCreated.apply(this, args);
+    }
+    controlledProps.forEach(({ key }) => {
+      const defaultKey = getDefaultKey(key);
+      const tDataKey = getInnerControlledValue(key);
+      this[tDataKey] = this[key];
+      if (this[key] == null) {
+        this._selfControlled = true;
+      }
+      if (this[key] == null && this[defaultKey] != null) {
+        this[tDataKey] = this[defaultKey];
+      }
+    });
+  };
+  options.methods._trigger = function(evtName, detail, opts) {
+    const target = controlledProps.find((item) => item.event === evtName);
+    if (target) {
+      const { key } = target;
+      if (this._selfControlled) {
+        const tDataKey = getInnerControlledValue(key);
+        this[tDataKey] = detail[key];
+      }
+      this.$emit(`update:${key}`, detail[key], opts);
+    }
+    this.$emit(evtName, detail, opts);
+  };
+  return options;
+};
+function sortPropsType(type) {
+  if (!Array.isArray(type)) {
+    return type;
+  }
+  type.sort((a, b) => {
+    if (a === Boolean) {
+      return -1;
+    }
+    if (b === Boolean) {
+      return 1;
+    }
+    return 0;
+  });
+  return type;
+}
+function filterProps(props2, controlledProps) {
+  const newProps = {};
+  const emits = [];
+  const reg = /^on[A-Z][a-z]/;
+  const controlledKeys = Object.values(controlledProps).map((item) => item.key);
+  const unControlledKeys = controlledKeys.map((key) => getDefaultKey(key));
+  Object.keys(props2).forEach((key) => {
+    const curType = props2[key].type || props2[key];
+    if (reg.test(key) && props2[key].type === Function) {
+      const str = key.replace(/^on/, "");
+      const eventName = str.charAt(0).toLowerCase() + str.slice(1);
+      emits.push(...[hyphenate(eventName), eventName]);
+    } else if (controlledKeys.indexOf(key) > -1 || unControlledKeys.indexOf(key) > -1) {
+      const newType = Array.isArray(curType) ? curType : [curType];
+      newProps[key] = {
+        type: [null, ...newType],
+        default: null
+      };
+    } else if ([Boolean, String].indexOf(props2[key].type) > -1 && props2[key].default === void 0) {
+      newProps[key] = {
+        ...props2[key],
+        default: getPropsDefault(props2[key].type, true)
+      };
+    } else {
+      newProps[key] = {
+        ...typeof props2[key] === "object" ? props2[key] : {},
+        type: sortPropsType(curType)
+      };
+    }
+  });
+  return {
+    newProps,
+    emits
+  };
+}
+const getEmitsByControlledProps = (controlledProps) => Object.values(controlledProps).map((item) => `update:${item.key}`);
+const uniComponent = function(info) {
+  const { newProps, emits } = filterProps(info.props || {}, info.controlledProps || {});
+  info.props = {
+    ...getExternalClasses(info),
+    ...newProps,
+    ...COMMON_PROPS
+  };
+  info.emits = Array.from(
+    /* @__PURE__ */ new Set([...info.emits || [], ...getEmitsByControlledProps(info.controlledProps || {}), ...emits])
+  );
+  info.options = {
+    ...info.options || {},
+    multipleSlots: true
+  };
+  if (canUseVirtualHost() && info.options.virtualHost == null) {
+    info.options.virtualHost = true;
+  }
+  if (!info.options.styleIsolation) {
+    info.options.styleIsolation = "shared";
+  }
+  if (info.name) {
+    info.name = toPascal(info.name);
+  }
+  const obj = toComponent(info);
+  return obj;
+};
+function getExternalClasses(info) {
+  if (!info.externalClasses) {
+    return {};
+  }
+  const { externalClasses } = info;
+  const list = Array.isArray(externalClasses) ? externalClasses : [externalClasses];
+  return list.reduce(
+    (acc, item) => ({
+      ...acc,
+      [toCamel(item)]: {
+        type: String,
+        default: ""
+      }
+    }),
+    {}
+  );
+}
+function getRegExp() {
+  const args = Array.prototype.slice.call(arguments);
+  args.unshift(RegExp);
+  return new (Function.prototype.bind.apply(RegExp, args))();
+}
+function addUnit(value) {
+  const REGEXP = getRegExp("^-?\\d+(.\\d+)?$");
+  if (value == null) {
+    return void 0;
+  }
+  return REGEXP.test(`${value}`) ? `${value}px` : value;
+}
+function isString(string) {
+  return typeof string === "string";
+}
+function isArray(array) {
+  return Array.isArray(array);
+}
+function isObject(x) {
+  const type = typeof x;
+  return x !== null && (type === "object" || type === "function");
+}
+function isBoolean(value) {
+  return typeof value === "boolean";
+}
+const isNoEmptyObj = function(obj) {
+  return isObject(obj) && JSON.stringify(obj) !== "{}";
+};
+function includes(arr, value) {
+  if (!arr || !isArray(arr))
+    return false;
+  let i = 0;
+  const len = arr.length;
+  for (; i < len; i++) {
+    if (arr[i] === value)
+      return true;
+  }
+  return false;
+}
+function cls(base, arr) {
+  const res = [base];
+  let i = 0;
+  for (let size2 = arr.length; i < size2; i++) {
+    const item = arr[i];
+    if (item && Array.isArray(item)) {
+      const key = arr[i][0];
+      const value = arr[i][1];
+      if (value) {
+        res.push(`${base}--${key}`);
+      }
+    } else if (typeof item === "string" || typeof item === "number") {
+      if (item) {
+        res.push(`${base}--${item}`);
+      }
+    }
+  }
+  return res.join(" ");
+}
+function getBadgeAriaLabel(options) {
+  const maxCount = options.maxCount || 99;
+  if (options.dot) {
+    return "有新的消息";
+  }
+  if (options.count === "...") {
+    return "有很多消息";
+  }
+  if (isNaN(options.count)) {
+    return options.count;
+  }
+  const str1 = `有${maxCount}+条消息`;
+  const str2 = `有${options.count}条消息`;
+  return Number(options.count) > maxCount ? str1 : str2;
+}
+function endsWith(str, endStr) {
+  return str.slice(-endStr.length) === endStr ? str : str + endStr;
+}
+function keys(obj) {
+  return JSON.stringify(obj).replace(getRegExp('{|}|"', "g"), "").split(",").map((item) => item.split(":")[0]);
+}
+function kebabCase(str) {
+  return str.replace(getRegExp("[A-Z]", "g"), (ele) => `-${ele}`).toLowerCase();
+}
+function _style(styles2) {
+  if (isArray(styles2)) {
+    return styles2.filter((item) => item != null && item !== "").map((item) => isArray(item) || isObject(item) ? _style(item) : endsWith(item, ";")).join(" ");
+  }
+  if (isObject(styles2)) {
+    return keys(styles2).filter((key) => styles2[key] != null && styles2[key] !== "").map((key) => [kebabCase(key), [styles2[key]]].join(":")).join(";");
+  }
+  return styles2;
+}
+function isValidIconName(str) {
+  return getRegExp("^[A-Za-z0-9-_]+$").test(str);
+}
+const tools = {
+  addUnit,
+  isString,
+  isArray,
+  isObject,
+  isBoolean,
+  isNoEmptyObj,
+  includes,
+  cls,
+  getBadgeAriaLabel,
+  _style,
+  isValidIconName
+};
+const props$7 = {
+  /** 图标颜色 */
+  color: {
+    type: String,
+    default: ""
+  },
+  /** 图标名称或图片链接 */
+  name: {
+    type: String,
+    default: "",
+    required: true
+  },
+  /** 自定义图标前缀 */
+  prefix: {
+    type: String,
+    default: ""
+  },
+  /** 图标大小, 如 `20`, `20px`, `48rpx`, 默认单位是 `px` */
+  size: {
+    type: [String, Number],
+    default: ""
+  },
+  /** 点击图标时触发 */
+  onClick: {
+    type: Function,
+    default: () => ({})
+  }
+};
+const props$6 = {
+  /** 描述文字 */
+  description: {
+    type: String
+  },
+  /** 图标名称。值为字符串表示图标名称，值为 `Object` 类型，表示透传至 `icon` */
+  icon: {
+    type: [String, Object]
+  },
+  /** 图片地址 */
+  image: {
+    type: String
+  }
+};
+const props$5 = {
+  /** 标签是否可关闭 */
+  closable: {
+    type: [Boolean, Object],
+    default: false
+  },
+  /** 标签禁用态，失效标签不能触发事件。默认风格（theme=default）才有禁用态 */
+  disabled: Boolean,
+  /** 标签中的图标，可自定义图标呈现 */
+  icon: {
+    type: [String, Object]
+  },
+  /** 标签最大宽度，宽度超出后会出现省略号。示例：'50px' / 80 */
+  maxWidth: {
+    type: [String, Number]
+  },
+  /** 标签类型，有三种：方形、圆角方形、标记型 */
+  shape: {
+    type: String,
+    default: "square",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["square", "round", "mark"].includes(val);
+    }
+  },
+  /** 标签尺寸 */
+  size: {
+    type: String,
+    default: "medium",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["small", "medium", "large", "extra-large"].includes(val);
+    }
+  },
+  /** 组件风格，用于描述组件不同的应用场景 */
+  theme: {
+    type: String,
+    default: "default",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["default", "primary", "warning", "danger", "success"].includes(val);
+    }
+  },
+  /** 标签风格变体 */
+  variant: {
+    type: String,
+    default: "dark",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["dark", "light", "outline", "light-outline"].includes(val);
+    }
+  },
+  /** 点击时触发 */
+  onClick: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 如果关闭按钮存在，点击关闭按钮时触发 */
+  onClose: {
+    type: Function,
+    default: () => ({})
+  }
+};
+const props$4 = {
+  /** 卡片id。 `open-type` 的值设置为 `liveActivity` ，设置 `activity-type` 参数为 [notify_type](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/subscribe-message-2.html)。当用户点击 `button` 后，可以通过 `bindcreateliveactivity` 事件回调获取到 `code`  */
+  activityType: {
+    type: Number
+  },
+  /** 打开 APP 时，向 APP 传递的参数，open-type=launchApp时有效 */
+  appParameter: {
+    type: String,
+    default: ""
+  },
+  /** 是否为块级元素 */
+  block: Boolean,
+  /** 按钮内容 */
+  content: {
+    type: String
+  },
+  /** 自定义 dataset，可通过 event.currentTarget.dataset.custom 获取 */
+  customDataset: {
+    type: [String, Number, Boolean, Object, Array],
+    default: () => ({})
+  },
+  /** 禁用状态。优先级：Button.disabled > Form.disabled */
+  disabled: {
+    type: [Boolean, null],
+    default: null
+  },
+  /** 从消息小程序入口打开小程序的路径，默认为聊天工具启动路径 */
+  entrancePath: {
+    type: String,
+    default: ""
+  },
+  /** 是否为幽灵按钮（镂空按钮） */
+  ghost: Boolean,
+  /** 指定按钮按下去的样式类，按钮不为加载或禁用状态时有效。当 `hover-class="none"` 时，没有点击态效果 */
+  hoverClass: {
+    type: String,
+    default: ""
+  },
+  /** 按住后多久出现点击态，单位毫秒 */
+  hoverStartTime: {
+    type: Number,
+    default: 20
+  },
+  /** 手指松开后点击态保留时间，单位毫秒 */
+  hoverStayTime: {
+    type: Number,
+    default: 70
+  },
+  /** 指定是否阻止本节点的祖先节点出现点击态 */
+  hoverStopPropagation: Boolean,
+  /** 图标名称。值为字符串表示图标名称，值为 `Object` 类型，表示透传至 `icon` */
+  icon: {
+    type: [String, Object]
+  },
+  /** 指定返回用户信息的语言，zh_CN 简体中文，zh_TW 繁体中文，en 英文。<br />具体释义：<br />`en` 英文；<br />`zh_CN` 简体中文；<br />`zh_TW` 繁体中文。<br />[小程序官方文档](https://developers.weixin.qq.com/miniprogram/dev/component/button.html) */
+  lang: {
+    type: String,
+    validator(val) {
+      if (!val)
+        return true;
+      return ["en", "zh_CN", "zh_TW"].includes(val);
+    }
+  },
+  /** 是否显示为加载状态 */
+  loading: Boolean,
+  /** 透传 Loading 组件全部属性 */
+  loadingProps: {
+    type: Object,
+    default: () => ({})
+  },
+  /** 转发的文本消息是否要带小程序入口 */
+  needShowEntrance: {
+    type: Boolean,
+    default: true
+  },
+  /** 微信开放能力。<br />具体释义：<br />`contact` 打开客服会话，如果用户在会话中点击消息卡片后返回小程序，可以从 bindcontact 回调中获得具体信息，<a href="https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/customer-message/customer-message.html">具体说明</a> （*鸿蒙 OS 暂不支持*）；<br />`liveActivity` 通过前端获取<a href="https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/subscribe-message-2.html">新的一次性订阅消息下发机制</a>使用的 code；<br />`share` 触发用户转发，使用前建议先阅读<a href="https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/share.html#使用指引">使用指引</a>；<br />`getPhoneNumber` 获取用户手机号，可以从 bindgetphonenumber 回调中获取到用户信息，<a href="https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/getPhoneNumber.html">具体说明</a> （*小程序插件中不能使用*）；<br />`getUserInfo` 获取用户信息，可以从 bindgetuserinfo 回调中获取到用户信息 （*小程序插件中不能使用*）；<br />`launchApp` 打开APP，可以通过 app-parameter 属性设定向 APP 传的参数<a href="https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/launchApp.html">具体说明</a>；<br />`openSetting` 打开授权设置页；<br />`feedback` 打开“意见反馈”页面，用户可提交反馈内容并上传<a href="https://developers.weixin.qq.com/miniprogram/dev/api/base/debug/wx.getLogManager.html">日志</a>，开发者可以登录<a href="https://mp.weixin.qq.com/">小程序管理后台</a>后进入左侧菜单“客服反馈”页面获取到反馈内容；<br />`chooseAvatar` 获取用户头像，可以从 bindchooseavatar 回调中获取到头像信息；<br />`agreePrivacyAuthorization`用户同意隐私协议按钮。用户点击一次此按钮后，所有隐私接口可以正常调用。可通过`bindagreeprivacyauthorization`监听用户同意隐私协议事件。隐私合规开发指南详情可见《<a href="https://developers.weixin.qq.com/miniprogram/dev/framework/user-privacy/PrivacyAuthorize.html">小程序隐私协议开发指南</a>》。<br />[小程序官方文档](https://developers.weixin.qq.com/miniprogram/dev/component/button.html) */
+  openType: {
+    type: String,
+    validator(val) {
+      if (!val)
+        return true;
+      return ["contact", "share", "getPhoneNumber", "getUserInfo", "launchApp", "openSetting", "feedback", "chooseAvatar", "agreePrivacyAuthorization"].includes(val);
+    }
+  },
+  /** 原生按钮属性，当手机号快速验证或手机号实时验证额度用尽时，是否对用户展示“申请获取你的手机号，但该功能使用次数已达当前小程序上限，暂时无法使用”的提示，默认展示，open-type="getPhoneNumber" 或 open-type="getRealtimePhoneNumber" 时有效 */
+  phoneNumberNoQuotaToast: {
+    type: Boolean,
+    default: true
+  },
+  /** 会话内消息卡片图片，open-type="contact"时有效 */
+  sendMessageImg: {
+    type: String,
+    default: "截图"
+  },
+  /** 会话内消息卡片点击跳转小程序路径，open-type="contact"时有效 */
+  sendMessagePath: {
+    type: String,
+    default: "当前分享路径"
+  },
+  /** 会话内消息卡片标题，open-type="contact"时有效 */
+  sendMessageTitle: {
+    type: String,
+    default: "当前标题"
+  },
+  /** 会话来源，open-type="contact"时有效 */
+  sessionFrom: {
+    type: String,
+    default: ""
+  },
+  /** 按钮形状，有 4 种：长方形、正方形、圆角长方形、圆形 */
+  shape: {
+    type: String,
+    default: "rectangle",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["rectangle", "square", "round", "circle"].includes(val);
+    }
+  },
+  /** 是否显示会话内消息卡片，设置此参数为 true，用户进入客服会话会在右下角显示"可能要发送的小程序"提示，用户点击后可以快速发送小程序消息，open-type="contact"时有效 */
+  showMessageCard: Boolean,
+  /** 组件尺寸 */
+  size: {
+    type: String,
+    default: "medium",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["extra-small", "small", "medium", "large"].includes(val);
+    }
+  },
+  /** 按钮标签id */
+  tId: {
+    type: String,
+    default: ""
+  },
+  /** 组件风格，依次为品牌色、危险色 */
+  theme: {
+    type: String,
+    default: "default",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["default", "primary", "danger", "light"].includes(val);
+    }
+  },
+  /** 同小程序的 formType */
+  type: {
+    type: String,
+    validator(val) {
+      if (!val)
+        return true;
+      return ["submit", "reset"].includes(val);
+    }
+  },
+  /** 按钮形式，基础、线框、虚线、文字 */
+  variant: {
+    type: String,
+    default: "base",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["base", "outline", "dashed", "text"].includes(val);
+    }
+  },
+  /** 原生按钮属性，用户同意隐私协议事件回调，open-type=agreePrivacyAuthorization时有效 （Tips: 如果使用 onNeedPrivacyAuthorization 接口，需要在 bindagreeprivacyauthorization 触发后再调用 resolve({ event: "agree", buttonId })） */
+  onAgreeprivacyauthorization: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 原生按钮属性，获取用户头像回调，`open-type=chooseAvatar` 时有效。返回 `e.detail.avatarUrl` 为头像临时文件链接 */
+  onChooseavatar: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 点击时触发 */
+  onClick: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 原生按钮属性，客服消息回调，`open-type="contact"` 时有效 */
+  onContact: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 新的一次性订阅消息下发机制回调，`open-type=liveActivity` 时有效 */
+  onCreateliveactivity: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 原生按钮属性，当使用开放能力时，发生错误的回调，`open-type=launchApp` 时有效 */
+  onError: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 原生按钮属性，手机号快速验证回调，open-type=getPhoneNumber时有效。Tips：在触发 bindgetphonenumber 回调后应立即隐藏手机号按钮组件，或置为 disabled 状态，避免用户重复授权手机号产生额外费用 */
+  onGetphonenumber: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 原生按钮属性，手机号实时验证回调，open-type=getRealtimePhoneNumber 时有效。Tips：在触发 bindgetrealtimephonenumber 回调后应立即隐藏手机号按钮组件，或置为 disabled 状态，避免用户重复授权手机号产生额外费用 */
+  onGetrealtimephonenumber: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 原生按钮属性，用户点击该按钮时，会返回获取到的用户信息，回调的detail数据与wx.getUserInfo返回的一致，open-type="getUserInfo"时有效 */
+  onGetuserinfo: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 打开 APP 成功的回调，`open-type=launchApp` 时有效 */
+  onLaunchapp: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 原生按钮属性，在打开授权设置页后回调，open-type=openSetting时有效 */
+  onOpensetting: {
+    type: Function,
+    default: () => ({})
+  }
+};
+const RELATION_MAP = {
+  Avatar: "AvatarGroup",
+  FormKey: "FormKey"
+};
+function textareaStyle(autosize) {
+  if (autosize && typeof autosize === "object") {
+    return tools._style({
+      "min-height": tools.addUnit(autosize.minHeight),
+      "max-height": tools.addUnit(autosize.maxHeight)
+    });
+  }
+  return "";
+}
+const props$3 = {
+  /** 键盘弹起时，是否自动上推页面 */
+  adjustPosition: {
+    type: Boolean,
+    default: true
+  },
+  /** 超出 `maxlength` 或 `maxcharacter` 之后是否还允许输入 */
+  allowInputOverMax: Boolean,
+  /** 自动聚焦，拉起键盘 */
+  autofocus: Boolean,
+  /** 是否自动增高，值为 true 时，style.height 不生效。支持传入对象，如 { maxHeight: 120, minHeight: 20 } */
+  autosize: {
+    type: [Boolean, Object],
+    default: false
+  },
+  /** 是否显示外边框 */
+  bordered: Boolean,
+  /** 点击键盘右下角按钮时是否保持键盘不收起点 */
+  confirmHold: Boolean,
+  /** 设置键盘右下角按钮的文字，仅在 type='text'时生效 */
+  confirmType: {
+    type: String,
+    default: "return",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["return", "send", "search", "next", "go", "done"].includes(val);
+    }
+  },
+  /** 指定 focus 时的光标位置 */
+  cursor: {
+    type: Number,
+    default: -1
+  },
+  /** 【试验性】光标颜色，仅在 Skyline 下有效 */
+  cursorColor: {
+    type: String,
+    default: "#0052d9"
+  },
+  /** 指定光标与键盘的距离。取textarea距离底部的距离和cursor-spacing指定的距离的最小值作为光标与键盘的距离 */
+  cursorSpacing: {
+    type: Number,
+    default: 0
+  },
+  /** 是否去掉 iOS 下的默认内边距 */
+  disableDefaultPadding: Boolean,
+  /** 是否禁用文本框 */
+  disabled: {
+    type: [Boolean, null],
+    default: null
+  },
+  /** 如果 textarea 是在一个 `position:fixed` 的区域，需要显式指定属性 fixed 为 true */
+  fixed: Boolean,
+  /** 自动聚焦 */
+  focus: Boolean,
+  /** focus时，点击页面的时候不收起键盘 */
+  holdKeyboard: Boolean,
+  /** 显示文本计数器，如 0/140。当 `maxlength < 0 && maxcharacter < 0` 成立时， indicator无效 */
+  indicator: Boolean,
+  /** 左侧文本 */
+  label: {
+    type: String
+  },
+  /** 用户最多可以输入的字符个数，一个中文汉字表示两个字符长度 */
+  maxcharacter: {
+    type: Number
+  },
+  /** 用户最多可以输入的字符个数，值为 -1 的时候不限制最大长度 */
+  maxlength: {
+    type: Number,
+    default: -1
+  },
+  /** 占位符 */
+  placeholder: {
+    type: [String, null],
+    default: null
+  },
+  /** 指定 placeholder 的样式类，目前仅支持color,font-size和font-weight */
+  placeholderClass: {
+    type: String,
+    default: "textarea-placeholder"
+  },
+  /** 指定 placeholder 的样式，目前仅支持 color ,font-size和font-weight */
+  placeholderStyle: {
+    type: String,
+    default: ""
+  },
+  /** 只读状态 */
+  readonly: {
+    type: [Boolean, null],
+    default: null
+  },
+  /** 光标结束位置，自动聚集时有效，需与 selection-start 搭配使用 */
+  selectionEnd: {
+    type: Number,
+    default: -1
+  },
+  /** 光标起始位置，自动聚集时有效，需与 selection-end 搭配使用 */
+  selectionStart: {
+    type: Number,
+    default: -1
+  },
+  /** 是否显示键盘上方带有”完成“按钮那一栏 */
+  showConfirmBar: {
+    type: Boolean,
+    default: true
+  },
+  /** 文本框值 */
+  value: {
+    type: [String, Number]
+  },
+  /** 文本框值，非受控属性 */
+  defaultValue: {
+    type: [String, Number]
+  },
+  /** 失去焦点时触发 */
+  onBlur: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 输入内容变化时触发 */
+  onChange: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 点击完成时触发 */
+  onEnter: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 获得焦点时触发 */
+  onFocus: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 键盘高度发生变化的时候触发此事件 */
+  onKeyboardheightchange: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 行高发生变化时触发 */
+  onLineChange: {
+    type: Function,
+    default: () => ({})
+  }
+};
+function getInputClass(classPrefix, suffix, align, disabled) {
+  const className = [`${classPrefix}__control`];
+  if (align) {
+    className.push(`${classPrefix}--${align}`);
+  }
+  if (disabled) {
+    className.push(`${classPrefix}__control--disabled`);
+  }
+  return className.join(" ");
+}
+const props$2 = {
+  /** 键盘弹起时，是否自动上推页面 */
+  adjustPosition: {
+    type: Boolean,
+    default: true
+  },
+  /** 文本内容位置，居左/居中/居右 */
+  align: {
+    type: String,
+    default: "left",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["left", "center", "right"].includes(val);
+    }
+  },
+  /** 超出 `maxlength` 或 `maxcharacter` 之后是否允许继续输入 */
+  allowInputOverMax: Boolean,
+  /** 强制 input 处于同层状态，默认 focus 时 input 会切到非同层状态 (仅在 iOS 下生效) */
+  alwaysEmbed: Boolean,
+  /** (即将废弃，请直接使用 focus )自动聚焦，拉起键盘 */
+  autoFocus: Boolean,
+  /** 是否开启无边框模式 */
+  borderless: Boolean,
+  /** 清空图标触发方式，仅在输入框有值时有效 */
+  clearTrigger: {
+    type: String,
+    default: "always",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["always", "focus"].includes(val);
+    }
+  },
+  /** 是否可清空，默认不启动。值为 `true` 表示使用默认清空按钮，值为 `Object` 表示透传至 `icon` */
+  clearable: {
+    type: [Boolean, Object],
+    default: false
+  },
+  /** 点击键盘右下角按钮时是否保持键盘不收起 */
+  confirmHold: Boolean,
+  /** 设置键盘右下角按钮的文字，仅在type='text'时生效。<br />具体释义：<br />`send` 右下角按钮为“发送”；<br />`search` 右下角按钮为“搜索”；<br />`next` 右下角按钮为“下一个”；<br />`go` 右下角按钮为“前往”；<br />`done` 右下角按钮为“完成”。<br />[小程序官方文档](https://developers.weixin.qq.com/miniprogram/dev/component/input.html) */
+  confirmType: {
+    type: String,
+    default: "done",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["send", "search", "next", "go", "done"].includes(val);
+    }
+  },
+  /** 指定 focus 时的光标位置 */
+  cursor: {
+    type: Number,
+    default: -1
+  },
+  /** 光标颜色。iOS 下的格式为十六进制颜色值 #000000，安卓下的只支持 default 和 green，Skyline 下无限制 */
+  cursorColor: {
+    type: String,
+    default: "#0052d9"
+  },
+  /** 指定光标与键盘的距离，取 input 距离底部的距离和 cursor-spacing 指定的距离的最小值作为光标与键盘的距离 */
+  cursorSpacing: {
+    type: Number,
+    default: 0
+  },
+  /** 是否禁用输入框 */
+  disabled: {
+    type: [Boolean, null],
+    default: null
+  },
+  /** 获取焦点 */
+  focus: Boolean,
+  /** 指定输入框展示值的格式 */
+  format: {
+    type: Function
+  },
+  /** focus时，点击页面的时候不收起键盘 */
+  holdKeyboard: Boolean,
+  /** 左侧文本 */
+  label: {
+    type: String
+  },
+  /** 标题输入框布局方式 */
+  layout: {
+    type: String,
+    default: "horizontal",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["vertical", "horizontal"].includes(val);
+    }
+  },
+  /** 用户最多可以输入的字符个数，一个中文汉字表示两个字符长度。`maxcharacter` 和 `maxlength` 二选一使用 */
+  maxcharacter: {
+    type: Number
+  },
+  /** 用户最多可以输入的文本长度，一个中文等于一个计数长度。默认为 -1，不限制输入长度。`maxcharacter` 和 `maxlength` 二选一使用 */
+  maxlength: {
+    type: Number,
+    default: -1
+  },
+  /** 占位符 */
+  placeholder: {
+    type: [String, null],
+    default: null
+  },
+  /** 指定 placeholder 的样式类 */
+  placeholderClass: {
+    type: String,
+    default: "input-placeholder"
+  },
+  /** 指定 placeholder 的样式 */
+  placeholderStyle: {
+    type: String,
+    default: ""
+  },
+  /** 组件前置图标。值为字符串表示图标名称，值为 `Object` 类型，表示透传至 `icon` */
+  prefixIcon: {
+    type: [String, Object]
+  },
+  /** 只读状态 */
+  readonly: {
+    type: [Boolean, null],
+    default: null
+  },
+  /** 安全键盘加密公钥的路径，只支持包内路径 */
+  safePasswordCertPath: {
+    type: String,
+    default: ""
+  },
+  /** 安全键盘计算 hash 的算法表达式，如 `md5(sha1('foo' + sha256(sm3(password + 'bar'))))` */
+  safePasswordCustomHash: {
+    type: String,
+    default: ""
+  },
+  /** 安全键盘输入密码长度 */
+  safePasswordLength: {
+    type: Number
+  },
+  /** 安全键盘加密盐值 */
+  safePasswordNonce: {
+    type: String,
+    default: ""
+  },
+  /** 安全键盘计算 hash 盐值，若指定custom-hash 则无效 */
+  safePasswordSalt: {
+    type: String,
+    default: ""
+  },
+  /** 安全键盘加密时间戳 */
+  safePasswordTimeStamp: {
+    type: Number
+  },
+  /** 光标结束位置，自动聚集时有效，需与 selection-start 搭配使用 */
+  selectionEnd: {
+    type: Number,
+    default: -1
+  },
+  /** 光标起始位置，自动聚集时有效，需与 selection-end 搭配使用 */
+  selectionStart: {
+    type: Number,
+    default: -1
+  },
+  /** 输入框状态 */
+  status: {
+    type: String,
+    default: "default",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["default", "success", "warning", "error"].includes(val);
+    }
+  },
+  /** 后置图标前的后置内容 */
+  suffix: {
+    type: String
+  },
+  /** 后置文本内容。值为字符串则表示图标名称，值为 `Object` 类型，表示透传至 `icon` */
+  suffixIcon: {
+    type: [String, Object]
+  },
+  /** 输入框下方提示文本，会根据不同的 `status` 呈现不同的样式 */
+  tips: {
+    type: String
+  },
+  /** 输入框类型 */
+  type: {
+    type: String,
+    default: "text",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["text", "number", "idcard", "digit", "safe-password", "password", "nickname"].includes(val);
+    }
+  },
+  /** 输入框的值 */
+  value: {
+    type: [String, Number]
+  },
+  /** 失去焦点时触发 */
+  onBlur: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 输入框值发生变化时触发；cursor 为光标位置； */
+  onChange: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 清空按钮点击时触发 */
+  onClear: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 点击事件。[详细类型定义](https://github.com/Tencent/tdesign-miniprogram/tree/develop/src/input/type.ts)。 */
+  onClick: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 回车键按下时触发 */
+  onEnter: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 获得焦点时触发 */
+  onFocus: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 键盘高度发生变化的时候触发此事件 */
+  onKeyboardheightchange: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 用户昵称审核完毕后触发，仅在 type 为 "nickname" 时有效 */
+  onNicknamereview: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 字数超出限制时触发 */
+  onValidate: {
+    type: Function,
+    default: () => ({})
+  }
+};
+function ChildrenMixin(parent, options = {}) {
+  const indexKey = options.indexKey || "index";
+  return {
+    inject: {
+      [parent]: {
+        default: null
+      }
+    },
+    data() {
+      return {};
+    },
+    computed: {
+      // 会造成循环引用
+      // parent() {
+      //   if (this.disableBindRelation) {
+      //     return null;
+      //   }
+      //   return this[parent];
+      // },
+      [indexKey]() {
+        const that = this;
+        that.bindRelation();
+        if (that[parent]) {
+          return that[parent].children.indexOf(this);
+        }
+        return null;
+      }
+    },
+    watch: {
+      disableBindRelation(val) {
+        const that = this;
+        if (!val) {
+          that.bindRelation();
+        }
+      }
+    },
+    created() {
+      const that = this;
+      that.bindRelation();
+    },
+    mounted() {
+    },
+    beforeUnmount() {
+      const that = this;
+      that.onBeforeMount();
+    },
+    methods: {
+      bindRelation() {
+        var _a, _b, _c;
+        if (!this[parent] || this[parent].children && this[parent].children.indexOf(this) !== -1) {
+          return;
+        }
+        const children = [...this[parent].children || [], this];
+        this[parent].children = children;
+        (_a = this.innerAfterLinked) == null ? void 0 : _a.call(this, this);
+        (_c = (_b = this[parent]).innerAfterLinked) == null ? void 0 : _c.call(_b, this);
+      },
+      onBeforeMount() {
+        var _a, _b, _c, _d;
+        const that = this;
+        if (that[parent]) {
+          that[parent].children = that[parent].children.filter((item) => item !== that);
+          (_b = (_a = this[parent]).innerAfterUnLinked) == null ? void 0 : _b.call(_a, this);
+          (_c = this.innerAfterUnLinked) == null ? void 0 : _c.call(this, this);
+          (_d = that == null ? void 0 : that.destroyCallback) == null ? void 0 : _d.call(that);
+        }
+      }
+    }
+  };
+}
+function getClass(classPrefix, size2, shape, bordered) {
+  const hasPx = (size2 || "").indexOf("px") > -1;
+  const borderSize = hasPx ? "medium" : size2;
+  const classNames2 = [
+    classPrefix,
+    classPrefix + (shape === "round" ? "--round" : "--circle"),
+    bordered ? `${classPrefix}--border ${classPrefix}--border-${borderSize}` : "",
+    hasPx ? "" : `${classPrefix}--${size2}`
+  ];
+  return classNames2.join(" ");
+}
+function getSize(size2 = "medium", windowWidth) {
+  const res = getRegExp("^([0-9]+)(px|rpx)$").exec(size2);
+  if (res && res.length >= 3) {
+    let px = res[1];
+    if (res[2] === "rpx") {
+      px = Math.floor(windowWidth * res[1] / 750);
+    }
+    return `width:${size2};height:${size2};font-size:${px / 8 * 3 + 2}px`;
+  }
+}
+function getStyles(isShow) {
+  return isShow ? "" : "display: none;";
+}
+const utils = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  getClass,
+  getSize,
+  getStyles
+}, Symbol.toStringTag, { value: "Module" }));
+const avatarProps = {
+  /** 头像替换文本，仅当图片加载失败时有效 */
+  alt: {
+    type: String,
+    default: ""
+  },
+  /** 头像右上角提示信息，继承 Badge 组件的全部特性。如：小红点，或者数字 */
+  badgeProps: {
+    type: Object,
+    default: () => ({})
+  },
+  /** 已废弃。是否显示外边框 */
+  bordered: Boolean,
+  /** 加载失败时隐藏图片 */
+  hideOnLoadFailed: Boolean,
+  /** 图标。值为字符串表示图标名称，值为 `Object` 类型，表示透传至 `icon` */
+  icon: {
+    type: [String, Object]
+  },
+  /** 图片地址 */
+  image: {
+    type: String,
+    default: ""
+  },
+  /** 透传至 Image 组件 */
+  imageProps: {
+    type: Object
+  },
+  /** 形状。优先级高于 AvatarGroup.shape 。Avatar 单独存在时，默认值为 circle。如果父组件 AvatarGroup 存在，默认值便由 AvatarGroup.shape 决定 */
+  shape: {
+    type: String,
+    validator(val) {
+      if (!val)
+        return true;
+      return ["circle", "round"].includes(val);
+    }
+  },
+  /** 尺寸，示例值：small/medium/large/24px/38px 等。优先级高于 AvatarGroup.size 。Avatar 单独存在时，默认值为 medium。如果父组件 AvatarGroup 存在，默认值便由 AvatarGroup.size 决定 */
+  size: {
+    type: String,
+    default: ""
+  },
+  /** 图片加载失败时触发 */
+  onError: {
+    type: Function,
+    default: () => ({})
+  }
+};
+const ImageProps = {
+  /** 加载失败时显示的内容。值为 `default` 则表示使用默认加载失败风格；值为空或者 `slot` 表示使用插槽渲染，插槽名称为 `error`；值为其他则表示普通文本内容，如“加载失败” */
+  error: {
+    type: String,
+    default: "default"
+  },
+  /** 高度，默认单位为`px` */
+  height: {
+    type: [String, Number]
+  },
+  /** 是否开启图片懒加载 */
+  lazy: Boolean,
+  /** 加载态内容。值为 `default` 则表示使用默认加载中风格；值为其他则表示普通文本内容，如“加载中” */
+  loading: {
+    type: String,
+    default: "default"
+  },
+  /** 图片裁剪、缩放的模式；[小程序官方文档](https://developers.weixin.qq.com/miniprogram/dev/component/image.html) */
+  mode: {
+    type: String,
+    default: "scaleToFill",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["scaleToFill", "aspectFit", "aspectFill", "widthFix", "heightFix", "top", "bottom", "center", "left", "right", "top left", "top right", "bottom left", "bottom right"].includes(val);
+    }
+  },
+  /** 图片圆角类型 */
+  shape: {
+    type: String,
+    default: "square",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["circle", "round", "square"].includes(val);
+    }
+  },
+  /** 长按图片显示发送给朋友、收藏、保存图片、搜一搜、打开名片/前往群聊/打开小程序（若图片中包含对应二维码或小程序码）的菜单 */
+  showMenuByLongpress: Boolean,
+  /** 图片链接 */
+  src: {
+    type: String,
+    default: ""
+  },
+  /** 图片标签id */
+  tId: {
+    type: String,
+    default: ""
+  },
+  /** 默认不解析 webP 格式，只支持网络资源 */
+  webp: Boolean,
+  /** 宽度，默认单位为`px` */
+  width: {
+    type: [String, Number]
+  },
+  /** 图片加载失败时触发 */
+  onError: {
+    type: Function,
+    default: () => ({})
+  },
+  /** 图片加载完成时触发 */
+  onLoad: {
+    type: Function,
+    default: () => ({})
+  }
+};
+const props$1 = {
+  /** 延迟显示加载效果的时间，用于防止请求速度过快引起的加载闪烁，单位：毫秒 */
+  delay: {
+    type: Number,
+    default: 0
+  },
+  /** 加载动画执行完成一次的时间，单位：毫秒 */
+  duration: {
+    type: Number,
+    default: 800
+  },
+  /** 是否显示为全屏加载 */
+  fullscreen: Boolean,
+  /** 加载指示符，值为 true 显示默认指示符，值为 false 则不显示，也可以自定义指示符 */
+  indicator: {
+    type: Boolean,
+    default: true
+  },
+  /** 是否继承父元素颜色 */
+  inheritColor: Boolean,
+  /** 对齐方式 */
+  layout: {
+    type: String,
+    default: "horizontal",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["horizontal", "vertical"].includes(val);
+    }
+  },
+  /** 是否处于加载状态 */
+  loading: {
+    type: Boolean,
+    default: true
+  },
+  /** 是否暂停动画 */
+  pause: Boolean,
+  /** 加载进度 */
+  progress: {
+    type: Number
+  },
+  /** 加载动画是否反向 */
+  reverse: Boolean,
+  /** 尺寸，示例：20px */
+  size: {
+    type: String,
+    default: "20px"
+  },
+  /** 加载提示文案 */
+  text: {
+    type: String
+  },
+  /** 加载组件类型 */
+  theme: {
+    type: String,
+    default: "circular",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["circular", "spinner", "dots", "custom"].includes(val);
+    }
+  }
+};
+const getBadgeValue = function(props2) {
+  if (props2.dot) {
+    return "";
+  }
+  if (isNaN(props2.count) || isNaN(props2.maxCount)) {
+    return props2.count;
+  }
+  return parseInt(props2.count, 10) > props2.maxCount ? `${props2.maxCount}+` : props2.count;
+};
+const hasUnit = function(unit) {
+  return unit.indexOf("px") > 0 || unit.indexOf("rpx") > 0 || unit.indexOf("em") > 0 || unit.indexOf("rem") > 0 || unit.indexOf("%") > 0 || unit.indexOf("vh") > 0 || unit.indexOf("vm") > 0;
+};
+const getBadgeStyles = function(props2) {
+  var _a, _b;
+  let styleStr = "";
+  if (props2.color) {
+    styleStr += `background:${props2.color};`;
+  }
+  if ((_a = props2.offset) == null ? void 0 : _a[0]) {
+    styleStr += `left: calc(100% + ${hasUnit(props2.offset[0].toString()) ? props2.offset[0] : `${props2.offset[0]}px`});`;
+  }
+  if ((_b = props2.offset) == null ? void 0 : _b[1]) {
+    styleStr += `top:${hasUnit(props2.offset[1].toString()) ? props2.offset[1] : `${props2.offset[1]}px`};`;
+  }
+  return styleStr;
+};
+const getBadgeInnerClass = function(props2) {
+  const baseClass = props2.classPrefix;
+  const classNames2 = [
+    `${baseClass}--basic`,
+    props2.dot ? `${baseClass}--dot` : "",
+    `${baseClass}--${props2.size}`,
+    `${baseClass}--${props2.shape}`,
+    !props2.dot ? `${baseClass}--count` : ""
+  ];
+  return classNames2.join(" ");
+};
+const isShowBadge = function(props2) {
+  if (props2.dot) {
+    return true;
+  }
+  if (!props2.showZero && !isNaN(props2.count) && parseInt(props2.count, 10) === 0) {
+    return false;
+  }
+  if (props2.count == null)
+    return false;
+  return true;
+};
+const props = {
+  /** 颜色 */
+  color: {
+    type: String,
+    default: ""
+  },
+  /** 徽标内容，示例：`content='自定义内容'`。也可以使用默认插槽定义 */
+  content: {
+    type: String,
+    default: ""
+  },
+  /** 徽标右上角内容。可以是数字，也可以是文字。如：'new'/3/99+。特殊：值为空表示使用插槽渲染 */
+  count: {
+    type: [String, Number],
+    default: 0
+  },
+  /** 是否为红点 */
+  dot: Boolean,
+  /** 封顶的数字值 */
+  maxCount: {
+    type: Number,
+    default: 99
+  },
+  /** 设置状态点的位置偏移，示例：[-10, 20] 或 ['10em', '8rem'] */
+  offset: {
+    type: Array
+  },
+  /** 徽标形状，其中 ribbon 和 ribbon-right 等效 */
+  shape: {
+    type: String,
+    default: "circle",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["circle", "square", "bubble", "ribbon", "ribbon-right", "ribbon-left", "triangle-right", "triangle-left"].includes(val);
+    }
+  },
+  /** 当数值为 0 时，是否展示徽标 */
+  showZero: Boolean,
+  /** 尺寸 */
+  size: {
+    type: String,
+    default: "medium",
+    validator(val) {
+      if (!val)
+        return true;
+      return ["medium", "large"].includes(val);
+    }
+  }
+};
+exports.ChildrenMixin = ChildrenMixin;
+exports.ImageProps = ImageProps;
+exports.RELATION_MAP = RELATION_MAP;
 exports._export_sfc = _export_sfc;
+exports.addUnit = addUnit$1;
+exports.appBaseInfo = appBaseInfo;
+exports.avatarProps = avatarProps;
+exports.calcIcon = calcIcon;
+exports.canUseVirtualHost = canUseVirtualHost;
+exports.classNames = classNames;
+exports.coalesce = coalesce;
+exports.compareVersion = compareVersion;
 exports.computed = computed;
 exports.createPinia = createPinia;
 exports.createSSRApp = createSSRApp;
@@ -8230,18 +9910,47 @@ exports.defineComponent = defineComponent;
 exports.defineStore = defineStore;
 exports.e = e;
 exports.f = f;
+exports.getBadgeInnerClass = getBadgeInnerClass;
+exports.getBadgeStyles = getBadgeStyles;
+exports.getBadgeValue = getBadgeValue;
+exports.getCharacterLength = getCharacterLength;
+exports.getInputClass = getInputClass;
+exports.getRect = getRect;
 exports.index = index;
+exports.isDef = isDef;
+exports.isNumeric = isNumeric;
+exports.isShowBadge = isShowBadge;
 exports.n = n;
+exports.nextTick = nextTick;
+exports.nextTick$1 = nextTick$1;
 exports.o = o;
 exports.onHide = onHide;
-exports.onLaunch = onLaunch;
 exports.onLoad = onLoad;
 exports.onMounted = onMounted;
 exports.onShow = onShow;
 exports.onUnmounted = onUnmounted;
 exports.p = p;
+exports.prefix = prefix;
+exports.props = props$7;
+exports.props$1 = props$6;
+exports.props$2 = props$5;
+exports.props$3 = props$4;
+exports.props$4 = props$3;
+exports.props$5 = props$2;
+exports.props$6 = props$1;
+exports.props$7 = props;
 exports.reactive = reactive;
 exports.ref = ref;
 exports.resolveComponent = resolveComponent;
+exports.s = s;
+exports.setIcon = setIcon;
+exports.styles = styles;
+exports.systemInfo = systemInfo$1;
 exports.t = t;
+exports.textareaStyle = textareaStyle;
+exports.tools = tools;
+exports.uniComponent = uniComponent;
+exports.uniqueFactory = uniqueFactory;
 exports.unref = unref;
+exports.utils = utils;
+exports.watch = watch;

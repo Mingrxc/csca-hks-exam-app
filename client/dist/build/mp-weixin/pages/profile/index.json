@@ -1,4 +1,9 @@
 {
-  "navigationBarTitleText": "我的",
-  "usingComponents": {}
+  "navigationBarTitleText": "个人信息",
+  "usingComponents": {
+    "t-avatar": "../../node-modules/@tdesign/uniapp/dist/avatar/avatar",
+    "t-tag": "../../node-modules/@tdesign/uniapp/dist/tag/tag",
+    "t-button": "../../node-modules/@tdesign/uniapp/dist/button/button",
+    "t-icon": "../../node-modules/@tdesign/uniapp/dist/icon/icon"
+  }
 }

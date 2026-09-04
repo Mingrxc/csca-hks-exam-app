@@ -1,4 +1,7 @@
 {
   "component": true,
-  "usingComponents": {}
+  "usingComponents": {
+    "t-tag": "../../node-modules/@tdesign/uniapp/dist/tag/tag",
+    "t-button": "../../node-modules/@tdesign/uniapp/dist/button/button"
+  }
 }

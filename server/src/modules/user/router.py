@@ -10,7 +10,13 @@ from src.config.database import get_db
 from src.modules.user.schemas import UserProfileUpdate, WxLoginRequest
 from src.modules.user.service import get_dashboard as get_dashboard_service
 from src.modules.user.service import exchange_wx_code
-from src.modules.user.service import get_or_create_user_by_openid, serialize_user
+from src.modules.user.service import (
+    count_user_favorites,
+    get_or_create_user_by_openid,
+    get_target_dates,
+    serialize_user,
+    update_target_dates,
+)
 
 router = APIRouter()
 
@@ -20,11 +26,17 @@ async def wx_login(payload: WxLoginRequest, db: Session = Depends(get_db)):
     """微信登录"""
     openid = await exchange_wx_code(payload.code)
     user = get_or_create_user_by_openid(db, openid)
-    return success({
-        "token": create_token(openid),
-        "openid": openid,
-        "user": serialize_user(user),
-    })
+    return success(
+        {
+            "token": create_token(openid),
+            "openid": openid,
+            "user": serialize_user(
+                user,
+                count_user_favorites(db, user.id),
+                get_target_dates(db, user),
+            ),
+        }
+    )
 
 
 @router.get("/info")
@@ -34,7 +46,9 @@ async def get_user_info(
 ):
     """获取用户信息"""
     user = get_or_create_user_by_openid(db, openid)
-    return success(serialize_user(user))
+    return success(
+        serialize_user(user, count_user_favorites(db, user.id), get_target_dates(db, user))
+    )
 
 
 @router.get("/dashboard")
@@ -56,9 +70,19 @@ async def update_profile(
     """更新用户资料"""
     user = get_or_create_user_by_openid(db, openid)
     data = payload.model_dump(exclude_unset=True)
+    target_dates = data.pop("target_dates", None)
     for key in ("nickname", "avatar_url", "target_exam", "target_date"):
         if key in data:
             setattr(user, key, data[key])
+    if target_dates is not None:
+        update_target_dates(db, user.id, target_dates)
+        primary_exam = data.get("target_exam") or user.target_exam
+        if "target_date" not in data and primary_exam in target_dates:
+            user.target_date = target_dates[primary_exam]
+    elif "target_date" in data and user.target_exam:
+        update_target_dates(db, user.id, {user.target_exam: data["target_date"]})
     db.commit()
     db.refresh(user)
-    return success(serialize_user(user))
+    return success(
+        serialize_user(user, count_user_favorites(db, user.id), get_target_dates(db, user))
+    )

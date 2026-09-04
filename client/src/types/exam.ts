@@ -12,6 +12,8 @@ export interface OptionItem {
 
 export interface Question {
   id: number
+  examType: ExamType
+  subject: string
   type: QuestionType
   difficulty: Difficulty
   knowledgePoint?: string
@@ -20,6 +22,7 @@ export interface Question {
   answer?: string
   analysis?: string
   wrongCount?: number
+  isFavorite?: boolean
 }
 
 export interface ExamConfig {

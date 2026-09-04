@@ -1,8 +1,13 @@
 import type {
   ApiExamResult,
   ApiDashboard,
+  ApiAIReply,
+  ApiContentItem,
+  ApiFavoriteItem,
+  ApiFavoriteStatus,
   ApiHistoryPaper,
   ApiPaper,
+  ApiSpecialOption,
   ApiQuestion,
   ApiRelatedQuestion,
   ApiSubmitAnswerResult,
@@ -10,10 +15,13 @@ import type {
   ApiWrongBookDetail,
   ApiWrongBookItem,
 } from './contracts'
+import type { ExamType } from '@/types/exam'
 
 // API 基础配置
 const DEFAULT_BASE_URL = 'http://127.0.0.1:8000/api/v1'
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, '')
+const FALLBACK_BASE_URL = (import.meta.env.VITE_API_FALLBACK_URL || DEFAULT_BASE_URL).replace(/\/$/, '')
+const API_BASE_URLS = Array.from(new Set([BASE_URL, FALLBACK_BASE_URL].filter(Boolean)))
 
 interface RequestOptions {
   url: string
@@ -21,6 +29,17 @@ interface RequestOptions {
   data?: any
   header?: Record<string, string>
   showLoading?: boolean
+  requireAuth?: boolean
+}
+
+function formatNetworkErrorMessage(err: any): string {
+  const raw = typeof err?.errMsg === 'string' ? err.errMsg : ''
+  if (!raw) return '网络异常'
+  if (raw.includes('url not in domain list')) return '域名未配置'
+  if (raw.includes('SSL') || raw.includes('TLS')) return '证书校验失败'
+  if (raw.includes('timeout')) return '请求超时'
+  if (raw.includes('fail')) return raw.replace(/^fail\s*/i, '').slice(0, 30)
+  return raw.slice(0, 30)
 }
 
 interface LoginResult {
@@ -30,6 +49,27 @@ interface LoginResult {
 }
 
 let loginPromise: Promise<LoginResult> | null = null
+
+function wxLoginWithBaseUrl(baseUrl: string, code: string): Promise<LoginResult> {
+  return new Promise((resolve, reject) => {
+    uni.request({
+      url: baseUrl + '/user/wx-login',
+      method: 'POST',
+      data: { code },
+      header: { 'Content-Type': 'application/json' },
+      success: (response: any) => {
+        const payload = response.data
+        if (response.statusCode === 200 && payload?.code === 0) {
+          uni.setStorageSync('token', payload.data.token)
+          resolve(payload.data)
+        } else {
+          reject(payload || new Error('登录失败'))
+        }
+      },
+      fail: reject,
+    })
+  })
+}
 
 export function ensureLogin(force = false): Promise<LoginResult> {
   const storedToken = uni.getStorageSync('token')
@@ -45,22 +85,18 @@ export function ensureLogin(force = false): Promise<LoginResult> {
           reject(new Error('微信登录未返回临时凭证'))
           return
         }
-        uni.request({
-          url: BASE_URL + '/user/wx-login',
-          method: 'POST',
-          data: { code: loginResult.code },
-          header: { 'Content-Type': 'application/json' },
-          success: (response: any) => {
-            const payload = response.data
-            if (response.statusCode === 200 && payload?.code === 0) {
-              uni.setStorageSync('token', payload.data.token)
-              resolve(payload.data)
-            } else {
-              reject(payload || new Error('登录失败'))
-            }
-          },
-          fail: reject,
-        })
+        const tryLogin = (baseIndex: number): void => {
+          wxLoginWithBaseUrl(API_BASE_URLS[baseIndex], loginResult.code)
+            .then(resolve)
+            .catch((error) => {
+              if (baseIndex + 1 < API_BASE_URLS.length) {
+                tryLogin(baseIndex + 1)
+                return
+              }
+              reject(error)
+            })
+        }
+        tryLogin(0)
       },
       fail: reject,
     })
@@ -82,7 +118,7 @@ function request<T = any>(options: RequestOptions): Promise<T> {
       uni.showLoading({ title: '加载中...', mask: true })
     }
 
-    const send = (token: string, allowRetry: boolean) => {
+    const send = (token: string, allowRetry: boolean, baseIndex = 0) => {
       const header: Record<string, string> = {
         'Content-Type': 'application/json',
         ...options.header,
@@ -90,7 +126,7 @@ function request<T = any>(options: RequestOptions): Promise<T> {
       if (token) header.Authorization = `Bearer ${token}`
 
       uni.request({
-        url: BASE_URL + options.url,
+        url: API_BASE_URLS[baseIndex] + options.url,
         method: options.method || 'GET',
         data: options.data,
         header,
@@ -122,14 +158,25 @@ function request<T = any>(options: RequestOptions): Promise<T> {
           reject(data)
         },
         fail: (err) => {
+          if (baseIndex + 1 < API_BASE_URLS.length) {
+            send(token, allowRetry, baseIndex + 1)
+            return
+          }
           finishLoading()
-          uni.showToast({ title: '网络异常', icon: 'none' })
+          const message = formatNetworkErrorMessage(err)
+          console.error('[request fail]', options.url, err)
+          uni.showToast({ title: message, icon: 'none' })
           reject(err)
         },
       })
     }
 
     const storedToken = uni.getStorageSync('token')
+    const requiresAuth = options.requireAuth !== false
+    if (!requiresAuth) {
+      send(storedToken, true)
+      return
+    }
     if (storedToken || options.url === '/user/wx-login') {
       send(storedToken, true)
       return
@@ -150,20 +197,29 @@ async function download(url: string): Promise<string> {
     }
   }
 
-  return new Promise((resolve, reject) => {
-    uni.downloadFile({
-      url: BASE_URL + url,
-      header: token ? { Authorization: `Bearer ${token}` } : {},
-      success: (response: any) => {
-        if (response.statusCode === 200) {
-          resolve(response.tempFilePath)
-        } else {
-          reject(new Error(`PDF download failed with status ${response.statusCode}`))
-        }
-      },
-      fail: reject,
+  const downloadWithBaseUrl = (baseIndex: number): Promise<string> =>
+    new Promise((resolve, reject) => {
+      uni.downloadFile({
+        url: API_BASE_URLS[baseIndex] + url,
+        header: token ? { Authorization: `Bearer ${token}` } : {},
+        success: (response: any) => {
+          if (response.statusCode === 200) {
+            resolve(response.tempFilePath)
+          } else {
+            reject(new Error(`PDF download failed with status ${response.statusCode}`))
+          }
+        },
+        fail: (error) => {
+          if (baseIndex + 1 < API_BASE_URLS.length) {
+            downloadWithBaseUrl(baseIndex + 1).then(resolve).catch(reject)
+            return
+          }
+          reject(error)
+        },
+      })
     })
-  })
+
+  return downloadWithBaseUrl(0)
 }
 
 // ==================== 用户模块 ====================
@@ -172,15 +228,31 @@ export const userApi = {
     url: '/user/wx-login',
     method: 'POST',
     data: { code },
+    requireAuth: false,
   }),
   getDashboard: () => request<ApiDashboard>({ url: '/user/dashboard' }),
   getUserInfo: () => request<ApiUser>({ url: '/user/info' }),
   updateProfile: (data: any) => request<ApiUser>({ url: '/user/profile', method: 'PUT', data }),
 }
 
+// ==================== 内容模块 ====================
+export const contentApi = {
+  listHome: () => request<ApiContentItem[]>({ url: '/content/home', showLoading: false, requireAuth: false }),
+  get: (id: number) => request<ApiContentItem>({ url: `/content/${id}`, requireAuth: false }),
+  listAdmin: () => request<ApiContentItem[]>({ url: '/content/list' }),
+  create: (data: Record<string, unknown>) => request<ApiContentItem>({ url: '/content', method: 'POST', data }),
+  update: (id: number, data: Record<string, unknown>) => request<ApiContentItem>({ url: `/content/${id}`, method: 'PUT', data }),
+  remove: (id: number) => request<{ id: number; deleted: boolean }>({ url: `/content/${id}`, method: 'DELETE' }),
+}
+
 // ==================== 题库模块 ====================
 export const questionApi = {
   getPapers: (params: any) => request<ApiHistoryPaper[]>({ url: '/question/papers', data: params }),
+  getSpecialOptions: (examType: ExamType, limit = 100) =>
+    request<ApiSpecialOption[]>({
+      url: `/question/special-options?examType=${examType}&limit=${limit}`,
+      showLoading: false,
+    }),
   generatePaper: (config: any) => request<ApiPaper>({
     url: '/question/generate-paper',
     method: 'POST',
@@ -224,4 +296,27 @@ export const wrongBookApi = {
   },
 }
 
-export default { userApi, questionApi, examApi, wrongBookApi }
+// ==================== 收藏模块 ====================
+export const favoriteApi = {
+  list: (limit = 50) => request<ApiFavoriteItem[]>({ url: `/favorite/list?limit=${limit}` }),
+  status: (questionId: number) => request<ApiFavoriteStatus>({ url: `/favorite/status/${questionId}`, showLoading: false }),
+  toggle: (questionId: number) => request<ApiFavoriteStatus>({
+    url: '/favorite/toggle',
+    method: 'POST',
+    data: { questionId },
+    showLoading: false,
+  }),
+}
+
+// ==================== AI 模块 ====================
+export const aiApi = {
+  chat: (data: {
+    messages: Array<{ role: 'user' | 'assistant'; content: string }>
+    examType?: 'CSCA' | 'HKS'
+    question?: string
+    topic?: string
+    context?: string
+  }) => request<ApiAIReply>({ url: '/ai/chat', method: 'POST', data }),
+}
+
+export default { userApi, questionApi, examApi, wrongBookApi, favoriteApi, contentApi, aiApi }

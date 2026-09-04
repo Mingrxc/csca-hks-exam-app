@@ -4,7 +4,7 @@
 
 | 文件 | Store | 说明 |
 |------|-------|------|
-| `user.ts` | `useUserStore` | 用户状态：登录 token、用户信息、累计刷题/正确率/打卡 |
+| `user.ts` | `useUserStore` | 用户状态：登录 token、用户信息、累计刷题/正确率/打卡/收藏数 |
 | `exam.ts` | `useExamStore` | 考试状态：组卷配置、题目列表、答题记录、计时、得分计算 |
 
 ## 使用规范

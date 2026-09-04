@@ -1,130 +1,291 @@
 <template>
-  <view class="page">
-    <!-- 刷题入口卡片 -->
-    <view class="section">
-      <text class="section-title">选择组卷策略</text>
-      <view class="strategy-list">
-        <view class="strategy-card" v-for="item in strategies" :key="item.key" @click="goPaper(item.key)">
-          <view class="strategy-left">
-            <text class="strategy-icon">{{ item.icon }}</text>
+  <view class="page exam-page app-shell">
+    <view class="app-section">
+      <view class="hero app-card app-card-pad">
+        <view class="hero-head">
+          <view class="hero-copy">
+            <text class="hero-title">刷题</text>
+            <view v-if="selectedExamLabels.length" class="hero-exams">
+              <t-tag
+                v-for="item in selectedExamLabels"
+                :key="item.value"
+                :theme="item.theme"
+                variant="light"
+                shape="round"
+                size="small"
+              >
+                {{ item.label }}
+              </t-tag>
+            </view>
           </view>
-          <view class="strategy-right">
-            <text class="strategy-title">{{ item.title }}</text>
-            <text class="strategy-desc">{{ item.desc }}</text>
+        </view>
+
+        <view class="hero-metrics">
+          <view class="hero-metric">
+            <text class="hero-metric-value">{{ dashboard.todayStats.questionCount }}</text>
+            <text class="hero-metric-label">今日刷题</text>
           </view>
-          <text class="strategy-arrow">→</text>
+          <view class="hero-metric">
+            <text class="hero-metric-value">{{ dashboard.todayStats.correctRate }}%</text>
+            <text class="hero-metric-label">正确率</text>
+          </view>
+          <view class="hero-metric">
+            <text class="hero-metric-value">{{ dashboard.pendingWrongCount }}</text>
+            <text class="hero-metric-label">待复习</text>
+          </view>
+          <view class="hero-metric">
+            <text class="hero-metric-value">{{ dashboard.favoriteCount }}</text>
+            <text class="hero-metric-label">收藏题目</text>
+          </view>
         </view>
       </view>
     </view>
 
-    <!-- 历史试卷 -->
-    <view class="section">
-      <view class="section-header">
-        <text class="section-title">历史试卷</text>
-        <text class="section-more" v-if="canViewAll" @click="viewAll">查看全部</text>
+    <view class="app-section exam-group">
+      <view class="section-head">
+        <text class="app-section-title">快速开始</text>
       </view>
-      <view class="load-error" v-if="loadError" @click="loadHistory(historyLimit)">
-        <text>历史试卷加载失败，点击重试</text>
-      </view>
-      <view class="paper-card" v-for="paper in historyPapers" :key="paper.id" @click="goResult(paper.id)">
-        <view class="paper-header">
-          <text class="paper-name">{{ paper.title }}</text>
-          <view class="paper-badge" :class="paper.passed ? 'pass' : 'fail'">
-            {{ paper.passed ? '通过' : '未通过' }}
+      <view class="feature-grid">
+        <view class="feature-card exam-entry-card app-card app-card-compact" v-for="item in strategyCards" :key="item.key" @click="goPaper(item.key)">
+          <view class="feature-top">
+            <view class="app-icon-badge"><t-icon :name="item.icon" :color="item.iconColor" size="28rpx" /></view>
           </view>
+          <text class="app-card-title">{{ item.title }}</text>
         </view>
-        <view class="paper-stats">
-          <text class="paper-stat">正确率 {{ paper.correctRate }}%</text>
-          <text class="paper-stat">用时 {{ paper.timeUsed }}</text>
-          <text class="paper-stat">{{ paper.date }}</text>
-        </view>
-      </view>
-      <view class="empty-state" v-if="!loading && !loadError && historyPapers.length === 0">
-        <text class="empty-icon">📝</text>
-        <text class="empty-text">还没有答题记录</text>
       </view>
     </view>
+
+    <view class="app-section exam-group">
+      <view class="section-head">
+        <text class="app-section-title">错题收藏</text>
+      </view>
+      <view class="tool-grid">
+        <view class="tool-card exam-entry-card app-card app-card-compact" @click="goHistory">
+          <view class="tool-top">
+            <view class="app-icon-badge">
+              <t-icon name="file-paste-filled" size="28rpx" color="#c77f5e" />
+            </view>
+          </view>
+          <text class="app-card-title">历史试卷</text>
+        </view>
+        <view class="tool-card exam-entry-card app-card app-card-compact" @click="goWrongBook">
+          <view class="tool-top">
+            <view class="app-icon-badge"><t-icon name="book" size="28rpx" color="#c77f5e" /></view>
+          </view>
+          <text class="app-card-title">错题本</text>
+        </view>
+        <view class="tool-card exam-entry-card app-card app-card-compact" @click="goFavorite">
+          <view class="tool-top">
+            <view class="app-icon-badge"><t-icon name="star" size="28rpx" color="#c77f5e" /></view>
+          </view>
+          <text class="app-card-title">收藏题目</text>
+        </view>
+        <view class="tool-card exam-entry-card app-card app-card-compact" @click="goRedo">
+          <view class="tool-top">
+            <view class="app-icon-badge"><t-icon name="refresh" size="28rpx" color="#c77f5e" /></view>
+          </view>
+          <text class="app-card-title">错题重做</text>
+        </view>
+      </view>
+    </view>
+
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, reactive } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { questionApi } from '@/api'
-import { toHistoryPaper } from '@/api/contracts'
-import { PAPER_STRATEGIES } from '@/constants/exam'
-import type { HistoryPaper, PaperStrategy } from '@/types/exam'
+import { userApi } from '@/api'
+import { toDashboardData } from '@/api/contracts'
+import type { PaperStrategy } from '@/types/exam'
+import { useUserStore } from '@/stores/user'
 
-const strategies = ref(PAPER_STRATEGIES)
+const userStore = useUserStore()
+const dashboard = reactive({
+  todayStats: { questionCount: 0, correctRate: 0, wrongCount: 0 },
+  pendingWrongCount: 0,
+  favoriteCount: 0,
+})
+const strategyCards = computed(
+  () =>
+    [
+      {
+        key: 'random',
+        icon: 'star',
+        iconColor: '#c77f5e',
+        title: '随机组卷',
+      },
+      {
+        key: 'real',
+        icon: 'calendar',
+        iconColor: '#c77f5e',
+        title: '模拟考试',
+      },
+      {
+        key: 'knowledge',
+        icon: 'book',
+        iconColor: '#c77f5e',
+        title: '专项训练',
+      },
+      {
+        key: 'progressive',
+        icon: 'arrow-right',
+        iconColor: '#c77f5e',
+        title: '难度递进',
+      },
+    ] as const,
+)
 
-const historyPapers = ref<HistoryPaper[]>([])
-const historyLimit = ref(5)
-const loading = ref(false)
-const loadError = ref(false)
-const canViewAll = computed(() => historyLimit.value === 5 && historyPapers.value.length === 5)
+const selectedExamLabels = computed(() =>
+  userStore.selectedExams.map((exam) => ({
+    value: exam,
+    label: exam,
+    theme: exam === 'CSCA' ? ('primary' as const) : ('warning' as const),
+  })),
+)
+const defaultExamType = computed(() => userStore.primaryExam)
 
-const loadHistory = async (limit: number) => {
-  loading.value = true
-  loadError.value = false
+const loadDashboard = async () => {
   try {
-    const items = await questionApi.getPapers({ limit })
-    historyPapers.value = items.map(toHistoryPaper)
-    historyLimit.value = limit
-  } catch {
-    loadError.value = true
-  } finally {
-    loading.value = false
-  }
+    const data = toDashboardData(await userApi.getDashboard())
+    dashboard.todayStats = data.todayStats
+    dashboard.pendingWrongCount = data.pendingWrongCount
+    dashboard.favoriteCount = data.favoriteCount
+  } catch {}
 }
 
 const goPaper = (strategy: PaperStrategy) => {
-  uni.navigateTo({ url: `/pages/exam/paper?strategy=${strategy}` })
+  uni.navigateTo({ url: `/pages/exam/paper?strategy=${strategy}&examType=${defaultExamType.value}` })
 }
 
-const goResult = (id: number) => {
-  uni.navigateTo({ url: `/pages/exam/result?id=${id}` })
-}
+const goHistory = () => uni.navigateTo({ url: '/pages/exam/history' })
+const goWrongBook = () => uni.navigateTo({ url: '/pages/wrongbook/index' })
+const goFavorite = () => uni.navigateTo({ url: '/pages/favorite/index' })
+const goRedo = () => uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${defaultExamType.value}` })
 
-const viewAll = () => {
-  loadHistory(100)
-}
-
-onShow(() => loadHistory(historyLimit.value))
+onShow(() => {
+  if (!userStore.isLogin) userStore.login().catch(() => {})
+  loadDashboard()
+})
 </script>
 
 <style lang="scss" scoped>
-.page { min-height: 100vh; padding: 24rpx 0 40rpx; }
-.section { padding: 0 24rpx; margin-bottom: 32rpx; }
-.section-title { font-size: 30rpx; font-weight: 600; color: #1F2937; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
-.section-more { font-size: 24rpx; color: #4F46E5; }
-
-.strategy-list { display: flex; flex-direction: column; gap: 16rpx; margin-top: 16rpx; }
-.strategy-card {
-  display: flex; align-items: center;
-  background: #fff; border-radius: 16rpx; padding: 28rpx 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+.hero {
+  border-radius: var(--app-radius-xl);
+  background: linear-gradient(180deg, #fffaf4 0%, #f8ecdf 100%);
 }
-.strategy-icon { font-size: 44rpx; }
-.strategy-right { flex: 1; margin-left: 20rpx; }
-.strategy-title { font-size: 28rpx; font-weight: 600; color: #1F2937; }
-.strategy-desc { font-size: 22rpx; color: #9CA3AF; margin-top: 6rpx; display: block; }
-.strategy-arrow { font-size: 28rpx; color: #C7D2FE; }
 
-.paper-card {
-  background: #fff; border-radius: 16rpx; padding: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); margin-bottom: 16rpx;
+.exam-page .app-card {
+  border-radius: 24rpx !important;
+  overflow: hidden;
 }
-.paper-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
-.paper-name { font-size: 28rpx; font-weight: 500; color: #1F2937; }
-.paper-badge { font-size: 20rpx; padding: 4rpx 16rpx; border-radius: 20rpx; }
-.paper-badge.pass { background: #D1FAE5; color: #065F46; }
-.paper-badge.fail { background: #FEE2E2; color: #991B1B; }
-.paper-stats { display: flex; gap: 24rpx; }
-.paper-stat { font-size: 22rpx; color: #9CA3AF; }
 
-.empty-state { padding: 80rpx 0; text-align: center; }
-.empty-icon { font-size: 60rpx; display: block; margin-bottom: 16rpx; }
-.empty-text { font-size: 26rpx; color: #9CA3AF; }
-.load-error { margin-top: 16rpx; padding: 24rpx; text-align: center; color: #B91C1C; background: #FEF2F2; border-radius: 12rpx; font-size: 24rpx; }
+.exam-group .section-head {
+  margin-bottom: 16rpx;
+}
+
+.exam-group + .exam-group {
+  margin-top: 48rpx;
+}
+
+.hero-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.hero-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-title {
+  display: block;
+  font-size: 40rpx;
+  line-height: 1.25;
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.hero-exams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 14rpx;
+}
+
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12rpx;
+  margin-top: 18rpx;
+}
+
+.hero-metric {
+  padding: 16rpx 12rpx;
+  border-radius: 20rpx !important;
+  background: #fffdf8;
+  border: 1rpx solid #eadfce;
+  overflow: hidden;
+  text-align: center;
+}
+
+.hero-metric-value {
+  display: block;
+  font-size: 32rpx;
+  line-height: 1.1;
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.hero-metric-label {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: var(--app-text-weak);
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20rpx;
+}
+
+.feature-card {
+  min-height: 154rpx;
+}
+
+.feature-top,
+.tool-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10rpx;
+  margin-bottom: 14rpx;
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20rpx;
+}
+
+.tool-card {
+  min-height: 154rpx;
+}
+
+.exam-entry-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24rpx;
+  min-height: 160rpx;
+  border-radius: 24rpx !important;
+  background: #fffdf8 !important;
+  border: 1rpx solid #eadfce !important;
+  box-shadow: 0 8rpx 24rpx rgba(117, 86, 62, 0.12) !important;
+  overflow: hidden;
+}
+
 </style>

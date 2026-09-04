@@ -1,4 +1,4 @@
-# 公共组件
+# 组件目录
 
 ## 组件列表
 
@@ -7,7 +7,7 @@
 | CountdownBar | `components/CountdownBar/` | 考试倒计时组件，剩余 5 分钟黄色警告，1 分钟红色告警 |
 | RingChart | `components/RingChart/` | Canvas 环形进度图，用于成绩页分数展示 |
 | AnswerCard | `components/AnswerCard/` | 答题卡弹窗，显示已答/未答/当前/标记状态 |
-| QuestionItem | `components/QuestionItem/` | 题目卡片，含题干、选项、解析区，支持正确/错误高亮 |
+| QuestionItem | `components/QuestionItem/` | 题目卡片，含题干、选项、解析区，支持收藏切换 |
 
 ## 使用方式
 

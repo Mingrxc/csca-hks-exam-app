@@ -107,3 +107,91 @@ def test_generate_progressive_paper_orders_sample_by_difficulty(db_session, monk
         "medium",
         "hard",
     ]
+
+
+def test_generate_hks_paper_filters_by_top_level_subject(db_session):
+    user = User(openid="paper-hks-subject-user")
+    listening = Question(
+        exam_type="HKS",
+        subject="听力",
+        knowledge_point="听力选择",
+        difficulty="medium",
+        question_type="single",
+        stem_text="listening question",
+        options=[{"key": "A", "text": "alpha"}],
+        answer="A",
+        analysis="because alpha is correct",
+        is_active=1,
+    )
+    reading = Question(
+        exam_type="HKS",
+        subject="阅读",
+        knowledge_point="阅读理解",
+        difficulty="medium",
+        question_type="single",
+        stem_text="reading question",
+        options=[{"key": "A", "text": "alpha"}],
+        answer="A",
+        analysis="because alpha is correct",
+        is_active=1,
+    )
+    db_session.add_all([user, listening, reading])
+    db_session.commit()
+
+    paper = generate_paper(
+        db_session,
+        user.id,
+        GeneratePaperRequest(
+            exam_type="HKS",
+            question_count=1,
+            strategy="knowledge",
+            knowledge_points=["听力"],
+        ),
+    )
+
+    assert [question["stem_text"] for question in paper["questions"]] == ["listening question"]
+
+
+def test_generate_hks_real_paper_covers_all_subjects(db_session):
+    user = User(openid="paper-hks-real-user")
+    listening = Question(
+        exam_type="HKS",
+        subject="听力",
+        knowledge_point="听力选择",
+        difficulty="easy",
+        question_type="single",
+        stem_text="listening question",
+        options=[{"key": "A", "text": "alpha"}],
+        answer="A",
+        analysis="because alpha is correct",
+        is_active=1,
+    )
+    reading = Question(
+        exam_type="HKS",
+        subject="阅读",
+        knowledge_point="阅读理解",
+        difficulty="hard",
+        question_type="single",
+        stem_text="reading question",
+        options=[{"key": "A", "text": "alpha"}],
+        answer="A",
+        analysis="because alpha is correct",
+        is_active=1,
+    )
+    db_session.add_all([user, listening, reading])
+    db_session.commit()
+
+    paper = generate_paper(
+        db_session,
+        user.id,
+        GeneratePaperRequest(
+            exam_type="HKS",
+            question_count=1,
+            strategy="real",
+            knowledge_points=["听力"],
+            mode="exam",
+        ),
+    )
+
+    assert {question["subject"] for question in paper["questions"]} == {"听力", "阅读"}
+    assert set(paper["question_ids"]) == {listening.id, reading.id}

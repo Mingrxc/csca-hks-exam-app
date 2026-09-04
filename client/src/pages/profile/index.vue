@@ -1,164 +1,282 @@
 <template>
-  <view class="page">
-    <!-- 用户信息卡片 -->
-    <view class="profile-header">
-      <view class="avatar-area">
-        <view class="avatar">😊</view>
-        <text class="nickname">{{ userInfo.nickname }}</text>
-        <text class="exam-target">目标：{{ userInfo.targetExam }}</text>
-      </view>
-    </view>
-
-    <view class="load-error" v-if="loadError" @click="loadProfile">
-      <text>个人资料加载失败，点击重试</text>
-    </view>
-
-    <!-- 学习数据 -->
-    <view class="stats-section">
-      <view class="stats-card">
-        <view class="stat-item">
-          <text class="stat-num">{{ userInfo.totalQuestions }}</text>
-          <text class="stat-label">累计刷题</text>
-        </view>
-        <view class="stat-divider"></view>
-        <view class="stat-item">
-          <text class="stat-num">{{ userInfo.correctRate }}%</text>
-          <text class="stat-label">总正确率</text>
-        </view>
-        <view class="stat-divider"></view>
-        <view class="stat-item">
-          <text class="stat-num">{{ userInfo.streakDays }}</text>
-          <text class="stat-label">连续打卡</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 功能菜单 -->
-    <view class="menu-section">
-      <view class="menu-group">
-        <view class="menu-item" @click="goPage('/pages/exam/index')">
-          <text class="menu-icon">📝</text>
-          <text class="menu-label">我的试卷</text>
-          <text class="menu-arrow">→</text>
-        </view>
-        <view class="menu-item" @click="goPage('/pages/wrongbook/index')">
-          <text class="menu-icon">📋</text>
-          <text class="menu-label">错题统计</text>
-          <text class="menu-arrow">→</text>
-        </view>
-        <view class="menu-item" @click="goRedo">
-          <text class="menu-icon">🔄</text>
-          <text class="menu-label">错题重做</text>
-          <text class="menu-arrow">→</text>
-        </view>
-      </view>
-
-      <view class="menu-group">
-        <view class="menu-item" @click="openTargetEditor">
-          <text class="menu-icon">🎯</text>
-          <text class="menu-label">考试目标设置</text>
-          <text class="menu-value">{{ userInfo.targetExam }}</text>
-          <text class="menu-arrow">→</text>
-        </view>
-        <view class="target-editor" v-if="targetEditorOpen">
-          <view class="exam-segments">
-            <view class="exam-segment" :class="{ active: targetDraftExam === 'CSCA' }" @click="targetDraftExam = 'CSCA'">CSCA</view>
-            <view class="exam-segment" :class="{ active: targetDraftExam === 'HKS' }" @click="targetDraftExam = 'HKS'">HKS</view>
+  <view class="page app-shell">
+    <view class="app-section">
+      <view class="profile-card app-card app-card-pad">
+        <view class="profile-top">
+          <t-avatar v-if="userInfo.avatarUrl" class="profile-avatar" :image="userInfo.avatarUrl" size="112rpx" shape="circle" />
+          <view v-else class="profile-avatar-fallback">{{ userInfo.nickname.slice(0, 1) }}</view>
+          <view class="profile-copy">
+            <text class="profile-name">{{ userInfo.nickname }}</text>
+            <view class="profile-meta">
+              <t-tag
+                v-for="item in selectedExamLabels"
+                :key="item.value"
+                :theme="item.theme"
+                variant="light"
+                shape="round"
+                size="small"
+              >
+                {{ item.label }}
+              </t-tag>
+              <t-tag v-if="!selectedExamLabels.length" theme="default" variant="light" shape="round" size="small">
+                随便看看
+              </t-tag>
+              <t-tag v-if="userInfo.targetDate && !selectedExamLabels.length" theme="warning" variant="light" shape="round" size="small">
+                {{ userInfo.targetDate }}
+              </t-tag>
+            </view>
           </view>
-          <picker mode="date" :value="targetDraftDate" :start="today" @change="selectTargetDate">
-            <view class="date-picker">{{ targetDraftDate || '选择考试日期' }}</view>
-          </picker>
-          <button class="save-target" :disabled="savingTarget" @click="saveTarget">保存目标</button>
         </view>
-        <view class="menu-item" @click="showAbout">
-          <text class="menu-icon">📖</text>
-          <text class="menu-label">关于留学考霸</text>
-          <text class="menu-arrow">→</text>
+
+        <view class="profile-actions">
+          <t-button class="profile-action" theme="primary" variant="outline" size="small" shape="round" open-type="chooseAvatar" @chooseavatar="chooseAvatar">
+            更换头像
+          </t-button>
+          <t-button class="profile-action" theme="default" variant="outline" size="small" shape="round" @click="editNickname">
+            修改昵称
+          </t-button>
         </view>
       </view>
     </view>
 
-    <!-- 退出登录 -->
-    <view class="logout-section">
-      <button class="logout-btn" @click="handleLogout">退出登录</button>
+    <view class="app-section" v-if="loadError">
+      <view class="error-card app-card" @click="loadProfile">个人资料加载失败，点击重试</view>
+    </view>
+
+    <view class="app-section">
+      <view class="stats-grid">
+        <view class="stat-card app-card">
+          <text class="stat-value">{{ userInfo.totalQuestions }}</text>
+          <text class="stat-label">累计刷题数</text>
+        </view>
+        <view class="stat-card app-card">
+          <text class="stat-value">{{ userInfo.correctRate }}%</text>
+          <text class="stat-label">正确率</text>
+        </view>
+        <view class="stat-card app-card">
+          <text class="stat-value">{{ userInfo.streakDays }}</text>
+          <text class="stat-label">连续学习天数</text>
+        </view>
+        <view class="stat-card app-card">
+          <text class="stat-value">{{ dashboard.pendingWrongCount }}</text>
+          <text class="stat-label">错题数量</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="app-section">
+      <view class="target-card app-card app-card-pad">
+        <view class="target-head">
+          <text class="app-section-title">目标设置</text>
+        </view>
+
+        <view class="target-mode">
+          <view class="mode-chip" :class="{ active: targetDraftExams.length === 0 }" @click="setBrowseMode">
+            随便看看
+          </view>
+          <view class="mode-chip" :class="{ active: targetDraftExams.includes('CSCA') }" @click="toggleDraftExam('CSCA')">
+            CSCA
+          </view>
+          <view class="mode-chip" :class="{ active: targetDraftExams.includes('HKS') }" @click="toggleDraftExam('HKS')">
+            HKS
+          </view>
+        </view>
+
+        <view v-if="targetDraftExams.length > 0" class="target-dates">
+          <view v-for="exam in targetDraftExams" :key="exam" class="target-date-row">
+            <text class="target-date-label">{{ exam }} 考试日期</text>
+            <picker mode="date" :value="targetDraftDates[exam]" :start="today" @change="selectTargetDate(exam, $event)">
+              <view class="date-picker">{{ targetDraftDates[exam] || '选择考试日期' }}</view>
+            </picker>
+          </view>
+        </view>
+
+        <t-button theme="primary" block shape="round" :loading="savingTarget" @click="saveTarget">保存目标</t-button>
+      </view>
+    </view>
+
+    <view class="app-section">
+      <view class="menu-grid">
+        <view class="menu-card app-card" @click="showAbout">
+          <view class="menu-head">
+            <view class="app-icon-badge"><t-icon name="info-circle" size="28rpx" /></view>
+          </view>
+          <text class="app-card-title">关于</text>
+        </view>
+        <view class="menu-card app-card danger" @click="handleLogout">
+          <view class="menu-head">
+            <view class="app-icon-badge"><t-icon name="poweroff" size="28rpx" /></view>
+          </view>
+          <text class="app-card-title">退出登录</text>
+        </view>
+      </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { userApi } from '@/api'
-import { toUserProfile } from '@/api/contracts'
-import type { UserProfile } from '@/types/user'
+import { toDashboardData, toUserProfile } from '@/api/contracts'
+import { useUserStore } from '@/stores/user'
+import type { DashboardData, UserProfile } from '@/types/user'
+import type { ExamType } from '@/types/exam'
 
+const userStore = useUserStore()
 const userInfo = ref<UserProfile>({
-  nickname: '考霸同学',
+  nickname: '留学同学',
   avatarUrl: '',
   targetExam: 'CSCA',
   targetDate: '',
+  targetDates: {},
   totalQuestions: 0,
   correctRate: 0,
   streakDays: 0,
+  favoriteCount: 0,
+})
+const dashboard = reactive<DashboardData>({
+  userName: '留学同学',
+  targetExam: 'CSCA',
+  targetDate: '',
+  targetDates: {},
+  countdown: { days: '0', hours: '00', minutes: '00' },
+  todayStats: { questionCount: 0, correctRate: 0, wrongCount: 0 },
+  pendingWrongCount: 0,
+  favoriteCount: 0,
+  recentPapers: [],
 })
 const loadError = ref(false)
-const targetEditorOpen = ref(false)
-const targetDraftExam = ref<'CSCA' | 'HKS'>('CSCA')
-const targetDraftDate = ref('')
+const targetDraftExams = ref<ExamType[]>([])
+const targetDraftDates = reactive<Record<ExamType, string>>({ CSCA: '', HKS: '' })
 const savingTarget = ref(false)
 const now = new Date()
 const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+const selectedExamLabels = computed(() =>
+  targetDraftExams.value.map((exam) => ({
+    value: exam,
+    label: exam,
+    theme: exam === 'CSCA' ? ('primary' as const) : ('warning' as const),
+  })),
+)
 
 const loadProfile = async () => {
   loadError.value = false
   try {
     userInfo.value = toUserProfile(await userApi.getUserInfo())
+    targetDraftDates.CSCA = userInfo.value.targetDates.CSCA || ''
+    targetDraftDates.HKS = userInfo.value.targetDates.HKS || ''
+    targetDraftExams.value = [...userStore.selectedExams]
   } catch {
     loadError.value = true
   }
 }
 
-const openTargetEditor = () => {
-  targetDraftExam.value = userInfo.value.targetExam
-  targetDraftDate.value = userInfo.value.targetDate
-  targetEditorOpen.value = !targetEditorOpen.value
+const loadDashboard = async () => {
+  try {
+    Object.assign(dashboard, toDashboardData(await userApi.getDashboard()))
+  } catch {}
 }
 
-const selectTargetDate = (event: any) => {
-  targetDraftDate.value = event.detail.value
+const loadAll = async () => {
+  await Promise.all([loadProfile(), loadDashboard()])
+}
+
+const selectTargetDate = (exam: ExamType, event: any) => {
+  targetDraftDates[exam] = event.detail.value
+}
+
+const toggleDraftExam = (exam: ExamType) => {
+  const index = targetDraftExams.value.indexOf(exam)
+  if (index >= 0) {
+    targetDraftExams.value.splice(index, 1)
+  } else if (targetDraftExams.value.length < 2) {
+    targetDraftExams.value.push(exam)
+  }
+  if (targetDraftExams.value.length === 0) {
+    userStore.setBrowseMode()
+  } else {
+    userStore.setSelectedExams(targetDraftExams.value)
+  }
+}
+
+const setBrowseMode = () => {
+  targetDraftExams.value = []
+  targetDraftDates.CSCA = ''
+  targetDraftDates.HKS = ''
+  userStore.setBrowseMode()
 }
 
 const saveTarget = async () => {
-  if (!targetDraftDate.value) {
-    uni.showToast({ title: '请选择考试日期', icon: 'none' })
+  const missingExam = targetDraftExams.value.find((exam) => !targetDraftDates[exam])
+  if (missingExam) {
+    uni.showToast({ title: `请选择 ${missingExam} 考试日期`, icon: 'none' })
     return
   }
   savingTarget.value = true
   try {
-    const updated = await userApi.updateProfile({
-      target_exam: targetDraftExam.value,
-      target_date: targetDraftDate.value,
-    })
+    const primaryExam = targetDraftExams.value[0] || userInfo.value.targetExam
+    const targetDates: Record<ExamType, string | null> = {
+      CSCA: targetDraftExams.value.includes('CSCA') ? targetDraftDates.CSCA || null : null,
+      HKS: targetDraftExams.value.includes('HKS') ? targetDraftDates.HKS || null : null,
+    }
+    const payload: Record<string, unknown> = {
+      target_exam: primaryExam,
+      target_date: targetDates[primaryExam],
+      target_dates: targetDates,
+    }
+    const updated = await userApi.updateProfile(payload)
     userInfo.value = toUserProfile(updated)
-    targetEditorOpen.value = false
+    targetDraftDates.CSCA = userInfo.value.targetDates.CSCA || ''
+    targetDraftDates.HKS = userInfo.value.targetDates.HKS || ''
+    dashboard.targetExam = updated.target_exam
+    dashboard.targetDate = updated.target_date || ''
     uni.showToast({ title: '目标已更新', icon: 'success' })
   } catch {
-    // The shared request layer displays the failure.
+    // request layer handles toast
   } finally {
     savingTarget.value = false
   }
 }
 
+const chooseAvatar = async (event: any) => {
+  const avatarUrl = event.detail?.avatarUrl
+  if (!avatarUrl) return
+  try {
+    const updated = await userApi.updateProfile({ avatar_url: avatarUrl })
+    userInfo.value = toUserProfile(updated)
+    uni.showToast({ title: '头像已更新', icon: 'success' })
+  } catch {}
+}
+
+const editNickname = () => {
+  uni.showModal({
+    title: '修改昵称',
+    editable: true,
+    placeholderText: '输入昵称',
+    content: userInfo.value.nickname,
+    success: async (result: any) => {
+      const nickname = String(result.content || '').trim()
+      if (!result.confirm || !nickname || nickname === userInfo.value.nickname) return
+      try {
+        const updated = await userApi.updateProfile({ nickname })
+        userInfo.value = toUserProfile(updated)
+      } catch {}
+    },
+  })
+}
+
 const showAbout = () => {
   uni.showModal({
-    title: '留学考霸',
-    content: 'CSCA 与 HKS 备考刷题工具\n版本 1.0.0',
+    title: '关于',
+    content: '老外1点通',
     showCancel: false,
   })
 }
 
 const goPage = (url: string) => {
-  if (url === '/pages/exam/index' || url === '/pages/wrongbook/index') {
+  if (url === '/pages/exam/index') {
     uni.switchTab({ url })
   } else {
     uni.navigateTo({ url })
@@ -166,7 +284,8 @@ const goPage = (url: string) => {
 }
 
 const goRedo = () => {
-  uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${userInfo.value.targetExam}` })
+  const examType = targetDraftExams.value[0] || userInfo.value.targetExam
+  uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${examType}` })
 }
 
 const handleLogout = () => {
@@ -175,68 +294,219 @@ const handleLogout = () => {
     content: '退出后需要重新登录，确定退出吗？',
     success: (res: any) => {
       if (res.confirm) {
-        uni.removeStorageSync('token')
+        userStore.logout()
+        userInfo.value = {
+          nickname: '留学同学',
+          avatarUrl: '',
+          targetExam: 'CSCA',
+          targetDate: '',
+          totalQuestions: 0,
+          correctRate: 0,
+          streakDays: 0,
+          favoriteCount: 0,
+        }
+        targetDraftExams.value = []
+        loadError.value = false
         uni.showToast({ title: '已退出登录', icon: 'success' })
       }
-    }
+    },
   })
 }
 
-onShow(loadProfile)
+onShow(async () => {
+  await loadAll()
+})
 </script>
 
 <style lang="scss" scoped>
-.page { min-height: 100vh; padding-bottom: 40rpx; }
-
-.profile-header {
-  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-  padding: 60rpx 0 48rpx;
-  border-radius: 0 0 48rpx 48rpx;
+.profile-card {
+  background: linear-gradient(180deg, rgba(199, 127, 94, 0.08), rgba(255, 251, 246, 0.94));
 }
-.avatar-area { text-align: center; }
-.avatar { font-size: 80rpx; display: block; margin-bottom: 16rpx; }
-.nickname { font-size: 36rpx; font-weight: 700; color: #fff; display: block; }
-.exam-target { font-size: 24rpx; color: rgba(255,255,255,0.7); margin-top: 8rpx; display: block; }
 
-.stats-section { padding: 0 24rpx; margin-top: -28rpx; }
-.stats-card {
-  background: #fff; border-radius: 20rpx; padding: 28rpx 0;
-  display: flex; align-items: center; justify-content: space-around;
-  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
+.profile-top {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
 }
-.stat-item { text-align: center; flex: 1; }
-.stat-num { font-size: 40rpx; font-weight: 700; color: #4F46E5; display: block; }
-.stat-label { font-size: 22rpx; color: #9CA3AF; margin-top: 6rpx; }
-.stat-divider { width: 2rpx; height: 48rpx; background: #E5E7EB; }
 
-.menu-section { padding: 24rpx; }
-.menu-group { background: #fff; border-radius: 16rpx; margin-bottom: 16rpx; overflow: hidden; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03); }
-.menu-item {
-  display: flex; align-items: center; padding: 24rpx;
-  border-bottom: 1rpx solid #F3F4F6;
+.profile-avatar {
+  flex: none;
 }
-.menu-item:last-child { border-bottom: none; }
-.menu-icon { font-size: 36rpx; margin-right: 16rpx; }
-.menu-label { flex: 1; font-size: 28rpx; color: #1F2937; }
-.menu-value { font-size: 24rpx; color: #9CA3AF; margin-right: 8rpx; }
-.menu-badge {
-  background: #EF4444; color: #fff; font-size: 20rpx;
-  padding: 2rpx 12rpx; border-radius: 20rpx; margin-right: 8rpx;
-}
-.menu-arrow { font-size: 24rpx; color: #C7D2FE; }
 
-.target-editor { padding: 24rpx; border-bottom: 1rpx solid #F3F4F6; }
-.exam-segments { display: flex; background: #F3F4F6; border-radius: 8rpx; padding: 4rpx; }
-.exam-segment { flex: 1; text-align: center; padding: 14rpx 0; font-size: 24rpx; color: #6B7280; border-radius: 6rpx; }
-.exam-segment.active { background: #fff; color: #4F46E5; font-weight: 600; }
-.date-picker { margin-top: 16rpx; padding: 20rpx; border: 1rpx solid #E5E7EB; border-radius: 8rpx; font-size: 24rpx; color: #374151; }
-.save-target { margin-top: 16rpx; background: #4F46E5; color: #fff; border-radius: 8rpx; font-size: 26rpx; padding: 16rpx 0; }
-
-.logout-section { padding: 24rpx; }
-.logout-btn {
-  background: #fff; border-radius: 48rpx; font-size: 28rpx;
-  color: #EF4444; text-align: center; padding: 20rpx 0; border: none;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
+.profile-avatar-fallback {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 999px;
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  font-weight: 600;
+  flex: none;
 }
-.load-error { margin: 24rpx; padding: 24rpx; text-align: center; color: #B91C1C; background: #FEF2F2; border-radius: 12rpx; font-size: 24rpx; }
+
+.profile-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-name {
+  display: block;
+  font-size: 36rpx;
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10rpx 12rpx;
+  margin-top: 10rpx;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 18rpx;
+}
+
+.profile-action {
+  flex: 1;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 124rpx;
+  padding: 20rpx 16rpx;
+  text-align: center;
+  background: #fffdf9;
+  border: 1rpx solid #efe5d8;
+  border-radius: 30rpx;
+  box-shadow: 0 8rpx 20rpx rgba(98, 76, 57, 0.035);
+}
+
+.stat-value {
+  display: block;
+  font-size: 34rpx;
+  line-height: 1.1;
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.stat-label {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: var(--app-text-weak);
+}
+
+.target-head {
+  margin-bottom: 14rpx;
+}
+
+.target-mode {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10rpx;
+  margin-bottom: 16rpx;
+}
+
+.mode-chip {
+  padding: 14rpx 0;
+  border-radius: 999px;
+  background: #f8efe4;
+  color: var(--app-text-weak);
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.mode-chip.active {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+  font-weight: 600;
+}
+
+.target-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.target-date-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.target-date-label {
+  font-size: 22rpx;
+  line-height: 1.4;
+  color: var(--app-text-weak);
+}
+
+.date-picker {
+  margin-bottom: 16rpx;
+  padding: 18rpx 20rpx;
+  border: 1rpx solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  color: var(--app-text);
+  font-size: 24rpx;
+  background: #ffffff;
+}
+
+.target-date-row .date-picker {
+  margin-bottom: 0;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14rpx;
+}
+
+.menu-card {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  min-height: 88rpx;
+  padding: 14rpx 22rpx;
+  border-radius: 999px;
+  background: #fffdf9;
+  border: 1rpx solid #efe5d8;
+  box-shadow: 0 8rpx 20rpx rgba(98, 76, 57, 0.035);
+}
+
+.menu-card.danger .app-card-title {
+  color: var(--app-danger);
+}
+
+.menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10rpx;
+  flex: none;
+  margin-bottom: 0;
+}
+
+.error-card {
+  padding: 24rpx;
+  text-align: center;
+  color: var(--app-danger);
+  background: var(--app-danger-soft);
+}
 </style>

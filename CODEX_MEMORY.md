@@ -4,7 +4,7 @@
 
 - Project: 留学考霸 - CSCA & HKS exam-prep WeChat mini-program.
 - Workspace: `E:\Deng\csca-hks-exam-app`
-- Current date: 2026-08-17.
+- Current date: 2026-08-30.
 - Paper: none provided. All decisions are engineering decisions, not paper claims.
 
 ## Product Goal
@@ -306,3 +306,20 @@ Continue the remaining profile regression: verify accumulated question count, to
 ### Immediate Next Action
 
 Run the critical login and wrongbook PDF-preview workflows on a physical device with production WeChat credentials. After that, perform release configuration review and a final end-to-end acceptance pass.
+
+## Progress Update (2026-08-30, Workspace Cleanup and Documentation)
+
+- Removed reproducible intermediate products from the working tree: `client/node_modules`, `client/dist`, `server/.venv`, project pytest caches, and all accessible Python `__pycache__` directories. Dependencies and build output can be regenerated from the lock/requirements files.
+- `.test-cache` and `.test-tmp` at the project root were created by an administrator-owned test run. The current account cannot read or delete them (`Access denied`); they remain ignored by Git and can be removed later from an elevated PowerShell.
+- Preserved `database/backups/csca_hks_exam_before_alembic_20260816_170437.sql` because it is the pre-migration rollback backup. Preserved the external `E:\Deng\original_question_bank` source data because it is required for full question import and is intentionally outside the repository.
+- Updated `.gitignore` so environment templates remain shareable via `!**/.env.example`. `CODEX_MEMORY.md` remains ignored by policy, but it is already tracked in the existing Git index; ignore rules do not remove tracked files automatically.
+- Rewrote `README.md` with the current feature status, clean-clone setup, environment configuration, MySQL/Alembic initialization, question import, development startup, verification commands, generated-output policy, and remaining production validation.
+- The working tree still records deletions for previously tracked `client/node_modules` and `client/dist` files. Those deletions will take effect when committed; no unrelated source files were reverted.
+- Security follow-up: `server/.env` is currently tracked in the existing index. Before publishing, remove it from the index, ensure no secrets are committed, and rotate any credentials that have appeared in Git history. This was not altered automatically because history rewriting is destructive.
+
+### Next Actions
+
+1. Remove the administrator-owned `.test-cache` and `.test-tmp` with elevated permissions when convenient.
+2. Reinstall `client` and `server` dependencies from `package-lock.json` and `requirements.txt` before running fresh tests or builds.
+3. Clean tracked generated files and the tracked `server/.env` from the Git index, then review the staged diff before publishing.
+4. Complete physical-device verification with production WeChat credentials and a reachable HTTPS API endpoint.

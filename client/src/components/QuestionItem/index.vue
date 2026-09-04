@@ -1,20 +1,34 @@
 <template>
   <view class="question-item">
-    <!-- 题目标题区 -->
     <view class="q-header">
-      <text class="q-index">第 {{ index + 1 }} 题</text>
+      <view class="q-index-wrap">
+        <text class="q-index">第 {{ index + 1 }} 题</text>
+        <text class="q-index-sub">{{ question.examType }}</text>
+      </view>
       <view class="q-tags">
-        <text class="q-tag type" :class="question.type">{{ typeLabel }}</text>
-        <text class="q-tag diff" :class="question.difficulty">{{ diffLabel }}</text>
+        <t-tag theme="primary" variant="light" shape="round" size="small">{{ typeLabel }}</t-tag>
+        <t-tag theme="default" variant="light" shape="round" size="small">{{ diffLabel }}</t-tag>
+        <t-tag theme="warning" variant="light" shape="round" size="small">
+          {{ domainLabel }}·{{ domainValue }}
+        </t-tag>
+        <t-button
+          class="favorite-btn"
+          theme="default"
+          :variant="isFavorite ? 'outline' : 'text'"
+          size="small"
+          shape="round"
+          @click.stop="$emit('favorite')"
+        >
+          {{ isFavorite ? '已收藏' : '收藏' }}
+        </t-button>
       </view>
     </view>
 
-    <!-- 题干 -->
     <view class="q-stem">
+      <view class="stem-ribbon"></view>
       <rich-text :nodes="question.stem"></rich-text>
     </view>
 
-    <!-- 选项列表 -->
     <view class="q-options">
       <view
         class="option-item"
@@ -30,9 +44,8 @@
       </view>
     </view>
 
-    <!-- 解析区 -->
     <view class="analysis" v-if="showResult && question.analysis">
-      <text class="analysis-label">💡 解析</text>
+      <text class="analysis-label">解析</text>
       <text class="analysis-text">{{ question.analysis }}</text>
     </view>
   </view>
@@ -41,21 +54,26 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Question } from '@/types/exam'
-import { QUESTION_TYPE_MAP, DIFFICULTY_MAP } from '@/utils'
+import { DIFFICULTY_MAP, QUESTION_TYPE_MAP } from '@/utils'
+import { getQuestionDomain, getQuestionDomainLabel } from '@/constants/exam'
 
 const props = defineProps<{
   question: Question
   index: number
   userAnswer: string
   showResult: boolean
+  isFavorite?: boolean
 }>()
 
 defineEmits<{
   (e: 'select', key: string): void
+  (e: 'favorite'): void
 }>()
 
 const typeLabel = computed(() => QUESTION_TYPE_MAP[props.question.type] || props.question.type)
 const diffLabel = computed(() => DIFFICULTY_MAP[props.question.difficulty] || props.question.difficulty)
+const domainLabel = computed(() => getQuestionDomainLabel(props.question.examType))
+const domainValue = computed(() => getQuestionDomain(props.question))
 
 function getOptionClass(key: string) {
   return {
@@ -68,48 +86,66 @@ function getOptionClass(key: string) {
 
 <style lang="scss" scoped>
 .question-item {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
 }
 
 .q-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16rpx;
+  gap: 16rpx;
+}
+
+.q-index-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
 }
 
 .q-index {
-  font-size: 24rpx;
-  color: #9CA3AF;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--app-text-weak);
+}
+
+.q-index-sub {
+  font-size: 20rpx;
+  color: var(--app-text-mute);
 }
 
 .q-tags {
   display: flex;
-  gap: 8rpx;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10rpx;
 }
 
-.q-tag {
-  padding: 2rpx 12rpx;
-  border-radius: 8rpx;
-  font-size: 20rpx;
+.favorite-btn {
+  min-width: 110rpx;
 }
-
-.q-tag.type.single { background: #DBEAFE; color: #1E40AF; }
-.q-tag.type.multi { background: #FEF3C7; color: #92400E; }
-.q-tag.type.judge { background: #D1FAE5; color: #065F46; }
-.q-tag.type.fill { background: #EDE9FE; color: #5B21B6; }
-
-.q-tag.diff.easy { background: #D1FAE5; color: #065F46; }
-.q-tag.diff.medium { background: #FEF3C7; color: #92400E; }
-.q-tag.diff.hard { background: #FEE2E2; color: #991B1B; }
 
 .q-stem {
+  position: relative;
+  padding: 16rpx 18rpx 16rpx 24rpx;
+  border-radius: var(--app-radius-md);
+  background: linear-gradient(180deg, rgba(255, 252, 246, 0.96) 0%, rgba(250, 242, 232, 0.92) 100%);
+  border: 1rpx solid rgba(201, 151, 118, 0.12);
   font-size: 28rpx;
   line-height: 1.8;
-  color: #1F2937;
-  margin-bottom: 24rpx;
+  color: var(--app-text);
+}
+
+.stem-ribbon {
+  position: absolute;
+  left: 0;
+  top: 18rpx;
+  bottom: 18rpx;
+  width: 6rpx;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--app-primary), var(--app-accent));
 }
 
 .q-options {
@@ -121,83 +157,84 @@ function getOptionClass(key: string) {
 .option-item {
   display: flex;
   align-items: center;
-  padding: 20rpx 16rpx;
-  border-radius: 12rpx;
-  border: 2rpx solid #E5E7EB;
-  background: #fff;
+  padding: 20rpx 18rpx;
+  border-radius: var(--app-radius-md);
+  border: 1rpx solid var(--app-border);
+  background: rgba(255, 253, 249, 0.94);
 }
 
 .option-item.selected {
-  border-color: #4F46E5;
-  background: #EEF2FF;
+  border-color: rgba(199, 127, 94, 0.28);
+  background: var(--app-primary-soft);
 }
 
 .option-item.correct {
-  border-color: #10B981;
-  background: #D1FAE5;
+  border-color: rgba(126, 154, 128, 0.26);
+  background: #f0f6f1;
 }
 
 .option-item.wrong {
-  border-color: #EF4444;
-  background: #FEE2E2;
+  border-color: rgba(198, 95, 82, 0.22);
+  background: #fbefeb;
 }
 
 .option-key {
   width: 44rpx;
   height: 44rpx;
-  border-radius: 50%;
-  background: #F3F4F6;
+  border-radius: 999px;
+  background: #f7efe5;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 22rpx;
   font-weight: 600;
-  color: #6B7280;
+  color: var(--app-text-weak);
 }
 
 .option-item.selected .option-key {
-  background: #4F46E5;
-  color: #fff;
+  background: var(--app-primary);
+  color: #ffffff;
 }
 
 .option-item.correct .option-key {
-  background: #10B981;
-  color: #fff;
+  background: var(--app-success);
+  color: #ffffff;
 }
 
 .option-item.wrong .option-key {
-  background: #EF4444;
-  color: #fff;
+  background: var(--app-danger);
+  color: #ffffff;
 }
 
 .option-text {
   flex: 1;
   margin-left: 12rpx;
   font-size: 26rpx;
-  color: #1F2937;
+  color: var(--app-text);
 }
 
 .option-icon {
   font-size: 24rpx;
-  font-weight: 700;
-  color: #10B981;
+  font-weight: 600;
+  color: var(--app-success);
 }
 
 .option-icon.wrong {
-  color: #EF4444;
+  color: var(--app-danger);
 }
 
 .analysis {
-  margin-top: 20rpx;
-  padding: 16rpx;
-  background: #F0FDF4;
-  border-radius: 12rpx;
+  margin-top: 4rpx;
+  padding: 18rpx;
+  background: linear-gradient(180deg, #f4efe6 0%, #f7efe5 100%);
+  border-radius: var(--app-radius-md);
+  border: 1rpx solid rgba(126, 154, 128, 0.12);
 }
 
 .analysis-label {
   font-size: 24rpx;
   font-weight: 600;
-  color: #065F46;
+  color: var(--app-primary);
   display: block;
   margin-bottom: 8rpx;
 }

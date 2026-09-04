@@ -3,6 +3,8 @@ import type { ExamResultSummary, HistoryPaper, Question, ResultWrongQuestion } f
 export const mockExamQuestions: Question[] = [
   {
     id: 1,
+    examType: 'CSCA',
+    subject: '文科中文',
     type: 'single',
     difficulty: 'medium',
     knowledgePoint: '文化常识',
@@ -18,6 +20,8 @@ export const mockExamQuestions: Question[] = [
   },
   {
     id: 2,
+    examType: 'CSCA',
+    subject: '数学',
     type: 'single',
     difficulty: 'easy',
     knowledgePoint: '中国地理',

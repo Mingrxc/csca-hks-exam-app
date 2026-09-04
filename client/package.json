@@ -1,7 +1,7 @@
 {
-  "name": "exam-miniapp",
+  "name": "laowai1diantong-miniapp",
   "version": "1.0.0",
-  "description": "留学考霸 — CSCA & HKS 备考刷题小程序",
+  "description": "老外1点通 留学考试学习助手",
   "scripts": {
     "dev:mp-weixin": "uni -p mp-weixin",
     "build:mp-weixin": "uni build -p mp-weixin",
@@ -14,6 +14,7 @@
     "@dcloudio/uni-components": "3.0.0-alpha-5020220260725001",
     "@dcloudio/uni-h5": "3.0.0-alpha-5020220260725001",
     "@dcloudio/uni-mp-weixin": "3.0.0-alpha-5020220260725001",
+    "@tdesign/uniapp": "^0.10.3",
     "pinia": "^2.1.7",
     "vue": "^3.4.21"
   },

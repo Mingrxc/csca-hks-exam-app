@@ -9,7 +9,7 @@ from src.common.exceptions import AppException
 from src.config.settings import settings
 from src.modules.exam.models import AnswerRecord
 from src.modules.question.service import list_papers
-from src.modules.user.models import StreakRecord, User
+from src.modules.user.models import StreakRecord, User, UserExamTarget
 from src.modules.wrongbook.models import WrongBook
 
 
@@ -66,7 +66,60 @@ def get_or_create_user_by_openid(
     return user
 
 
-def serialize_user(user: User) -> dict:
+def get_target_dates(db: Session, user: User) -> dict[str, str]:
+    rows = (
+        db.query(UserExamTarget)
+        .filter(UserExamTarget.user_id == user.id)
+        .order_by(UserExamTarget.exam_type)
+        .all()
+    )
+    target_dates = {
+        str(row.exam_type): row.target_date.isoformat()
+        for row in rows
+        if row.target_date is not None
+    }
+    if not target_dates and user.target_exam and user.target_date:
+        target_dates[str(user.target_exam)] = user.target_date.isoformat()
+    return target_dates
+
+
+def update_target_dates(
+    db: Session,
+    user_id: int,
+    target_dates: dict[str, date | None],
+) -> None:
+    for exam_type, target_date in target_dates.items():
+        if exam_type not in {"CSCA", "HKS"}:
+            continue
+        row = (
+            db.query(UserExamTarget)
+            .filter(
+                UserExamTarget.user_id == user_id,
+                UserExamTarget.exam_type == exam_type,
+            )
+            .first()
+        )
+        if target_date is None:
+            if row:
+                db.delete(row)
+            continue
+        if row:
+            row.target_date = target_date
+        else:
+            db.add(
+                UserExamTarget(
+                    user_id=user_id,
+                    exam_type=exam_type,
+                    target_date=target_date,
+                )
+            )
+
+
+def serialize_user(
+    user: User,
+    favorite_count: int = 0,
+    target_dates: dict[str, str] | None = None,
+) -> dict:
     total_questions = user.total_questions or 0
     total_correct = user.total_correct or 0
     correct_rate = round(total_correct / total_questions * 100) if total_questions else 0
@@ -78,10 +131,12 @@ def serialize_user(user: User) -> dict:
         "avatar_url": user.avatar_url,
         "target_exam": user.target_exam,
         "target_date": user.target_date,
+        "target_dates": target_dates if target_dates is not None else {},
         "total_questions": total_questions,
         "total_correct": total_correct,
         "correct_rate": correct_rate,
         "streak_days": user.streak_days or 0,
+        "favorite_count": favorite_count,
         "created_at": user.created_at,
     }
 
@@ -130,16 +185,23 @@ def get_dashboard(db: Session, user: User) -> dict:
         .filter(WrongBook.user_id == user.id, WrongBook.is_mastered == 0)
         .count()
     )
-
     return {
         "user_name": user.nickname,
         "target_exam": user.target_exam,
         "target_date": user.target_date,
+        "target_dates": get_target_dates(db, user),
         "today_stats": {
             "question_count": question_count,
             "correct_rate": round(correct_count / question_count * 100) if question_count else 0,
             "wrong_count": wrong_count,
         },
         "pending_wrong_count": pending_wrong_count,
+        "favorite_count": count_user_favorites(db, user.id),
         "recent_papers": list_papers(db, user.id, limit=3),
     }
+
+
+def count_user_favorites(db: Session, user_id: int) -> int:
+    from src.modules.favorite.models import Favorite
+
+    return db.query(Favorite).filter(Favorite.user_id == user_id).count()

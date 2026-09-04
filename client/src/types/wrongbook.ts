@@ -3,6 +3,7 @@ import type { Difficulty, ExamType, OptionItem } from './exam'
 export interface WrongBookListItem {
   id: number
   examType: ExamType
+  subject: string
   typeLabel: string
   diffLabel: string
   difficulty: Difficulty
@@ -16,6 +17,7 @@ export interface WrongBookListItem {
 export interface WrongBookDetail {
   id: number
   examType: ExamType
+  subject: string
   typeLabel: string
   diffLabel: string
   difficulty: Difficulty

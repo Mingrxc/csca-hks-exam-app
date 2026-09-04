@@ -24,8 +24,8 @@ const props = defineProps<{
 }>()
 
 const size = ref(props.size || 200)
-const color = ref(props.color || '#4F46E5')
-const bgColor = ref(props.bgColor || '#E5E7EB')
+const color = ref(props.color || '#C77F5E')
+const bgColor = ref(props.bgColor || '#E2E8F0')
 const lineWidth = ref(props.lineWidth || 12)
 
 function drawRing() {
@@ -73,14 +73,15 @@ watch(() => props.percent, () => drawRing())
 }
 
 .ring-value {
-  font-size: 40rpx;
-  font-weight: 700;
+  font-size: 38rpx;
+  font-weight: 600;
   line-height: 1;
+  color: var(--app-text);
 }
 
 .ring-label {
   font-size: 20rpx;
-  color: #9CA3AF;
+  color: var(--app-text-weak);
   margin-top: 4rpx;
 }
 </style>

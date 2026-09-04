@@ -1,111 +1,100 @@
-.page.data-v-b6604ac4 {
-  min-height: 100vh;
-  padding: 24rpx 0 40rpx;
+.hero.data-v-b6604ac4 {
+  border-radius: var(--app-radius-xl);
+  background: linear-gradient(180deg, #fffaf4 0%, #f8ecdf 100%);
 }
-.section.data-v-b6604ac4 {
-  padding: 0 24rpx;
-  margin-bottom: 32rpx;
+.exam-page .app-card.data-v-b6604ac4 {
+  border-radius: 24rpx !important;
+  overflow: hidden;
 }
-.section-title.data-v-b6604ac4 {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #1F2937;
-}
-.section-header.data-v-b6604ac4 {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.exam-group .section-head.data-v-b6604ac4 {
   margin-bottom: 16rpx;
 }
-.section-more.data-v-b6604ac4 {
-  font-size: 24rpx;
-  color: #4F46E5;
+.exam-group + .exam-group.data-v-b6604ac4 {
+  margin-top: 48rpx;
 }
-.strategy-list.data-v-b6604ac4 {
+.hero-head.data-v-b6604ac4 {
   display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  margin-top: 16rpx;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
 }
-.strategy-card.data-v-b6604ac4 {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 28rpx 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-}
-.strategy-icon.data-v-b6604ac4 {
-  font-size: 44rpx;
-}
-.strategy-right.data-v-b6604ac4 {
+.hero-copy.data-v-b6604ac4 {
   flex: 1;
-  margin-left: 20rpx;
+  min-width: 0;
 }
-.strategy-title.data-v-b6604ac4 {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #1F2937;
-}
-.strategy-desc.data-v-b6604ac4 {
-  font-size: 22rpx;
-  color: #9CA3AF;
-  margin-top: 6rpx;
+.hero-title.data-v-b6604ac4 {
   display: block;
+  font-size: 40rpx;
+  line-height: 1.25;
+  font-weight: 600;
+  color: var(--app-text);
 }
-.strategy-arrow.data-v-b6604ac4 {
-  font-size: 28rpx;
-  color: #C7D2FE;
-}
-.paper-card.data-v-b6604ac4 {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  margin-bottom: 16rpx;
-}
-.paper-header.data-v-b6604ac4 {
+.hero-exams.data-v-b6604ac4 {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12rpx;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 14rpx;
 }
-.paper-name.data-v-b6604ac4 {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: #1F2937;
+.hero-metrics.data-v-b6604ac4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12rpx;
+  margin-top: 18rpx;
 }
-.paper-badge.data-v-b6604ac4 {
-  font-size: 20rpx;
-  padding: 4rpx 16rpx;
-  border-radius: 20rpx;
-}
-.paper-badge.pass.data-v-b6604ac4 {
-  background: #D1FAE5;
-  color: #065F46;
-}
-.paper-badge.fail.data-v-b6604ac4 {
-  background: #FEE2E2;
-  color: #991B1B;
-}
-.paper-stats.data-v-b6604ac4 {
-  display: flex;
-  gap: 24rpx;
-}
-.paper-stat.data-v-b6604ac4 {
-  font-size: 22rpx;
-  color: #9CA3AF;
-}
-.empty-state.data-v-b6604ac4 {
-  padding: 80rpx 0;
+.hero-metric.data-v-b6604ac4 {
+  padding: 16rpx 12rpx;
+  border-radius: 20rpx !important;
+  background: #fffdf8;
+  border: 1rpx solid #eadfce;
+  overflow: hidden;
   text-align: center;
 }
-.empty-icon.data-v-b6604ac4 {
-  font-size: 60rpx;
+.hero-metric-value.data-v-b6604ac4 {
   display: block;
-  margin-bottom: 16rpx;
+  font-size: 32rpx;
+  line-height: 1.1;
+  font-weight: 600;
+  color: var(--app-text);
 }
-.empty-text.data-v-b6604ac4 {
-  font-size: 26rpx;
-  color: #9CA3AF;
+.hero-metric-label.data-v-b6604ac4 {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: var(--app-text-weak);
+}
+.feature-grid.data-v-b6604ac4 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20rpx;
+}
+.feature-card.data-v-b6604ac4 {
+  min-height: 154rpx;
+}
+.feature-top.data-v-b6604ac4,
+.tool-top.data-v-b6604ac4 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10rpx;
+  margin-bottom: 14rpx;
+}
+.tool-grid.data-v-b6604ac4 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20rpx;
+}
+.tool-card.data-v-b6604ac4 {
+  min-height: 154rpx;
+}
+.exam-entry-card.data-v-b6604ac4 {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24rpx;
+  min-height: 160rpx;
+  border-radius: 24rpx !important;
+  background: #fffdf8 !important;
+  border: 1rpx solid #eadfce !important;
+  box-shadow: 0 8rpx 24rpx rgba(117, 86, 62, 0.12) !important;
+  overflow: hidden;
 }

@@ -1,23 +1,37 @@
 <template>
-  <view class="page">
-    <!-- 筛选栏 -->
-    <view class="filter-bar">
-      <view class="filter-tabs">
-        <view
-          class="filter-tab"
-          :class="{ active: activeTab === t.key }"
-          v-for="t in tabs"
-          :key="t.key"
-          @click="selectTab(t.key)"
-        >{{ t.label }}</view>
-      </view>
-      <view class="filter-more" @click="showFilters = true">
-        <text>{{ activeFilterLabel }}</text>
-        <text class="filter-arrow">▾</text>
+  <view class="page app-shell">
+    <view class="app-section">
+      <view class="hero app-card app-card-soft app-card-pad">
+        <view class="hero-head">
+          <view class="hero-copy">
+            <text class="hero-brand">错题本</text>
+            <text class="hero-title">把容易错的地方收拢起来</text>
+            <text class="hero-subtitle">先筛选，再复习，最后重做，顺着来会更清楚。</text>
+          </view>
+          <t-tag theme="danger" variant="light" shape="round">{{ wrongList.length }}</t-tag>
+        </view>
       </view>
     </view>
 
-    <!-- 筛选下拉 -->
+    <view class="app-section filter-section">
+      <view class="filter-bar app-card">
+        <view class="filter-tabs">
+          <view
+            class="filter-tab"
+            :class="{ active: activeTab === t.key }"
+            v-for="t in tabs"
+            :key="t.key"
+            @click="selectTab(t.key)"
+          >
+            {{ t.label }}
+          </view>
+        </view>
+        <t-button theme="default" variant="text" size="small" shape="round" @click="showFilters = true">
+          {{ activeFilterLabel }}
+        </t-button>
+      </view>
+    </view>
+
     <view class="filter-dropdown" v-if="showFilters">
       <view class="dropdown-section">
         <text class="dropdown-title">考试类型</text>
@@ -25,22 +39,22 @@
           <view
             class="dropdown-tag"
             :class="{ active: filters.examType === 'all' }"
-            @click="filters.examType = 'all'; applyFilters()"
+            @click="setExamTypeFilter('all')"
           >全部</view>
           <view
             class="dropdown-tag"
             :class="{ active: filters.examType === 'CSCA' }"
-            @click="filters.examType = 'CSCA'; applyFilters()"
+            @click="setExamTypeFilter('CSCA')"
           >CSCA</view>
           <view
             class="dropdown-tag"
             :class="{ active: filters.examType === 'HKS' }"
-            @click="filters.examType = 'HKS'; applyFilters()"
+            @click="setExamTypeFilter('HKS')"
           >HKS</view>
         </view>
       </view>
       <view class="dropdown-section">
-        <text class="dropdown-title">知识点</text>
+        <text class="dropdown-title">{{ specialLabel }}</text>
         <view class="dropdown-tags">
           <view
             class="dropdown-tag"
@@ -50,7 +64,7 @@
           <view
             class="dropdown-tag"
             :class="{ active: filters.knowledge === k }"
-            v-for="k in knowledgePoints"
+            v-for="k in specialOptions"
             :key="k"
             @click="filters.knowledge = k; applyFilters()"
           >{{ k }}</view>
@@ -77,60 +91,61 @@
         </view>
       </view>
       <view class="dropdown-actions">
-        <button class="dropdown-btn reset" @click="resetFilters">重置</button>
-        <button class="dropdown-btn confirm" @click="showFilters = false">确定</button>
+        <t-button class="dropdown-btn" theme="default" variant="outline" shape="round" @click="resetFilters">重置</t-button>
+        <t-button class="dropdown-btn" theme="primary" shape="round" @click="showFilters = false">确定</t-button>
       </view>
     </view>
 
-    <!-- 错题统计 -->
-    <view class="stats-bar" v-if="wrongList.length > 0">
-      <text class="stats-text">共 {{ wrongList.length }} 道错题</text>
-      <text class="stats-text">{{ masteredCount }} 道已掌握</text>
+    <view class="app-section" v-if="wrongList.length > 0">
+      <view class="stats-bar app-card">
+        <text class="stats-text">共 {{ wrongList.length }} 道错题</text>
+        <text class="stats-text">{{ masteredCount }} 道已掌握</text>
+      </view>
     </view>
 
-    <!-- 错题列表 -->
-    <view class="list">
-      <view class="wrong-card" v-for="item in wrongList" :key="item.id" @click="goDetail(item.id)">
-        <view class="card-header">
+    <view class="app-section">
+      <view class="wrong-list">
+        <view class="wrong-card app-card" v-for="item in wrongList" :key="item.id" @click="goDetail(item.id)">
+          <view class="card-header">
           <view class="card-tags">
-            <text class="card-tag exam">{{ item.examType }}</text>
-            <text class="card-tag type">{{ item.typeLabel }}</text>
-            <text class="card-tag diff" :class="item.difficulty">{{ item.diffLabel }}</text>
-            <text class="card-tag point">{{ item.knowledgePoint }}</text>
+            <t-tag theme="primary" variant="light" shape="round" size="small">{{ item.examType }}</t-tag>
+            <t-tag theme="warning" variant="light" shape="round" size="small">{{ domainLabel(item) }}·{{ domainValue(item) }}</t-tag>
+            <t-tag theme="default" variant="light" shape="round" size="small">{{ item.typeLabel }}</t-tag>
+            <t-tag :theme="item.mastered ? 'success' : 'danger'" variant="light" shape="round" size="small">
+              {{ item.mastered ? '已掌握' : `错${item.wrongCount}次` }}
+            </t-tag>
+            </view>
           </view>
-          <view class="card-status" :class="{ mastered: item.mastered }">
-            {{ item.mastered ? '已掌握' : '错' + item.wrongCount + '次' }}
+          <text class="card-stem">{{ item.stem }}</text>
+          <view class="card-footer">
+            <text class="card-date">{{ item.lastWrongAt }}</text>
+            <text class="card-action">查看详情 ›</text>
           </view>
-        </view>
-        <text class="card-stem">{{ item.stem }}</text>
-        <view class="card-footer">
-          <text class="card-date">{{ item.lastWrongAt }}</text>
-          <text class="card-action">查看详情 →</text>
         </view>
       </view>
+
+      <t-empty v-if="!isLoading && wrongList.length === 0" description="太棒了！没有错题" />
     </view>
 
-    <!-- 空状态 -->
-    <view class="empty-state" v-if="!isLoading && wrongList.length === 0">
-      <text class="empty-icon">🎉</text>
-      <text class="empty-title">太棒了！没有错题</text>
-      <text class="empty-desc">继续保持，你是最棒的</text>
-    </view>
-
-    <!-- 底部操作 -->
     <view class="footer-actions" v-if="wrongList.length > 0">
-      <button class="footer-btn" @click="goRedo">错题重做</button>
-      <button class="footer-btn outline" @click="exportPdf">导出 PDF</button>
+      <t-button class="footer-btn" theme="primary" block shape="round" @click="goRedo">错题重做</t-button>
+      <t-button class="footer-btn" theme="default" variant="outline" block shape="round" @click="exportPdf">导出 PDF</t-button>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { computed, ref, reactive } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { wrongBookApi } from '@/api'
+import { questionApi, wrongBookApi } from '@/api'
 import { toWrongBookListItem } from '@/api/contracts'
-import { WRONG_BOOK_KNOWLEDGE_POINTS } from '@/constants/exam'
+import {
+  CSCA_SUBJECT_OPTIONS,
+  HSK_KNOWLEDGE_OPTIONS,
+  getQuestionDomain,
+  getQuestionDomainLabel,
+  getSpecialLabel,
+} from '@/constants/exam'
 import type { WrongBookListItem } from '@/types/wrongbook'
 import type { ExamType } from '@/types/exam'
 
@@ -144,12 +159,30 @@ const tabs = [
   { key: 'HKS', label: 'HKS' },
 ]
 
-const knowledgePoints = WRONG_BOOK_KNOWLEDGE_POINTS
-
 const filters = reactive({
   examType: 'all',
   knowledge: 'all',
   wrongCount: 'all',
+})
+const specialFetched = reactive<Record<ExamType, boolean>>({
+  CSCA: false,
+  HKS: false,
+})
+const specialOptionsByExam = reactive<Record<ExamType, string[]>>({
+  CSCA: [...CSCA_SUBJECT_OPTIONS],
+  HKS: [...HSK_KNOWLEDGE_OPTIONS],
+})
+
+const specialLabel = computed(() => {
+  if (filters.examType === 'CSCA') return getSpecialLabel('CSCA')
+  if (filters.examType === 'HKS') return getSpecialLabel('HKS')
+  return '专项'
+})
+
+const specialOptions = computed(() => {
+  if (filters.examType === 'CSCA') return specialOptionsByExam.CSCA
+  if (filters.examType === 'HKS') return specialOptionsByExam.HKS
+  return Array.from(new Set([...specialOptionsByExam.CSCA, ...specialOptionsByExam.HKS]))
 })
 
 const activeFilterLabel = computed(() => {
@@ -162,7 +195,23 @@ const activeFilterLabel = computed(() => {
 
 const wrongList = ref<WrongBookListItem[]>([])
 
-const masteredCount = computed(() => wrongList.value.filter(w => w.mastered).length)
+const masteredCount = computed(() => wrongList.value.filter((w) => w.mastered).length)
+
+const domainLabel = (item: WrongBookListItem) => getQuestionDomainLabel(item.examType)
+const domainValue = (item: WrongBookListItem) => getQuestionDomain(item)
+
+const loadSpecialOptions = async (examType: ExamType) => {
+  if (specialFetched[examType]) return
+  try {
+    const options = await questionApi.getSpecialOptions(examType)
+    specialOptionsByExam[examType] = options.map((item) => item.label || item.value).filter(Boolean)
+  } catch {
+    specialOptionsByExam[examType] =
+      examType === 'CSCA' ? [...CSCA_SUBJECT_OPTIONS] : [...HSK_KNOWLEDGE_OPTIONS]
+  } finally {
+    specialFetched[examType] = true
+  }
+}
 
 const loadWrongList = async () => {
   if (isLoading.value) return
@@ -182,10 +231,19 @@ const loadWrongList = async () => {
   }
 }
 
-const selectTab = (tab: string) => {
+const setExamTypeFilter = (tab: 'all' | ExamType) => {
+  if (filters.examType === tab) {
+    activeTab.value = tab
+    return
+  }
   activeTab.value = tab
   filters.examType = tab
+  filters.knowledge = 'all'
   loadWrongList()
+}
+
+const selectTab = (tab: string) => {
+  setExamTypeFilter(tab as 'all' | ExamType)
 }
 
 const applyFilters = () => {
@@ -245,79 +303,202 @@ const exportPdf = async () => {
   }
 }
 
+void loadSpecialOptions('CSCA')
+void loadSpecialOptions('HKS')
+
 onShow(loadWrongList)
 </script>
 
 <style lang="scss" scoped>
-.page { min-height: 100vh; padding-bottom: 120rpx; background: #F5F5F7; }
+.hero-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.hero-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-brand {
+  display: block;
+  color: var(--app-primary);
+  font-size: 22rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
+
+.hero-title {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 36rpx;
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.hero-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: var(--app-text-weak);
+}
+
+.filter-section {
+  margin-top: 18rpx;
+}
 
 .filter-bar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16rpx 24rpx; background: #fff; border-bottom: 1rpx solid #E5E7EB;
-  position: sticky; top: 0; z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 18rpx 20rpx;
 }
-.filter-tabs { display: flex; gap: 8rpx; }
-.filter-tab { padding: 8rpx 24rpx; border-radius: 20rpx; font-size: 24rpx; background: #F3F4F6; color: #6B7280; }
-.filter-tab.active { background: #EEF2FF; color: #4F46E5; font-weight: 600; }
-.filter-more { font-size: 24rpx; color: #4F46E5; display: flex; align-items: center; gap: 4rpx; }
-.filter-arrow { font-size: 20rpx; }
+
+.filter-tabs {
+  display: flex;
+  gap: 10rpx;
+}
+
+.filter-tab {
+  padding: 8rpx 18rpx;
+  border-radius: 999px;
+  background: #f8efe4;
+  color: var(--app-text-weak);
+  font-size: 23rpx;
+}
+
+.filter-tab.active {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+  font-weight: 600;
+}
 
 .filter-dropdown {
-  background: #fff; padding: 24rpx; border-bottom: 1rpx solid #E5E7EB;
+  margin: 14rpx 24rpx 0;
+  padding: 20rpx;
+  border: 1rpx solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  background: #fffaf3;
+  box-shadow: var(--app-shadow-sm);
 }
-.dropdown-section { margin-bottom: 20rpx; }
-.dropdown-title { font-size: 24rpx; color: #9CA3AF; display: block; margin-bottom: 12rpx; }
-.dropdown-tags { display: flex; flex-wrap: wrap; gap: 12rpx; }
+
+.dropdown-section {
+  margin-bottom: 20rpx;
+}
+
+.dropdown-section:last-child {
+  margin-bottom: 0;
+}
+
+.dropdown-title {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 24rpx;
+  color: var(--app-text-weak);
+}
+
+.dropdown-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
 .dropdown-tag {
-  padding: 8rpx 24rpx; border-radius: 16rpx; font-size: 22rpx;
-  background: #F3F4F6; color: #6B7280;
+  padding: 8rpx 18rpx;
+  border-radius: 999px;
+  background: #f8efe4;
+  color: var(--app-text-weak);
+  font-size: 22rpx;
 }
-.dropdown-tag.active { background: #EEF2FF; color: #4F46E5; }
-.dropdown-actions { display: flex; gap: 16rpx; }
-.dropdown-btn { flex: 1; border-radius: 24rpx; font-size: 26rpx; padding: 12rpx 0; border: none; text-align: center; }
-.dropdown-btn.reset { background: #F3F4F6; color: #374151; }
-.dropdown-btn.confirm { background: #4F46E5; color: #fff; }
+
+.dropdown-tag.active {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+
+.dropdown-actions {
+  display: flex;
+  gap: 12rpx;
+}
+
+.dropdown-btn {
+  flex: 1;
+}
 
 .stats-bar {
-  display: flex; justify-content: space-between;
-  padding: 16rpx 24rpx; font-size: 22rpx; color: #9CA3AF;
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 18rpx 20rpx;
+  color: var(--app-text-weak);
+  font-size: 22rpx;
+  background: rgba(255, 251, 246, 0.92);
 }
 
-.list { padding: 0 24rpx; }
+.wrong-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
 .wrong-card {
-  background: #fff; border-radius: 16rpx; padding: 24rpx;
-  margin-bottom: 16rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
+  padding: 22rpx;
 }
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
-.card-tags { display: flex; flex-wrap: wrap; gap: 8rpx; }
-.card-tag { padding: 2rpx 12rpx; border-radius: 8rpx; font-size: 20rpx; }
-.card-tag.exam { background: #ECFDF5; color: #047857; }
-.card-tag.type { background: #DBEAFE; color: #1E40AF; }
-.card-tag.diff { background: #F3F4F6; color: #6B7280; }
-.card-tag.diff.hard { background: #FEE2E2; color: #991B1B; }
-.card-tag.point { background: #F3F4F6; color: #6B7280; }
-.card-status { font-size: 22rpx; padding: 4rpx 16rpx; border-radius: 12rpx; background: #FEE2E2; color: #991B1B; }
-.card-status.mastered { background: #D1FAE5; color: #065F46; }
-.card-stem { font-size: 26rpx; color: #1F2937; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.card-footer { display: flex; justify-content: space-between; margin-top: 16rpx; }
-.card-date { font-size: 22rpx; color: #9CA3AF; }
-.card-action { font-size: 22rpx; color: #4F46E5; }
 
-.empty-state { padding: 120rpx 0; text-align: center; }
-.empty-icon { font-size: 80rpx; display: block; margin-bottom: 20rpx; }
-.empty-title { font-size: 30rpx; font-weight: 600; color: #1F2937; display: block; margin-bottom: 8rpx; }
-.empty-desc { font-size: 24rpx; color: #9CA3AF; }
+.card-header {
+  margin-bottom: 14rpx;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.card-stem {
+  display: block;
+  font-size: 26rpx;
+  line-height: 1.65;
+  color: var(--app-text);
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-top: 14rpx;
+}
+
+.card-date {
+  font-size: 21rpx;
+  color: var(--app-text-mute);
+}
+
+.card-action {
+  font-size: 22rpx;
+  color: var(--app-primary);
+}
 
 .footer-actions {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  padding: 20rpx 24rpx 40rpx; background: #fff;
-  box-shadow: 0 -2rpx 12rpx rgba(0,0,0,0.06);
-  display: flex; gap: 16rpx;
+  display: flex;
+  gap: 12rpx;
+  padding: 8rpx 24rpx 36rpx;
 }
+
 .footer-btn {
-  flex: 1; border-radius: 48rpx; font-size: 28rpx; font-weight: 600;
-  padding: 20rpx 0; border: none; text-align: center;
-  background: linear-gradient(135deg, #4F46E5, #7C3AED); color: #fff;
+  flex: 1;
 }
-.footer-btn.outline { background: #fff; color: #4F46E5; border: 2rpx solid #4F46E5; }
+
+.error-card {
+  padding: 24rpx;
+  text-align: center;
+  color: var(--app-danger);
+  background: var(--app-danger-soft);
+}
 </style>

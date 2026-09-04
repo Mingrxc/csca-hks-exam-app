@@ -1,10 +1,11 @@
 <template>
   <view class="answer-card">
     <view class="card-header">
-      <text class="card-title">答题卡</text>
-      <view class="card-stats">
-        <text>{{ answeredCount }}/{{ total }}已答</text>
+      <view>
+        <text class="card-title">答题卡</text>
+        <text class="card-subtitle">点选题号快速跳转</text>
       </view>
+      <view class="card-stats">{{ answeredCount }}/{{ total }} 已答</view>
     </view>
 
     <view class="card-grid">
@@ -65,27 +66,39 @@ defineEmits<{
 
 <style lang="scss" scoped>
 .answer-card {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20rpx;
+  align-items: flex-end;
+  gap: 16rpx;
 }
 
 .card-title {
-  font-size: 28rpx;
+  display: block;
+  font-size: 26rpx;
   font-weight: 600;
-  color: #1F2937;
+  color: var(--app-text);
+}
+
+.card-subtitle {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  color: var(--app-text-weak);
 }
 
 .card-stats {
-  font-size: 22rpx;
-  color: #9CA3AF;
+  flex: none;
+  padding: 8rpx 14rpx;
+  border-radius: 999px;
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+  font-size: 20rpx;
 }
 
 .card-grid {
@@ -98,35 +111,37 @@ defineEmits<{
 .card-item {
   width: 64rpx;
   height: 64rpx;
-  border-radius: 50%;
-  background: #F3F4F6;
+  border-radius: 999px;
+  background: #f8f1e8;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24rpx;
-  color: #6B7280;
+  color: var(--app-text-weak);
+  border: 1rpx solid var(--app-border);
 }
 
 .card-item.answered {
-  background: #EEF2FF;
-  color: #4F46E5;
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+  border-color: rgba(199, 127, 94, 0.18);
 }
 
 .card-item.current {
-  background: #4F46E5;
+  background: var(--app-primary);
   color: #fff;
   font-weight: 600;
 }
 
 .card-item.marked {
-  border: 2rpx solid #F59E0B;
+  border: 1rpx solid rgba(208, 161, 106, 0.9);
 }
 
 .card-legend {
   display: flex;
   justify-content: center;
   gap: 32rpx;
-  margin-top: 20rpx;
+  flex-wrap: wrap;
 }
 
 .legend-item {
@@ -134,26 +149,26 @@ defineEmits<{
   align-items: center;
   gap: 8rpx;
   font-size: 20rpx;
-  color: #9CA3AF;
+  color: var(--app-text-weak);
 }
 
 .dot {
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
-  background: #F3F4F6;
+  background: #efe5d8;
 }
 
 .dot.answered {
-  background: #EEF2FF;
+  background: var(--app-primary-soft);
 }
 
 .dot.current {
-  background: #4F46E5;
+  background: var(--app-primary);
 }
 
 .dot.marked {
-  background: #FEF3C7;
-  border: 2rpx solid #F59E0B;
+  background: var(--app-accent-soft);
+  border: 1rpx solid var(--app-accent);
 }
 </style>

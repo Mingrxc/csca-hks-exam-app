@@ -1,5 +1,7 @@
 import type { ExamType } from './exam'
 
+export type ExamTargetDates = Partial<Record<ExamType, string>>
+
 export interface TodayStats {
   questionCount: number
   correctRate: number
@@ -24,9 +26,11 @@ export interface DashboardData {
   userName: string
   targetExam: ExamType
   targetDate: string
+  targetDates: ExamTargetDates
   countdown: CountdownValue
   todayStats: TodayStats
   pendingWrongCount: number
+  favoriteCount: number
   recentPapers: RecentPaper[]
 }
 
@@ -35,7 +39,9 @@ export interface UserProfile {
   avatarUrl: string
   targetExam: ExamType
   targetDate: string
+  targetDates: ExamTargetDates
   totalQuestions: number
   correctRate: number
   streakDays: number
+  favoriteCount: number
 }

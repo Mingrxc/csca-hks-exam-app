@@ -1,274 +1,148 @@
 <template>
-  <view class="page">
-    <!-- 头部欢迎区 -->
-    <view class="header">
-      <view class="header-top">
-        <view class="greeting">
-          <text class="greeting-text">{{ greetingText }}</text>
-          <text class="user-name">{{ userName }}</text>
-        </view>
-        <view class="avatar">😊</view>
+  <view class="page app-shell">
+    <view class="app-section">
+      <view class="section-head">
+        <text class="app-section-title">留学资讯</text>
       </view>
-      <!-- 考试倒计时 -->
-      <view class="countdown-card" v-if="targetDate">
-        <text class="countdown-label">距 {{ targetExam }} 考试还有</text>
-        <view class="countdown-nums">
-          <view class="countdown-item">
-            <text class="countdown-num">{{ countdown.days }}</text>
-            <text class="countdown-unit">天</text>
-          </view>
-          <text class="countdown-sep">:</text>
-          <view class="countdown-item">
-            <text class="countdown-num">{{ countdown.hours }}</text>
-            <text class="countdown-unit">时</text>
-          </view>
-          <text class="countdown-sep">:</text>
-          <view class="countdown-item">
-            <text class="countdown-num">{{ countdown.minutes }}</text>
-            <text class="countdown-unit">分</text>
+      <view v-if="contents.length" class="app-list">
+        <view v-for="item in contents" :key="item.id" class="content-card home-card app-card app-list-card" @click="openContent(item)">
+          <view class="app-list-row">
+            <view class="app-list-main">
+              <view class="content-head">
+                <text class="app-list-meta">{{ item.created_at?.slice(0, 10) || '' }}</text>
+              </view>
+              <text class="app-list-title">{{ item.title }}</text>
+              <text class="app-list-desc">{{ item.summary }}</text>
+            </view>
+            <t-icon name="chevron-right" size="28rpx" color="#9d8f84" />
           </view>
         </view>
       </view>
-      <view class="countdown-card target-empty" v-else @click="goProfile">
-        <text class="countdown-label">当前目标：{{ targetExam }}</text>
-        <text class="target-empty-text">设置考试日期，开启备考倒计时</text>
-      </view>
+      <t-empty v-else description="暂无资讯内容" />
     </view>
 
-    <view class="load-error" v-if="loadError" @click="loadDashboard">
-      <text>首页数据加载失败，点击重试</text>
-    </view>
-
-    <!-- 今日数据卡片 -->
-    <view class="stats-row">
-      <view class="stat-card">
-        <text class="stat-num">{{ todayStats.questionCount }}</text>
-        <text class="stat-label">今日刷题</text>
+    <view class="app-section">
+      <view class="section-head">
+        <text class="app-section-title">社团广告</text>
       </view>
-      <view class="stat-card accent">
-        <text class="stat-num">{{ todayStats.correctRate }}%</text>
-        <text class="stat-label">正确率</text>
-      </view>
-      <view class="stat-card warning">
-        <text class="stat-num">{{ todayStats.wrongCount }}</text>
-        <text class="stat-label">今日错题</text>
-      </view>
-    </view>
-
-    <!-- 快捷入口 -->
-    <view class="section">
-      <text class="section-title">快速开始</text>
-      <view class="quick-actions">
-        <view
-          class="action-card"
-          :class="{ primary: index === 0 }"
-          v-for="(item, index) in strategies"
-          :key="item.key"
-          @click="goExam(item.key)"
-        >
-          <view class="action-icon">{{ item.icon }}</view>
-          <text class="action-title">{{ item.title }}</text>
-          <text class="action-desc">{{ item.shortDesc }}</text>
+      <view class="app-list">
+        <view v-for="item in clubAds" :key="item.title" class="ad-card home-card app-card app-card-compact">
+          <view class="app-list-row">
+            <view class="app-list-main">
+              <text class="app-list-title">{{ item.title }}</text>
+              <text class="app-list-desc">{{ item.desc }}</text>
+            </view>
+            <t-icon name="arrow-right" size="26rpx" color="#c77f5e" />
+          </view>
         </view>
       </view>
     </view>
 
-    <!-- 错题复习提醒 -->
-    <view class="section" v-if="pendingWrongCount > 0">
-      <view class="wrong-reminder" @click="goWrongBook">
-        <view class="reminder-left">
-          <text class="reminder-icon">📝</text>
-          <view class="reminder-text">
-            <text class="reminder-title">你有 {{ pendingWrongCount }} 道错题待复习</text>
-            <text class="reminder-desc">温故而知新，错题是进步的阶梯</text>
+    <view class="app-section">
+      <view class="section-head">
+        <text class="app-section-title">最近学习记录</text>
+      </view>
+      <view v-if="recentPapers.length" class="app-list">
+        <view v-for="paper in recentPapers" :key="paper.id" class="paper-card home-card app-card app-list-card" @click="goPaper(paper.id)">
+          <view class="app-list-row">
+            <view class="app-list-main">
+              <text class="app-list-title">{{ paper.title }}</text>
+              <text class="app-list-desc">{{ paper.questionCount }} 题 · {{ paper.score }} 分</text>
+            </view>
+            <view class="paper-meta">
+              <text>{{ paper.date }}</text>
+              <t-icon name="chevron-right" size="26rpx" color="#9d8f84" />
+            </view>
           </view>
         </view>
-        <text class="reminder-arrow">→</text>
       </view>
-    </view>
-
-    <!-- 最近试卷 -->
-    <view class="section">
-      <text class="section-title">最近试卷</text>
-      <view class="paper-list" v-if="recentPapers.length > 0">
-        <view class="paper-item" v-for="paper in recentPapers" :key="paper.id" @click="goPaper(paper.id)">
-          <view class="paper-info">
-            <text class="paper-title">{{ paper.title }}</text>
-            <text class="paper-meta">{{ paper.questionCount }}题 · {{ paper.score }}分</text>
-          </view>
-          <text class="paper-date">{{ paper.date }}</text>
-        </view>
-      </view>
-      <view class="empty-state" v-else>
-        <text class="empty-icon">📋</text>
-        <text class="empty-text">还没有做过试卷，快去刷题吧</text>
-      </view>
+      <t-empty v-else description="还没有学习记录" />
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { userApi } from '@/api'
+import { contentApi, userApi } from '@/api'
 import { toDashboardData } from '@/api/contracts'
-import { PAPER_STRATEGIES } from '@/constants/exam'
-import { getGreeting } from '@/utils'
-import type { PaperStrategy } from '@/types/exam'
-import type { CountdownValue, RecentPaper, TodayStats } from '@/types/user'
+import type { ApiContentItem } from '@/api/contracts'
+import type { RecentPaper } from '@/types/user'
+import { useUserStore } from '@/stores/user'
 
-const strategies = PAPER_STRATEGIES
-const userName = ref('考霸同学')
-const targetExam = ref<'CSCA' | 'HKS'>('CSCA')
-const targetDate = ref('')
-const loadError = ref(false)
-
-const greetingText = computed(() => getGreeting())
-
-const countdown = ref<CountdownValue>({ days: '0', hours: '00', minutes: '00' })
-const todayStats = ref<TodayStats>({ questionCount: 0, correctRate: 0, wrongCount: 0 })
-const pendingWrongCount = ref(0)
+const userStore = useUserStore()
 const recentPapers = ref<RecentPaper[]>([])
+const contents = ref<ApiContentItem[]>([])
+const clubAds = [
+  { title: '本周活动招募', desc: '报名入口和时间放在这里。' },
+  { title: '学习资料合作位', desc: '适合放推荐和活动宣传。' },
+]
 
-const loadDashboard = async () => {
-  loadError.value = false
+const loadRecentPapers = async () => {
+  if (!userStore.isLogin) {
+    recentPapers.value = []
+    return
+  }
   try {
     const data = toDashboardData(await userApi.getDashboard())
-    userName.value = data.userName
-    targetExam.value = data.targetExam
-    targetDate.value = data.targetDate
-    countdown.value = data.countdown
-    todayStats.value = data.todayStats
-    pendingWrongCount.value = data.pendingWrongCount
     recentPapers.value = data.recentPapers
-  } catch {
-    loadError.value = true
-  }
+  } catch {}
 }
 
-const goExam = (strategy: PaperStrategy) => {
-  uni.navigateTo({ url: `/pages/exam/paper?strategy=${strategy}` })
-}
-
-const goWrongBook = () => {
-  uni.switchTab({ url: '/pages/wrongbook/index' })
-}
-
-const goProfile = () => {
-  uni.switchTab({ url: '/pages/profile/index' })
+const loadContents = async () => {
+  try {
+    contents.value = (await contentApi.listHome()).slice(0, 5)
+  } catch {}
 }
 
 const goPaper = (id: number) => {
   uni.navigateTo({ url: `/pages/exam/result?id=${id}` })
 }
 
-onShow(loadDashboard)
+const openContent = (item: ApiContentItem) => {
+  if (item.link_url) {
+    uni.navigateTo({ url: item.link_url })
+    return
+  }
+  uni.showModal({ title: item.title, content: item.body, showCancel: false })
+}
+
+onShow(() => {
+  loadRecentPapers()
+  loadContents()
+})
 </script>
 
 <style lang="scss" scoped>
-.page {
-  min-height: 100vh;
-  padding-bottom: 40rpx;
+.content-card,
+.ad-card,
+.paper-card {
+  background: rgba(255, 255, 255, 0.86);
 }
 
-.header {
-  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-  padding: 48rpx 32rpx 40rpx;
-  border-radius: 0 0 48rpx 48rpx;
+.home-card {
+  border-radius: 32rpx !important;
+  overflow: hidden;
 }
 
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 28rpx;
+.app-section + .app-section {
+  margin-top: 40rpx;
 }
 
-.greeting-text { color: rgba(255,255,255,0.8); font-size: 28rpx; }
-.user-name { color: #fff; font-size: 36rpx; font-weight: 700; margin-left: 8rpx; }
-.avatar { font-size: 48rpx; }
-
-.countdown-card {
-  background: rgba(255,255,255,0.15);
-  border-radius: 20rpx;
-  padding: 24rpx;
-  backdrop-filter: blur(10px);
-}
-
-.countdown-label { color: rgba(255,255,255,0.8); font-size: 24rpx; }
-.target-empty { display: flex; align-items: center; justify-content: space-between; }
-.target-empty-text { color: #fff; font-size: 24rpx; }
-.countdown-nums { display: flex; align-items: baseline; margin-top: 12rpx; }
-.countdown-item { display: flex; align-items: baseline; }
-.countdown-num { color: #fff; font-size: 48rpx; font-weight: 700; font-family: 'Menlo', monospace; }
-.countdown-unit { color: rgba(255,255,255,0.7); font-size: 24rpx; margin-left: 4rpx; }
-.countdown-sep { color: rgba(255,255,255,0.5); font-size: 40rpx; margin: 0 8rpx; }
-
-.stats-row {
-  display: flex;
-  margin: -24rpx 24rpx 24rpx;
-  gap: 16rpx;
-}
-
-.stat-card {
-  flex: 1;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  text-align: center;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
-}
-
-.stat-num { font-size: 40rpx; font-weight: 700; color: #4F46E5; display: block; }
-.stat-card.accent .stat-num { color: #10B981; }
-.stat-card.warning .stat-num { color: #F59E0B; }
-.stat-label { font-size: 22rpx; color: #9CA3AF; margin-top: 8rpx; }
-
-.section { padding: 0 24rpx; margin-bottom: 28rpx; }
-.section-title { font-size: 30rpx; font-weight: 600; color: #1F2937; margin-bottom: 16rpx; display: block; }
-
-.quick-actions { display: flex; flex-wrap: wrap; gap: 16rpx; }
-.action-card {
-  width: calc(50% - 8rpx);
-  box-sizing: border-box;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 28rpx 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
-}
-.action-card.primary { background: linear-gradient(135deg, #EEF2FF, #E0E7FF); border: 2rpx solid #C7D2FE; }
-.action-icon { font-size: 40rpx; display: block; margin-bottom: 12rpx; }
-.action-title { font-size: 28rpx; font-weight: 600; color: #1F2937; }
-.action-desc { font-size: 22rpx; color: #9CA3AF; margin-top: 6rpx; display: block; }
-
-.wrong-reminder {
-  background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
-  border: 2rpx solid #FCD34D;
-  border-radius: 16rpx;
-  padding: 24rpx;
+.content-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12rpx;
+  margin-bottom: 10rpx;
 }
 
-.reminder-left { display: flex; align-items: center; }
-.reminder-icon { font-size: 40rpx; margin-right: 16rpx; }
-.reminder-title { font-size: 28rpx; font-weight: 600; color: #92400E; display: block; }
-.reminder-desc { font-size: 22rpx; color: #B45309; margin-top: 4rpx; display: block; }
-.reminder-arrow { font-size: 32rpx; color: #F59E0B; }
-
-.paper-list { background: #fff; border-radius: 16rpx; overflow: hidden; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
-.paper-item {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 24rpx; border-bottom: 1rpx solid #F3F4F6;
+.paper-meta {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  color: var(--app-text-mute);
+  font-size: 21rpx;
 }
-.paper-item:last-child { border-bottom: none; }
-.paper-title { font-size: 28rpx; font-weight: 500; color: #1F2937; }
-.paper-meta { font-size: 22rpx; color: #9CA3AF; display: block; margin-top: 4rpx; }
-.paper-date { font-size: 22rpx; color: #9CA3AF; }
-
-.empty-state { padding: 60rpx 0; text-align: center; }
-.empty-icon { font-size: 60rpx; display: block; margin-bottom: 16rpx; }
-.empty-text { font-size: 26rpx; color: #9CA3AF; }
-.load-error { margin: 24rpx; padding: 24rpx; text-align: center; color: #B91C1C; background: #FEF2F2; border-radius: 12rpx; font-size: 24rpx; }
 </style>

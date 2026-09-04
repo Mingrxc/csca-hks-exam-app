@@ -1,1 +1,1 @@
-"use strict";require("../constants/exam.js"),exports.formatTime=function(t){const r=Math.floor(t/60),e=t%60;return`${String(r).padStart(2,"0")}:${String(e).padStart(2,"0")}`},exports.getGreeting=function(){const t=(new Date).getHours();return t<6?"夜深了，":t<12?"早上好，":t<14?"中午好，":t<18?"下午好，":"晚上好，"};
+"use strict";require("../constants/exam.js"),exports.formatTime=function(t){const r=Math.floor(t/60),a=t%60;return`${String(r).padStart(2,"0")}:${String(a).padStart(2,"0")}`};

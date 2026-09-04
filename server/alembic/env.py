@@ -10,9 +10,11 @@ from src.config.database import Base
 from src.config.settings import settings
 
 # Register all tables on Base.metadata before Alembic compares schemas.
+from src.modules.content.models import ContentItem  # noqa: F401
+from src.modules.favorite.models import Favorite  # noqa: F401
 from src.modules.exam.models import AnswerRecord  # noqa: F401
 from src.modules.question.models import Paper, Question  # noqa: F401
-from src.modules.user.models import StreakRecord, User  # noqa: F401
+from src.modules.user.models import StreakRecord, User, UserExamTarget  # noqa: F401
 from src.modules.wrongbook.models import KnowledgeStat, WrongBook  # noqa: F401
 
 config = context.config

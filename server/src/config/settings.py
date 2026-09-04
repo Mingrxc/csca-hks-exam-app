@@ -5,7 +5,7 @@ from typing import Optional
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=(".env", ".env.local"), env_file_encoding="utf-8")
 
     # API
     CORS_ORIGINS: str = "*"
@@ -34,6 +34,17 @@ class Settings(BaseSettings):
     WX_APPID: str = ""
     WX_SECRET: str = ""
 
+    # AI
+    QWEN_API_KEY: str = ""
+    QWEN_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    QWEN_MODEL: str = "qwen-plus-2025-07-28"
+    QWEN_TEMPERATURE: float = 0.3
+    QWEN_MAX_TOKENS: int = 1024
+    QWEN_TIMEOUT_SECONDS: int = 45
+
+    # 内容管理
+    CONTENT_ADMIN_OPENIDS: str = "dev-openid"
+
     # 文件存储
     OSS_ENDPOINT: str = ""
     OSS_BUCKET: str = ""
@@ -43,6 +54,10 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
+    @property
+    def content_admin_openids(self) -> list[str]:
+        return [openid.strip() for openid in self.CONTENT_ADMIN_OPENIDS.split(",") if openid.strip()]
 
 
 settings = Settings()

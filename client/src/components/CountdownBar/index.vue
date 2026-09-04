@@ -1,6 +1,8 @@
 <template>
   <view class="countdown-bar">
-    <view class="timer-icon">⏱</view>
+    <view class="timer-icon">
+      <view class="timer-core"></view>
+    </view>
     <text class="timer-text" :class="{ warning: remaining <= 300, danger: remaining <= 60 }">
       {{ displayText }}
     </text>
@@ -44,28 +46,44 @@ onUnmounted(() => {
 .countdown-bar {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  padding: 8rpx 20rpx;
-  border-radius: 20rpx;
-  background: #F3F4F6;
+  gap: 10rpx;
+  padding: 8rpx 14rpx;
+  border-radius: 999px;
+  background: #fbf3e8;
+  border: 1rpx solid var(--app-border);
 }
 
 .timer-icon {
-  font-size: 24rpx;
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 50%;
+  border: 2rpx solid var(--app-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.timer-core {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: var(--app-primary);
 }
 
 .timer-text {
   font-size: 26rpx;
   font-weight: 600;
-  font-family: 'Menlo', monospace;
-  color: #374151;
+  font-family: var(--app-font-family);
+  font-variant-numeric: tabular-nums;
+  color: var(--app-text);
 }
 
 .timer-text.warning {
-  color: #F59E0B;
+  color: var(--app-accent);
 }
 
 .timer-text.danger {
-  color: #EF4444;
+  color: var(--app-danger);
 }
 </style>

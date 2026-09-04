@@ -9,6 +9,8 @@ __pycache__/
 .pytest_cache/
 .test-cache/
 .test-tmp/
+.pytest-cache/
+.pytest-tmp/
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -31,6 +33,8 @@ pnpm-debug.log*
 server/.env
 client/.env
 client/.env.*
+# Keep shareable templates under version control.
+!**/.env.example
 
 # IDE / OS
 .vscode/
@@ -40,6 +44,10 @@ Desktop.ini
 
 # Logs
 *.log
+
+# Local tunnel binary and runtime state
+server/tools/
+server/.dev/
 
 # Local database backups
 database/backups/

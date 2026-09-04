@@ -109,6 +109,7 @@ def get_result(db: Session, user_id: int, paper_id: int) -> dict:
     knowledge_analysis = defaultdict(lambda: {"total": 0, "correct": 0})
     wrong_questions = []
     review_questions = []
+    use_subject = paper.exam_type == "CSCA"
 
     for question_id in question_ids:
         question = question_map.get(question_id)
@@ -140,7 +141,8 @@ def get_result(db: Session, user_id: int, paper_id: int) -> dict:
             "analysis": question.analysis or "暂无解析",
             "is_correct": is_correct,
         })
-        bucket = knowledge_analysis[question.knowledge_point]
+        bucket_key = question.subject if use_subject else question.knowledge_point
+        bucket = knowledge_analysis[bucket_key]
         bucket["total"] += 1
         bucket["correct"] += 1 if is_correct else 0
 
@@ -281,12 +283,13 @@ def adjust_wrong_book(
 
 
 def update_knowledge_stat(db: Session, user_id: int, exam_type: str, question: Question, is_correct: bool) -> None:
+    bucket_key = question.subject if exam_type == "CSCA" else question.knowledge_point
     item = (
         db.query(KnowledgeStat)
         .filter(
             KnowledgeStat.user_id == user_id,
             KnowledgeStat.exam_type == exam_type,
-            KnowledgeStat.knowledge_point == question.knowledge_point,
+            KnowledgeStat.knowledge_point == bucket_key,
         )
         .first()
     )
@@ -294,7 +297,7 @@ def update_knowledge_stat(db: Session, user_id: int, exam_type: str, question: Q
         item = KnowledgeStat(
             user_id=user_id,
             exam_type=exam_type,
-            knowledge_point=question.knowledge_point,
+            knowledge_point=bucket_key,
         )
         db.add(item)
 
@@ -312,6 +315,7 @@ def adjust_knowledge_stat(
     previous_correct: bool,
     is_correct: bool,
 ) -> None:
+    bucket_key = question.subject if exam_type == "CSCA" else question.knowledge_point
     if previous_correct == is_correct:
         return
     item = (
@@ -319,7 +323,7 @@ def adjust_knowledge_stat(
         .filter(
             KnowledgeStat.user_id == user_id,
             KnowledgeStat.exam_type == exam_type,
-            KnowledgeStat.knowledge_point == question.knowledge_point,
+            KnowledgeStat.knowledge_point == bucket_key,
         )
         .first()
     )

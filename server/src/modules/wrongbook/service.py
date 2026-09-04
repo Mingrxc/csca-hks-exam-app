@@ -4,6 +4,7 @@ from datetime import datetime
 from html import escape
 from io import BytesIO
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from src.common.exceptions import AppException
@@ -42,7 +43,12 @@ def build_wrong_query(
     if exam_type != "all":
         query = query.filter(Question.exam_type == exam_type)
     if knowledge != "all":
-        query = query.filter(Question.knowledge_point == knowledge)
+        if exam_type == "CSCA":
+          query = query.filter(Question.subject == knowledge)
+        elif exam_type == "HKS":
+            query = query.filter(Question.knowledge_point == knowledge)
+        else:
+            query = query.filter(or_(Question.subject == knowledge, Question.knowledge_point == knowledge))
     if wrong_count == "1":
         query = query.filter(WrongBook.wrong_count == 1)
     elif wrong_count == "2+":
@@ -149,8 +155,9 @@ def export_wrongbook_pdf(
     ]
 
     for index, (item, question) in enumerate(rows, start=1):
+        domain = question.subject if question.exam_type == "CSCA" else question.knowledge_point
         meta = (
-            f"第 {index} 题　{escape(question.exam_type)} / {escape(question.knowledge_point)}"
+            f"第 {index} 题　{escape(question.exam_type)} / {escape(domain)}"
             f"　难度：{escape(question.difficulty)}　累计错误：{item.wrong_count or 0} 次"
         )
         block = [
@@ -293,7 +300,7 @@ def get_related(db: Session, question_id: int, limit: int = 3) -> list[dict]:
             Question.id != question.id,
             Question.is_active == 1,
             Question.exam_type == question.exam_type,
-            Question.knowledge_point == question.knowledge_point,
+            Question.subject == question.subject if question.exam_type == "CSCA" else Question.knowledge_point == question.knowledge_point,
         )
         .limit(limit)
         .all()
@@ -312,6 +319,7 @@ def serialize_wrong_item(item: WrongBook, question: Question) -> dict:
         "id": item.id,
         "question_id": question.id,
         "exam_type": question.exam_type,
+        "subject": question.subject,
         "stem": question.stem_text,
         "type": question.question_type,
         "difficulty": question.difficulty,

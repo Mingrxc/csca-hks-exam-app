@@ -1,99 +1,100 @@
 <template>
-  <view class="page" v-if="question">
-    <!-- 题目信息 -->
-    <view class="question-section">
-      <view class="q-header">
-        <view class="tag-row">
-          <text class="tag type">{{ question.typeLabel }}</text>
-          <text class="tag diff" :class="question.difficulty">{{ question.diffLabel }}</text>
-          <text class="tag point">{{ question.knowledgePoint }}</text>
-        </view>
-        <text class="wrong-count">错误 {{ question.wrongCount }} 次</text>
-      </view>
-
-      <text class="q-stem">{{ question.stem }}</text>
-
-      <!-- 选项 -->
-      <view class="q-options">
-        <view
-          class="option"
-          :class="{
-            correct: opt.key === question.answer,
-            my: opt.key === question.myAnswer,
-            wrong: opt.key === question.myAnswer && opt.key !== question.answer
-          }"
-          v-for="opt in question.options"
-          :key="opt.key"
-        >
-          <view class="option-key">{{ opt.key }}</view>
-          <text class="option-text">{{ opt.text }}</text>
-          <text class="option-mark" v-if="opt.key === question.answer">✓</text>
-          <text class="option-mark wrong-mark" v-else-if="opt.key === question.myAnswer">✗</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 解析区 -->
-    <view class="analysis-section">
-      <view class="analysis-header">
-        <text class="analysis-icon">💡</text>
-        <text class="analysis-title">题目解析</text>
-      </view>
-      <text class="analysis-text">{{ question.analysis }}</text>
-
-      <!-- 易混选项辨析 -->
-      <view class="confusion-box" v-if="question.confusion">
-        <text class="confusion-title">易混选项辨析</text>
-        <text class="confusion-text">{{ question.confusion }}</text>
-      </view>
-    </view>
-
-    <!-- 举一反三 -->
-    <view class="related-section">
-      <view class="related-header">
-        <text class="related-title">举一反三</text>
-        <text class="related-desc">以下题目基于相同知识点「{{ question.knowledgePoint }}」推荐</text>
-      </view>
-      <view class="related-list">
-        <view class="related-item" v-for="item in relatedQuestions" :key="item.id" @click="goRelated">
-          <view class="related-tags">
-            <text class="related-tag diff" :class="item.difficulty">{{ item.diffLabel }}</text>
-            <text class="related-tag">{{ item.typeLabel }}</text>
+  <view class="page app-shell" v-if="question">
+    <view class="app-section">
+      <view class="question-section app-card app-card-pad">
+        <view class="q-header">
+          <view class="tag-row">
+            <t-tag theme="primary" variant="light" shape="round" size="small">{{ question.typeLabel }}</t-tag>
+            <t-tag theme="default" variant="light" shape="round" size="small" :class="question.difficulty">{{ question.diffLabel }}</t-tag>
+            <t-tag theme="warning" variant="light" shape="round" size="small">{{ domainLabel }}·{{ domainValue }}</t-tag>
           </view>
-          <text class="related-stem">{{ item.stem }}</text>
-          <text class="related-action">去练习 →</text>
+          <t-tag theme="danger" variant="light" shape="round" size="small">错误 {{ question.wrongCount }} 次</t-tag>
+        </view>
+
+        <text class="q-stem">{{ question.stem }}</text>
+
+        <view class="q-options">
+          <view
+            class="option"
+            :class="{
+              correct: opt.key === question.answer,
+              my: opt.key === question.myAnswer,
+              wrong: opt.key === question.myAnswer && opt.key !== question.answer
+            }"
+            v-for="opt in question.options"
+            :key="opt.key"
+          >
+            <view class="option-key">{{ opt.key }}</view>
+            <text class="option-text">{{ opt.text }}</text>
+            <text class="option-mark" v-if="opt.key === question.answer">✓</text>
+            <text class="option-mark wrong-mark" v-else-if="opt.key === question.myAnswer">✗</text>
+          </view>
         </view>
       </view>
     </view>
 
-    <!-- 操作 -->
+    <view class="app-section">
+      <view class="analysis-section app-card app-card-pad">
+        <view class="analysis-header">
+          <text class="analysis-title">题目解析</text>
+        </view>
+        <text class="analysis-text">{{ question.analysis }}</text>
+
+        <view class="confusion-box" v-if="question.confusion">
+          <text class="confusion-title">易混选项辨析</text>
+          <text class="confusion-text">{{ question.confusion }}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="app-section">
+      <view class="related-section">
+        <view class="related-header">
+          <text class="app-section-title">举一反三</text>
+          <text class="app-section-subtitle">以下题目基于相同{{ domainLabel }}「{{ domainValue }}」推荐。</text>
+        </view>
+        <view class="related-list">
+          <view class="related-item app-card" v-for="item in relatedQuestions" :key="item.id" @click="goRelated">
+            <view class="related-tags">
+              <t-tag theme="primary" variant="light" shape="round" size="small">{{ item.diffLabel }}</t-tag>
+              <t-tag theme="default" variant="light" shape="round" size="small">{{ item.typeLabel }}</t-tag>
+            </view>
+            <text class="related-stem">{{ item.stem }}</text>
+            <text class="related-action">去练习 ›</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
     <view class="actions">
-      <button class="action-btn" @click="markMastered">
-        {{ question.mastered ? '✓ 已掌握' : '标记为已掌握' }}
-      </button>
-      <button class="action-btn outline" @click="goRedo">加入重做列表</button>
+      <t-button theme="primary" block shape="round" @click="markMastered">
+        {{ question.mastered ? '已掌握' : '标记为已掌握' }}
+      </t-button>
+      <t-button theme="default" variant="outline" block shape="round" @click="sendToAI">发给 AI</t-button>
+      <t-button theme="default" variant="outline" block shape="round" @click="goRedo">加入重做列表</t-button>
     </view>
   </view>
   <view class="loading-state" v-else>正在加载错题详情...</view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { wrongBookApi } from '@/api'
 import { toRelatedQuestion, toWrongBookDetail } from '@/api/contracts'
+import { getQuestionDomain, getQuestionDomainLabel } from '@/constants/exam'
 import type { RelatedQuestion, WrongBookDetail } from '@/types/wrongbook'
 
 const question = ref<WrongBookDetail | null>(null)
 const wrongBookId = ref<number | null>(null)
 
 const relatedQuestions = ref<RelatedQuestion[]>([])
+const domainLabel = computed(() => (question.value ? getQuestionDomainLabel(question.value.examType) : '专项'))
+const domainValue = computed(() => (question.value ? getQuestionDomain(question.value) : ''))
 
 const loadDetail = async (id?: number, questionId?: number) => {
   try {
-    const payload = questionId
-      ? await wrongBookApi.getDetailByQuestion(questionId)
-      : await wrongBookApi.getDetail(id as number)
+    const payload = questionId ? await wrongBookApi.getDetailByQuestion(questionId) : await wrongBookApi.getDetail(id as number)
     question.value = toWrongBookDetail(payload)
     wrongBookId.value = payload.id
 
@@ -132,8 +133,9 @@ const markMastered = async () => {
 
 const goRelated = () => {
   if (!question.value) return
+  const special = encodeURIComponent(domainValue.value)
   uni.navigateTo({
-    url: `/pages/exam/paper?strategy=knowledge&knowledge=${encodeURIComponent(question.value.knowledgePoint)}`,
+    url: `/pages/exam/paper?strategy=knowledge&examType=${question.value.examType}&special=${special}`,
   })
 }
 
@@ -141,77 +143,216 @@ const goRedo = () => {
   if (!question.value) return
   uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${question.value.examType}` })
 }
+
+const sendToAI = () => {
+  if (!question.value) return
+  uni.setStorageSync('ai_prefill', {
+    content: question.value.stem,
+    topic: `${question.value.examType} 错题咨询`,
+    context: [
+      `考试类型：${question.value.examType}`,
+      `${domainLabel.value}：${domainValue.value}`,
+      `我的答案：${question.value.myAnswer || '未作答'}`,
+      `正确答案：${question.value.answer || '暂无'}`,
+      question.value.analysis ? `解析：${question.value.analysis}` : '',
+      question.value.confusion ? `易混选项：${question.value.confusion}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n'),
+    examType: question.value.examType,
+  })
+  uni.switchTab({ url: '/pages/ai/index' })
+}
 </script>
 
 <style lang="scss" scoped>
-.page { min-height: 100vh; padding: 24rpx; background: #F5F5F7; }
-
-.question-section {
-  background: #fff; border-radius: 16rpx; padding: 24rpx;
-  margin-bottom: 16rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
+.page {
+  min-height: 100vh;
 }
-.q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
-.tag-row { display: flex; gap: 8rpx; }
-.tag { padding: 2rpx 12rpx; border-radius: 8rpx; font-size: 20rpx; }
-.tag.type { background: #DBEAFE; color: #1E40AF; }
-.tag.diff { background: #F3F4F6; color: #6B7280; }
-.tag.diff.hard { background: #FEE2E2; color: #991B1B; }
-.tag.point { background: #EDE9FE; color: #5B21B6; }
-.wrong-count { font-size: 22rpx; color: #EF4444; font-weight: 600; }
 
-.q-stem { font-size: 30rpx; line-height: 1.8; color: #1F2937; display: block; margin-bottom: 24rpx; }
+.q-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+  margin-bottom: 18rpx;
+}
 
-.q-options { display: flex; flex-direction: column; gap: 12rpx; }
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.q-stem {
+  display: block;
+  font-size: 30rpx;
+  line-height: 1.75;
+  color: var(--app-text);
+  margin-bottom: 22rpx;
+}
+
+.q-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
 .option {
-  display: flex; align-items: center;
-  padding: 20rpx 20rpx; border-radius: 12rpx;
-  border: 2rpx solid #E5E7EB; background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 20rpx;
+  border-radius: var(--app-radius-md);
+  border: 1rpx solid var(--app-border);
+  background: rgba(255, 251, 246, 0.96);
 }
-.option.correct { border-color: #10B981; background: #D1FAE5; }
-.option.wrong { border-color: #EF4444; background: #FEE2E2; }
-.option.my { border-color: #818CF8; }
+
+.option.correct {
+  border-color: rgba(126, 154, 128, 0.24);
+  background: #eff5ef;
+}
+
+.option.wrong {
+  border-color: rgba(198, 95, 82, 0.24);
+  background: #fbefeb;
+}
+
+.option.my {
+  box-shadow: inset 0 0 0 1rpx rgba(199, 127, 94, 0.18);
+}
+
 .option-key {
-  width: 44rpx; height: 44rpx; border-radius: 50%;
-  background: #F3F4F6; display: flex; align-items: center;
-  justify-content: center; font-size: 22rpx; font-weight: 600; color: #6B7280;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 999px;
+  background: #f7efe5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--app-text-weak);
 }
-.option.correct .option-key { background: #10B981; color: #fff; }
-.option.wrong .option-key { background: #EF4444; color: #fff; }
-.option-text { flex: 1; margin-left: 12rpx; font-size: 26rpx; color: #1F2937; }
-.option-mark { font-size: 24rpx; font-weight: 700; color: #10B981; margin-left: 8rpx; }
-.wrong-mark { color: #EF4444; }
+
+.option.correct .option-key {
+  background: var(--app-success);
+  color: #ffffff;
+}
+
+.option.wrong .option-key {
+  background: var(--app-danger);
+  color: #ffffff;
+}
+
+.option-text {
+  flex: 1;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: var(--app-text);
+}
+
+.option-mark {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--app-success);
+}
+
+.wrong-mark {
+  color: var(--app-danger);
+}
 
 .analysis-section {
-  background: #fff; border-radius: 16rpx; padding: 24rpx;
-  margin-bottom: 16rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
+  background: rgba(255, 251, 246, 0.98);
 }
-.analysis-header { display: flex; align-items: center; gap: 8rpx; margin-bottom: 12rpx; }
-.analysis-icon { font-size: 28rpx; }
-.analysis-title { font-size: 28rpx; font-weight: 600; color: #1F2937; }
-.analysis-text { font-size: 26rpx; color: #374151; line-height: 1.7; }
-.confusion-box { margin-top: 16rpx; padding: 20rpx; background: #FFFBEB; border-radius: 12rpx; }
-.confusion-title { font-size: 24rpx; font-weight: 600; color: #92400E; display: block; margin-bottom: 8rpx; }
-.confusion-text { font-size: 24rpx; color: #78350F; line-height: 1.7; }
 
-.related-section { margin-bottom: 32rpx; }
-.related-header { margin-bottom: 16rpx; }
-.related-title { font-size: 30rpx; font-weight: 600; color: #1F2937; display: block; }
-.related-desc { font-size: 22rpx; color: #9CA3AF; margin-top: 4rpx; display: block; }
-.related-list { display: flex; flex-direction: column; gap: 12rpx; }
+.analysis-header {
+  margin-bottom: 12rpx;
+}
+
+.analysis-title {
+  font-size: 30rpx;
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+.analysis-text {
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: #524740;
+}
+
+.confusion-box {
+  margin-top: 16rpx;
+  padding: 18rpx;
+  border-radius: var(--app-radius-md);
+  background: var(--app-accent-soft);
+}
+
+.confusion-title {
+  display: block;
+  margin-bottom: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.confusion-text {
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #92400e;
+}
+
+.related-header {
+  margin-bottom: 14rpx;
+}
+
+.related-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
 .related-item {
-  background: #fff; border-radius: 16rpx; padding: 20rpx 24rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03); border-left: 4rpx solid #4F46E5;
+  padding: 20rpx 22rpx;
+  border-left: 4rpx solid var(--app-primary);
+  background: rgba(255, 251, 246, 0.96);
 }
-.related-tags { display: flex; gap: 8rpx; margin-bottom: 8rpx; }
-.related-tag { padding: 2rpx 12rpx; border-radius: 8rpx; font-size: 20rpx; background: #F3F4F6; color: #6B7280; }
-.related-tag.diff.hard { background: #FEE2E2; color: #991B1B; }
-.related-stem { font-size: 24rpx; color: #1F2937; line-height: 1.6; display: block; }
-.related-action { font-size: 22rpx; color: #4F46E5; margin-top: 8rpx; display: block; }
 
-.actions { padding: 0 0 40rpx; display: flex; flex-direction: column; gap: 16rpx; }
-.action-btn {
-  border-radius: 48rpx; font-size: 28rpx; font-weight: 600; padding: 20rpx 0;
-  border: none; text-align: center; background: linear-gradient(135deg, #4F46E5, #7C3AED); color: #fff;
+.related-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-bottom: 8rpx;
 }
-.action-btn.outline { background: #fff; color: #4F46E5; border: 2rpx solid #4F46E5; }
+
+.related-stem {
+  display: block;
+  font-size: 24rpx;
+  line-height: 1.65;
+  color: var(--app-text);
+}
+
+.related-action {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: var(--app-primary);
+}
+
+.actions {
+  padding: 8rpx 24rpx 36rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.loading-state {
+  padding: 120rpx 24rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: var(--app-text-weak);
+}
 </style>

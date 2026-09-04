@@ -1,13 +1,13 @@
 <template>
-  <view class="page">
-    <view class="top-bar">
-      <view class="back-btn" @click="confirmExit">
-        <text>退出</text>
-      </view>
+  <view class="page app-page">
+    <view class="top-bar app-card">
+      <t-button class="top-action" theme="default" variant="text" size="small" shape="round" @click="confirmExit">
+        退出
+      </t-button>
       <view class="progress-info">
         <text class="question-index">{{ questions.length ? currentIndex + 1 : 0 }} / {{ questions.length }}</text>
       </view>
-      <view class="mode-badge">错题重做</view>
+      <t-tag theme="danger" variant="light" shape="round">错题重做</t-tag>
     </view>
 
     <view class="progress-bar">
@@ -15,7 +15,7 @@
     </view>
 
     <scroll-view class="question-area" scroll-y>
-      <view class="question-card">
+      <view class="question-card app-card app-card-pad">
         <c-question-item
           v-if="currentQuestion"
           :question="currentQuestion"
@@ -30,15 +30,23 @@
       </view>
     </scroll-view>
 
-    <view class="bottom-bar">
-      <button class="prev-btn" :disabled="currentIndex === 0 || isLoading" @click="prevQuestion">上一题</button>
-      <button
-        class="next-btn"
+    <view class="bottom-bar app-card">
+      <t-button class="bar-btn" theme="default" variant="outline" shape="round" :disabled="currentIndex === 0 || isLoading" @click="prevQuestion">
+        上一题
+      </t-button>
+      <t-button
         v-if="currentIndex < questions.length - 1"
+        class="bar-btn"
+        theme="primary"
+        shape="round"
         :disabled="isLoading"
         @click="nextQuestion"
-      >下一题</button>
-      <button class="submit-btn" v-else :disabled="isLoading || !questions.length" @click="finishRedo">完成</button>
+      >
+        下一题
+      </t-button>
+      <t-button class="bar-btn" theme="primary" shape="round" :disabled="isLoading || !questions.length" @click="finishRedo">
+        完成
+      </t-button>
     </view>
   </view>
 </template>
@@ -148,7 +156,9 @@ const confirmExit = () => {
   uni.showModal({
     title: '确认退出',
     content: '退出后当前重做进度将不会继续提交，确定退出吗？',
-    success: (res: any) => { if (res.confirm) uni.navigateBack() },
+    success: (res: any) => {
+      if (res.confirm) uni.navigateBack()
+    },
   })
 }
 
@@ -180,33 +190,72 @@ onLoad((query) => {
 </script>
 
 <style lang="scss" scoped>
-.page { height: 100vh; display: flex; flex-direction: column; background: #F5F5F7; }
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-bg);
+}
 
 .top-bar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 24rpx; height: 88rpx; background: #fff;
-  border-bottom: 1rpx solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  padding: 16rpx 20rpx;
+  margin: 20rpx 24rpx 0;
 }
-.back-btn { color: #6B7280; font-size: 28rpx; }
-.progress-info { font-weight: 600; font-size: 28rpx; color: #1F2937; }
-.mode-badge { padding: 4rpx 16rpx; border-radius: 12rpx; font-size: 20rpx; background: #FEE2E2; color: #991B1B; }
 
-.progress-bar { height: 4rpx; background: #E5E7EB; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, #EF4444, #F59E0B); transition: width 0.3s; }
+.progress-info {
+  flex: 1;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--app-text);
+}
 
-.question-area { flex: 1; padding: 24rpx; }
-.question-card { background: #fff; border-radius: 16rpx; padding: 32rpx 24rpx; }
-.empty-question { color: #6B7280; font-size: 28rpx; text-align: center; padding: 80rpx 20rpx; }
+.question-index {
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-bar {
+  height: 4rpx;
+  margin: 14rpx 24rpx 0;
+  background: #eadfce;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--app-danger), var(--app-accent));
+}
+
+.question-area {
+  flex: 1;
+  padding: 24rpx;
+}
+
+.question-card {
+  min-height: 100%;
+}
+
+.empty-question {
+  padding: 84rpx 20rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: var(--app-text-weak);
+}
 
 .bottom-bar {
-  display: flex; align-items: center; gap: 16rpx;
-  padding: 16rpx 24rpx 40rpx; background: #fff;
-  border-top: 1rpx solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx 20rpx calc(28rpx + env(safe-area-inset-bottom));
+  margin: 0 24rpx 24rpx;
 }
-.bottom-bar button { border-radius: 24rpx; font-size: 28rpx; padding: 12rpx 28rpx; border: none; }
-.prev-btn { background: #F3F4F6; color: #374151; }
-.prev-btn[disabled] { opacity: 0.4; }
-.next-btn { background: #EEF2FF; color: #4F46E5; }
-.submit-btn { background: linear-gradient(135deg, #10B981, #059669); color: #fff; font-weight: 600; }
-.submit-btn[disabled] { opacity: 0.5; }
+
+.bar-btn {
+  flex: 1;
+}
 </style>

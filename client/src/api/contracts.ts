@@ -7,7 +7,7 @@ import type {
   ResultReviewQuestion,
   ResultWrongQuestion,
 } from '@/types/exam'
-import type { DashboardData, UserProfile } from '@/types/user'
+import type { DashboardData, ExamTargetDates, UserProfile } from '@/types/user'
 import type { RelatedQuestion, WrongBookDetail, WrongBookListItem } from '@/types/wrongbook'
 import { DIFFICULTY_MAP, QUESTION_TYPE_MAP } from '@/constants/exam'
 
@@ -22,6 +22,7 @@ export interface ApiQuestion {
   options: Question['options']
   answer?: string
   analysis?: string
+  is_favorite?: boolean
 }
 
 export interface ApiPaper {
@@ -35,6 +36,12 @@ export interface ApiPaper {
   mode: string
   difficulty: string
   questions: ApiQuestion[]
+}
+
+export interface ApiSpecialOption {
+  value: string
+  label: string
+  count: number
 }
 
 export interface ApiHistoryPaper {
@@ -55,22 +62,26 @@ export interface ApiUser {
   avatar_url?: string
   target_exam: 'CSCA' | 'HKS'
   target_date?: string
+  target_dates?: Partial<Record<ExamType, string>>
   total_questions: number
   total_correct: number
   correct_rate: number
   streak_days: number
+  favorite_count: number
 }
 
 export interface ApiDashboard {
   user_name: string
   target_exam: 'CSCA' | 'HKS'
   target_date?: string
+  target_dates?: Partial<Record<ExamType, string>>
   today_stats: {
     question_count: number
     correct_rate: number
     wrong_count: number
   }
   pending_wrong_count: number
+  favorite_count: number
   recent_papers: ApiHistoryPaper[]
 }
 
@@ -115,6 +126,7 @@ export interface ApiWrongBookItem {
   id: number
   question_id: number
   exam_type: ExamType
+  subject: string
   stem: string
   type: Question['type']
   difficulty: Difficulty
@@ -135,9 +147,45 @@ export interface ApiRelatedQuestion extends ApiQuestion {
   similarity_score: number
 }
 
+export interface ApiFavoriteStatus {
+  question_id: number
+  is_favorite: boolean
+  favorite_count: number
+}
+
+export interface ApiFavoriteItem {
+  id: number
+  question_id: number
+  question: ApiQuestion
+  note?: string
+  created_at: string
+}
+
+export interface ApiContentItem {
+  id: number
+  category: 'consulting' | 'club' | 'ad' | 'notice'
+  title: string
+  summary: string
+  body: string
+  cover_image?: string
+  link_url?: string
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ApiAIReply {
+  reply: string
+  model: string
+  usage: Record<string, number>
+}
+
 export function toQuestion(item: ApiQuestion): Question {
   return {
     id: item.id,
+    examType: item.exam_type,
+    subject: item.subject,
     type: item.question_type,
     difficulty: item.difficulty,
     knowledgePoint: item.knowledge_point,
@@ -145,6 +193,7 @@ export function toQuestion(item: ApiQuestion): Question {
     options: item.options,
     answer: item.answer,
     analysis: item.analysis,
+    isFavorite: item.is_favorite,
   }
 }
 
@@ -164,6 +213,7 @@ export function toDashboardData(item: ApiDashboard): DashboardData {
     userName: item.user_name,
     targetExam: item.target_exam,
     targetDate: item.target_date || '',
+    targetDates: normalizeTargetDates(item.target_dates, item.target_exam, item.target_date),
     countdown: calculateCountdown(item.target_date),
     todayStats: {
       questionCount: item.today_stats.question_count,
@@ -171,6 +221,7 @@ export function toDashboardData(item: ApiDashboard): DashboardData {
       wrongCount: item.today_stats.wrong_count,
     },
     pendingWrongCount: item.pending_wrong_count,
+    favoriteCount: item.favorite_count,
     recentPapers: item.recent_papers.map((paper) => ({
       id: paper.id,
       title: paper.title,
@@ -187,10 +238,26 @@ export function toUserProfile(item: ApiUser): UserProfile {
     avatarUrl: item.avatar_url || '',
     targetExam: item.target_exam,
     targetDate: item.target_date || '',
+    targetDates: normalizeTargetDates(item.target_dates, item.target_exam, item.target_date),
     totalQuestions: item.total_questions,
     correctRate: item.correct_rate,
     streakDays: item.streak_days,
+    favoriteCount: item.favorite_count,
   }
+}
+
+function normalizeTargetDates(
+  targetDates: ApiUser['target_dates'],
+  targetExam?: ExamType,
+  targetDate?: string,
+): ExamTargetDates {
+  const normalized: ExamTargetDates = {}
+  if (targetDates?.CSCA) normalized.CSCA = targetDates.CSCA
+  if (targetDates?.HKS) normalized.HKS = targetDates.HKS
+  if (!Object.keys(normalized).length && targetExam && targetDate) {
+    normalized[targetExam] = targetDate
+  }
+  return normalized
 }
 
 function calculateCountdown(targetDate?: string) {
@@ -245,6 +312,7 @@ export function toWrongBookListItem(item: ApiWrongBookItem): WrongBookListItem {
   return {
     id: item.id,
     examType: item.exam_type,
+    subject: item.subject,
     typeLabel: QUESTION_TYPE_MAP[item.type] || item.type,
     diffLabel: DIFFICULTY_MAP[item.difficulty] || item.difficulty,
     difficulty: item.difficulty,

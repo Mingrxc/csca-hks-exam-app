@@ -2,6 +2,8 @@
   "navigationBarTitleText": "错题重做",
   "navigationStyle": "custom",
   "usingComponents": {
+    "t-button": "../../node-modules/@tdesign/uniapp/dist/button/button",
+    "t-tag": "../../node-modules/@tdesign/uniapp/dist/tag/tag",
     "c-question-item": "../../components/QuestionItem/index"
   }
 }
