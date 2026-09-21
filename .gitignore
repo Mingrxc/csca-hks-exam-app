@@ -1,6 +1,3 @@
-# Codex memory
-CODEX_MEMORY.md
-
 # Python
 __pycache__/
 *.py[cod]
@@ -33,7 +30,7 @@ pnpm-debug.log*
 server/.env
 client/.env
 client/.env.*
-# Keep shareable templates under version control.
+# Keep sanitized templates under version control.
 !**/.env.example
 
 # IDE / OS

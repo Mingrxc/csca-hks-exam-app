@@ -13,12 +13,10 @@
       </view>
     </view>
 
-    <view v-if="loadError" class="app-section">
-      <view class="error-card app-card" @click="load">加载失败，点击重试</view>
-    </view>
-
     <view class="app-section">
-      <view class="favorite-list">
+      <c-app-state v-if="loading" state="loading" title="正在加载收藏" />
+      <c-app-state v-else-if="error" state="error" title="收藏加载失败" :description="error" @retry="load" />
+      <view v-else class="favorite-list">
         <view v-for="item in items" :key="item.id" class="favorite-item app-card app-card-compact">
           <view class="meta">
             <t-tag theme="primary" variant="light" shape="round" size="small">{{ item.question.exam_type }}</t-tag>
@@ -39,38 +37,20 @@
         </view>
       </view>
 
-      <t-empty v-if="!loading && !loadError && items.length === 0" description="还没有收藏题目" />
+      <c-app-state v-if="!loading && !error && items.length === 0" state="empty" title="还没有收藏题目" />
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { favoriteApi } from '@/api'
 import type { ApiFavoriteItem } from '@/api/contracts'
+import { useFavorites } from '@/features/favorite/useFavorites'
 
-const items = ref<ApiFavoriteItem[]>([])
-const loading = ref(false)
-const loadError = ref(false)
-
-const load = async () => {
-  loading.value = true
-  loadError.value = false
-  try {
-    items.value = await favoriteApi.list()
-  } catch {
-    loadError.value = true
-  } finally {
-    loading.value = false
-  }
-}
+const { data: items, loading, error, load, remove: removeFavorite } = useFavorites()
 
 const remove = async (questionId: number) => {
-  try {
-    await favoriteApi.toggle(questionId)
-    items.value = items.value.filter((item) => item.question_id !== questionId)
-  } catch {}
+  try { await removeFavorite(questionId) } catch {}
 }
 
 const askAI = (item: ApiFavoriteItem) => {
@@ -171,10 +151,4 @@ onShow(load)
   margin-top: 16rpx;
 }
 
-.error-card {
-  padding: 24rpx;
-  text-align: center;
-  color: var(--app-danger);
-  background: var(--app-danger-soft);
-}
 </style>

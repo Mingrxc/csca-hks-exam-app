@@ -4,6 +4,7 @@ param(
   [string]$PublicUrl = $env:CLOUDFLARE_PUBLIC_URL,
   [string]$TunnelName = $env:CLOUDFLARE_TUNNEL_NAME,
   [string]$TunnelToken = $env:CLOUDFLARE_TUNNEL_TOKEN,
+  [string]$PythonPath = $env:CSCA_PYTHON_PATH,
   [switch]$StartWatcher
 )
 
@@ -13,7 +14,27 @@ $ServerRoot = Join-Path $ProjectRoot 'server'
 $ClientRoot = Join-Path $ProjectRoot 'client'
 $RuntimeRoot = Join-Path $ServerRoot '.dev'
 $ToolsRoot = Join-Path $ServerRoot 'tools'
-$Python = Join-Path $ServerRoot '.venv\Scripts\python.exe'
+
+function Find-ProjectPython {
+  $candidates = @(
+    $PythonPath,
+    (Join-Path $env:USERPROFILE 'miniforge3\envs\deng\python.exe')
+  )
+  if ($env:CONDA_DEFAULT_ENV -eq 'deng') {
+    $activePython = Get-Command python.exe -ErrorAction SilentlyContinue
+    if ($activePython) {
+      $candidates = @($activePython.Source) + $candidates
+    }
+  }
+  foreach ($candidate in $candidates) {
+    if ($candidate -and (Test-Path -LiteralPath $candidate)) {
+      return (Resolve-Path -LiteralPath $candidate).Path
+    }
+  }
+  throw 'Python for Conda environment deng was not found. Activate deng or set CSCA_PYTHON_PATH.'
+}
+
+$Python = Find-ProjectPython
 
 function Find-Cloudflared {
   $candidates = @(
@@ -33,12 +54,7 @@ function Find-Cloudflared {
     return $command.Source
   }
 
-  New-Item -ItemType Directory -Force -Path $ToolsRoot | Out-Null
-  $downloadUrl = 'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe'
-  $downloadPath = Join-Path $ToolsRoot 'cloudflared.exe'
-  Write-Host 'Downloading cloudflared from the official release...' -ForegroundColor DarkCyan
-  Invoke-WebRequest -UseBasicParsing -Uri $downloadUrl -OutFile $downloadPath
-  return (Resolve-Path -LiteralPath $downloadPath).Path
+  throw 'cloudflared was not found. Install it manually, then set CLOUDFLARED_PATH or add it to PATH.'
 }
 
 function Test-BackendHealth {
@@ -80,19 +96,21 @@ function Start-Database {
     return
   }
 
-  $service = Get-Service -Name 'MySQL80' -ErrorAction SilentlyContinue
+  $service = @(
+    Get-Service -Name 'MySQL84', 'MySQL80' -ErrorAction SilentlyContinue
+  ) | Sort-Object { if ($_.Name -eq 'MySQL84') { 0 } else { 1 } } | Select-Object -First 1
   if (-not $service) {
-    throw 'MySQL80 service was not found and port 3306 is unavailable.'
+    throw 'Neither MySQL84 nor MySQL80 was found and port 3306 is unavailable.'
   }
 
   if ($service.Status -ne 'Running') {
     try {
-      Start-Service -Name 'MySQL80'
+      Start-Service -Name $service.Name
     } catch {
-      $command = "Set-Service -Name 'MySQL80' -StartupType Automatic; Start-Service -Name 'MySQL80'"
+      $command = "Start-Service -Name '$($service.Name)'"
       $encodedCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
       try {
-        $elevated = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -PassThru -ArgumentList @(
+        $elevated = Start-Process -FilePath 'powershell.exe' -Verb RunAs -Wait -PassThru -WindowStyle Hidden -ArgumentList @(
           '-NoProfile',
           '-ExecutionPolicy',
           'Bypass',
@@ -103,7 +121,7 @@ function Start-Database {
           throw 'The elevated MySQL start command failed.'
         }
       } catch {
-        throw 'MySQL80 is stopped. Allow the Administrator prompt once, or start MySQL80 manually, then run this script again.'
+        throw "$($service.Name) is stopped. Start it manually, then run this script again."
       }
     }
   }
@@ -117,7 +135,7 @@ function Start-Database {
     Start-Sleep -Milliseconds 500
   }
 
-  throw 'MySQL80 did not become ready on port 3306. Check the MySQL service log.'
+  throw "$($service.Name) did not become ready on port 3306. Check the MySQL service log."
 }
 
 function Start-Backend {
@@ -128,7 +146,7 @@ function Start-Backend {
 
   if (-not (Test-BackendHealth)) {
     if (-not (Test-Path -LiteralPath $Python)) {
-      throw "Missing backend virtual environment: $Python"
+      throw "Missing project Python: $Python"
     }
 
     New-Item -ItemType Directory -Force -Path $RuntimeRoot | Out-Null
@@ -248,16 +266,18 @@ function Update-FrontendEnv([string]$apiBaseUrl) {
     (Join-Path $ClientRoot '.env.development.local'),
     (Join-Path $ClientRoot '.env.production.local')
   )
-  $fallback = 'http://127.0.0.1:8000/api/v1'
-
   foreach ($file in $files) {
     $lines = @()
     if (Test-Path -LiteralPath $file) {
       $lines = @(Get-Content -LiteralPath $file)
     }
-    $lines = @($lines | Where-Object { $_ -notmatch '^VITE_API_BASE_URL=' -and $_ -notmatch '^VITE_API_FALLBACK_URL=' })
+    $lines = @($lines | Where-Object {
+      $_ -notmatch '^VITE_API_BASE_URL=' -and
+      $_ -notmatch '^VITE_API_FALLBACK_URL=' -and
+      $_ -notmatch '^VITE_API_TIMEOUT_MS='
+    })
     $lines += "VITE_API_BASE_URL=$apiBaseUrl"
-    $lines += "VITE_API_FALLBACK_URL=$fallback"
+    $lines += 'VITE_API_TIMEOUT_MS=15000'
     Set-Content -LiteralPath $file -Value $lines -Encoding UTF8
   }
 }

@@ -126,6 +126,7 @@
       "^c-question-item$": "@/components/QuestionItem/index.vue",
       "^c-countdown-bar$": "@/components/CountdownBar/index.vue",
       "^c-answer-card$": "@/components/AnswerCard/index.vue",
+      "^c-app-state$": "@/components/AppState/index.vue",
       "^c-ring-chart$": "@/components/RingChart/index.vue"
     }
   }

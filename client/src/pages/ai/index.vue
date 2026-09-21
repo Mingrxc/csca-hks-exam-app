@@ -187,7 +187,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { aiApi } from '@/api'
+import { aiApi } from '@/features/ai/api'
 import { useUserStore } from '@/stores/user'
 import type { ExamType } from '@/types/exam'
 

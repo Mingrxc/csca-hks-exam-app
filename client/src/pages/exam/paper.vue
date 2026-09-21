@@ -152,7 +152,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { questionApi } from '@/api'
+import { questionApi } from '@/features/exam/api'
 import { toQuestion } from '@/api/contracts'
 import {
   CSCA_SUBJECT_OPTIONS,
@@ -166,6 +166,7 @@ import {
 } from '@/constants/exam'
 import type { DifficultyFilter, ExamMode, ExamType, PaperStrategy } from '@/types/exam'
 import { useExamStore } from '@/stores/exam'
+import { confirmAction } from '@/shared/ui/confirm'
 
 const examStore = useExamStore()
 const strategyType = ref<PaperStrategy>('random')
@@ -336,6 +337,15 @@ const startExam = async () => {
     return
   }
   if (isGenerating.value) return
+
+  if (examStore.hasActiveProgress) {
+    const confirmed = await confirmAction({
+      title: '开始新试卷',
+      content: '开始新试卷会覆盖本机保存的未完成答题进度。',
+      confirmText: '继续组卷',
+    })
+    if (!confirmed) return
+  }
 
   isGenerating.value = true
   try {

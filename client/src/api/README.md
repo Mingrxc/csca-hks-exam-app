@@ -1,6 +1,10 @@
 # API 接口封装
 
-## 模块
+## 边界
+
+`client.ts` 是唯一的请求与下载传输层，负责环境地址、认证、超时、安全重试、统一错误和请求 ID。业务接口按领域放在 `src/features/*/api.ts`；`index.ts` 只保留兼容导出，新代码应直接依赖所属 feature。
+
+## 领域模块
 
 | 模块 | 说明 |
 |------|------|
@@ -12,8 +16,8 @@
 | `contentApi` | 首页资讯列表、内容管理 CRUD |
 | `aiApi` | 留学与备考 AI 问答 |
 
-## 配置
+## 约束
 
-- 基础 URL：`/api/v1`，通过拦截器自动拼接
-- 认证：Bearer Token，从 uni.storage 读取
-- 错误处理：401 自动清 token，其他弹出 toast 提示
+- 页面不得直接调用 `uni.request`、`uni.downloadFile` 或拼接 API 根地址。
+- GET 网络失败最多重试一次；写请求不自动重试。
+- 认证恢复、错误提示和 `X-Request-ID` 由传输层统一处理。

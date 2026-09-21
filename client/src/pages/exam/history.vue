@@ -13,11 +13,15 @@
       </view>
     </view>
 
-    <view v-if="loadError" class="app-section">
-      <view class="error-card app-card" @click="loadHistory">历史试卷加载失败，点击重试</view>
-    </view>
-
-    <view v-if="!loadError" class="app-section">
+    <view class="app-section">
+      <c-app-state v-if="loading" state="loading" title="正在加载历史试卷" />
+      <c-app-state
+        v-else-if="error"
+        state="error"
+        title="历史试卷加载失败"
+        :description="error"
+        @retry="load"
+      />
       <view class="history-list app-list">
         <view
           v-for="paper in historyPapers"
@@ -41,42 +45,22 @@
         </view>
       </view>
 
-      <t-empty v-if="!loading && historyPapers.length === 0" description="还没有答题记录" />
+      <c-app-state v-if="!loading && !error && historyPapers.length === 0" state="empty" title="还没有答题记录" />
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { questionApi } from '@/api'
-import { toHistoryPaper } from '@/api/contracts'
-import type { HistoryPaper } from '@/types/exam'
+import { useExamHistory } from '@/features/exam/useExamHistory'
 
-const historyPapers = ref<HistoryPaper[]>([])
-const loading = ref(false)
-const loadError = ref(false)
-
-const loadHistory = async () => {
-  if (loading.value) return
-
-  loading.value = true
-  loadError.value = false
-  try {
-    const items = await questionApi.getPapers({ limit: 100 })
-    historyPapers.value = items.map(toHistoryPaper)
-  } catch {
-    loadError.value = true
-  } finally {
-    loading.value = false
-  }
-}
+const { data: historyPapers, loading, error, load } = useExamHistory()
 
 const goResult = (id: number) => {
   uni.navigateTo({ url: `/pages/exam/result?id=${id}` })
 }
 
-onShow(loadHistory)
+onShow(load)
 </script>
 
 <style lang="scss" scoped>
@@ -136,11 +120,4 @@ onShow(loadHistory)
   margin-left: 2rpx;
 }
 
-.error-card {
-  padding: 24rpx;
-  text-align: center;
-  color: var(--app-danger);
-  background: var(--app-danger-soft);
-  border-radius: 28rpx !important;
-}
 </style>

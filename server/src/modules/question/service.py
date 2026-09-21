@@ -36,7 +36,7 @@ def special_field_for_exam(exam_type: str):
 
 
 def paper_special_field_for_exam(exam_type: str):
-    """组卷页使用考试一级科目筛选，HKS 不使用细分知识点。"""
+    """Use the top-level subject when filtering paper generation."""
     return Question.subject
 
 
@@ -173,8 +173,10 @@ def generate_paper(db: Session, user_id: int, payload: GeneratePaperRequest) -> 
     if payload.strategy.value == "progressive":
         questions.sort(key=lambda question: DIFFICULTY_ORDER.get(question.difficulty, 4))
 
-    for question in questions:
-        question.usage_count = (question.usage_count or 0) + 1
+    db.query(Question).filter(Question.id.in_(selected_ids)).update(
+        {Question.usage_count: func.coalesce(Question.usage_count, 0) + 1},
+        synchronize_session=False,
+    )
 
     title = f"{payload.exam_type.value} {strategy_label(payload.strategy.value)}"
     paper = Paper(

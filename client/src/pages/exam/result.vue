@@ -123,7 +123,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { examApi } from '@/api'
+import { examApi } from '@/features/exam/api'
 import { toExamResultSummary, toResultReviewQuestions, toResultWrongQuestions } from '@/api/contracts'
 import { useExamStore } from '@/stores/exam'
 import type { ApiQuestion } from '@/api/contracts'

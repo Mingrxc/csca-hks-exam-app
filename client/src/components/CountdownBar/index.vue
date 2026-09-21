@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { formatTime } from '@/utils'
 
 const props = defineProps<{
@@ -23,18 +23,23 @@ const emit = defineEmits<{
 
 const remaining = ref(props.seconds)
 let timer: any = null
+let deadline = Date.now() + props.seconds * 1000
 
 const displayText = computed(() => formatTime(remaining.value))
 
 onMounted(() => {
   timer = setInterval(() => {
-    if (remaining.value > 0) {
-      remaining.value--
-    } else {
+    remaining.value = Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
+    if (remaining.value === 0) {
       clearInterval(timer)
       emit('timeout')
     }
   }, 1000)
+})
+
+watch(() => props.seconds, (seconds) => {
+  remaining.value = seconds
+  deadline = Date.now() + seconds * 1000
 })
 
 onUnmounted(() => {

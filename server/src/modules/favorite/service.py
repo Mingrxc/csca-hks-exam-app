@@ -1,6 +1,7 @@
 """收藏业务逻辑."""
 
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from src.common.exceptions import AppException
 from src.modules.favorite.models import Favorite
@@ -33,7 +34,13 @@ def get_favorite_status(db: Session, user_id: int, question_id: int) -> dict:
     }
 
 
-def toggle_favorite(db: Session, user_id: int, question_id: int) -> dict:
+def toggle_favorite(
+    db: Session,
+    user_id: int,
+    question_id: int,
+    *,
+    retry_on_conflict: bool = True,
+) -> dict:
     question = db.query(Question).filter(Question.id == question_id, Question.is_active == 1).first()
     if not question:
         raise AppException(40431, "题目不存在", status_code=404)
@@ -54,7 +61,18 @@ def toggle_favorite(db: Session, user_id: int, question_id: int) -> dict:
 
     item = Favorite(user_id=user_id, question_id=question_id)
     db.add(item)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        if retry_on_conflict:
+            return toggle_favorite(
+                db,
+                user_id,
+                question_id,
+                retry_on_conflict=False,
+            )
+        raise
     db.refresh(item)
     return {
         "question_id": question_id,

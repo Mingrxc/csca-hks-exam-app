@@ -117,7 +117,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { userApi } from '@/api'
+import { userApi } from '@/features/user/api'
 import { toDashboardData, toUserProfile } from '@/api/contracts'
 import { useUserStore } from '@/stores/user'
 import type { DashboardData, UserProfile } from '@/types/user'

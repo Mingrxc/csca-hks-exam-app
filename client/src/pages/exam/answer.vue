@@ -85,119 +85,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { WRONG_REASONS } from '@/constants/exam'
-import { examApi, favoriteApi } from '@/api'
-import { useExamStore } from '@/stores/exam'
+import { ref, onMounted } from 'vue'
+import { confirmAction } from '@/shared/ui/confirm'
+import { useAnswerSession } from '@/features/exam/useAnswerSession'
 
-const examStore = useExamStore()
-const mode = computed(() => examStore.config.mode)
-const currentIndex = computed(() => examStore.currentIndex)
-const answers = computed(() => examStore.answers)
-const showResult = ref<Record<number, boolean>>({})
-const answerCorrectness = ref<Record<number, boolean>>({})
-const selectedReasons = ref<Record<number, string>>({})
+const {
+  examStore, mode, currentIndex, answers, showResult, questions, remainingSeconds,
+  currentQuestion, progressPercent, answeredCount, currentCorrect, currentSelectedReason,
+  answerSheetItems, wrongReasons, toggleFavorite, selectOption, selectWrongReason,
+  commitElapsedTime, moveTo,
+} = useAnswerSession()
 const showSheet = ref(false)
-const isSubmitting = ref(false)
-const questionStartedAt = ref(Date.now())
-const questionElapsedSeconds = ref<Record<number, number>>({})
-const questions = computed(() => examStore.questions)
-const remainingSeconds = computed(() => examStore.config.timeLimit * 60)
-
-const currentQuestion = computed(() => examStore.currentQuestion)
-const progressPercent = computed(() => examStore.progressPercent)
-const answeredCount = computed(() => examStore.answeredCount)
-const currentCorrect = computed(() => answerCorrectness.value[currentIndex.value] === true)
-const currentSelectedReason = computed(() => selectedReasons.value[currentIndex.value] || '')
-
-const wrongReasons = WRONG_REASONS
-
-const toggleFavorite = async () => {
-  if (!currentQuestion.value) return
-  try {
-    const status = await favoriteApi.toggle(currentQuestion.value.id)
-    currentQuestion.value.isFavorite = status.is_favorite
-    uni.showToast({ title: status.is_favorite ? '已收藏' : '已取消收藏', icon: 'none' })
-  } catch {}
-}
-
-const commitElapsedTime = () => {
-  const index = currentIndex.value
-  const elapsed = Math.max(0, Math.floor((Date.now() - questionStartedAt.value) / 1000))
-  questionElapsedSeconds.value[index] = (questionElapsedSeconds.value[index] || 0) + elapsed
-  questionStartedAt.value = Date.now()
-  return questionElapsedSeconds.value[index]
-}
-
-const selectOption = async (key: string) => {
-  if (!currentQuestion.value || !examStore.paperId || isSubmitting.value) return
-  if (showResult.value[currentIndex.value] && mode.value === 'practice') return
-
-  isSubmitting.value = true
-  const index = currentIndex.value
-  const previousAnswer = answers.value[index]
-  examStore.setAnswer(index, key)
-
-  try {
-    const response = await examApi.submitAnswer({
-      paperId: examStore.paperId,
-      questionId: currentQuestion.value.id,
-      userAnswer: key,
-      timeSpent: commitElapsedTime(),
-      wrongReason: currentSelectedReason.value || undefined,
-    })
-    if (typeof response.is_correct === 'boolean') {
-      answerCorrectness.value[index] = response.is_correct
-    }
-    if (mode.value === 'practice') {
-      showResult.value[index] = true
-    }
-  } catch {
-    if (previousAnswer == null) {
-      examStore.clearAnswer(index)
-    } else {
-      examStore.setAnswer(index, previousAnswer)
-    }
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-const selectWrongReason = async (reason: string) => {
-  const index = currentIndex.value
-  const previousReason = selectedReasons.value[index]
-  selectedReasons.value[index] = reason
-  const answer = answers.value[index]
-  if (!answer || !currentQuestion.value || !examStore.paperId || isSubmitting.value) return
-
-  isSubmitting.value = true
-  try {
-    const response = await examApi.submitAnswer({
-      paperId: examStore.paperId,
-      questionId: currentQuestion.value.id,
-      userAnswer: answer,
-      timeSpent: commitElapsedTime(),
-      wrongReason: reason,
-    })
-    if (typeof response.is_correct === 'boolean') {
-      answerCorrectness.value[index] = response.is_correct
-    }
-  } catch {
-    if (previousReason == null) {
-      delete selectedReasons.value[index]
-    } else {
-      selectedReasons.value[index] = previousReason
-    }
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-const moveTo = (index: number) => {
-  if (index === currentIndex.value) return
-  commitElapsedTime()
-  examStore.setCurrentIndex(index)
-}
 
 const prevQuestion = () => moveTo(currentIndex.value - 1)
 const nextQuestion = () => moveTo(currentIndex.value + 1)
@@ -207,22 +105,14 @@ const jumpToAndClose = (i: number) => {
   showSheet.value = false
 }
 
-const answerSheetItems = computed(() =>
-  questions.value.map((_, index) => ({
-    index,
-    answered: answers.value[index] != null,
-    marked: !!showResult.value[index],
-  })),
-)
-
-const confirmExit = () => {
-  uni.showModal({
-    title: '确认退出',
-    content: '退出后答题进度将不会保存，确定退出吗？',
-    success: (res: any) => {
-      if (res.confirm) uni.navigateBack()
-    },
+const confirmExit = async () => {
+  examStore.persistProgress()
+  const confirmed = await confirmAction({
+    title: '暂时退出',
+    content: '当前答题进度已保存在本机，下次进入答题页可继续。',
+    confirmText: '退出',
   })
+  if (confirmed) uni.navigateBack()
 }
 
 const completeExam = () => {
@@ -236,28 +126,32 @@ const completeExam = () => {
   uni.redirectTo({ url: `/pages/exam/result?paperId=${examStore.paperId}` })
 }
 
-const submitExam = (forced = false) => {
+const submitExam = async (forced = false) => {
   if (forced) {
     completeExam()
     return
   }
 
   const answered = Object.keys(answers.value).length
-  uni.showModal({
+  const unanswered = questions.value.length - answered
+  const confirmed = await confirmAction({
     title: '确认交卷',
-    content: `还有 ${questions.value.length - answered} 题未作答，确定交卷吗？`,
-    success: (res: any) => {
-      if (res.confirm) {
-        completeExam()
-      }
-    },
+    content: unanswered > 0 ? `还有 ${unanswered} 题未作答，确定交卷吗？` : '已完成全部题目，确定交卷吗？',
   })
+  if (confirmed) completeExam()
 }
 
 if (!examStore.paperId || questions.value.length === 0) {
   uni.showToast({ title: '请先完成组卷', icon: 'none' })
   setTimeout(() => uni.navigateBack(), 300)
 }
+
+onMounted(() => {
+  if (examStore.restoredFromStorage) {
+    uni.showToast({ title: '已恢复上次答题进度', icon: 'none' })
+    examStore.acknowledgeRestore()
+  }
+})
 </script>
 
 <style lang="scss" scoped>

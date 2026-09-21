@@ -47,3 +47,8 @@ class ContentItemResponse(ContentItemBase):
     created_at: datetime
     updated_at: datetime
 
+
+class ContentDeleteResponse(BaseModel):
+    id: int
+    deleted: bool
+

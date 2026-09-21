@@ -137,7 +137,8 @@
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { questionApi, wrongBookApi } from '@/api'
+import { questionApi } from '@/features/exam/api'
+import { wrongBookApi } from '@/features/wrongbook/api'
 import { toWrongBookListItem } from '@/api/contracts'
 import {
   CSCA_SUBJECT_OPTIONS,

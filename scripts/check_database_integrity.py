@@ -1,4 +1,4 @@
-"""Read-only integrity checks before applying ownership foreign keys."""
+"""Read-only database integrity and schema-constraint checks."""
 
 from __future__ import annotations
 
@@ -62,6 +62,50 @@ CHECKS = {
         LEFT JOIN users u ON u.id = s.user_id
         WHERE u.id IS NULL
     """,
+    "orphan_favorites_user": """
+        SELECT COUNT(*) FROM favorites f
+        LEFT JOIN users u ON u.id = f.user_id
+        WHERE u.id IS NULL
+    """,
+    "orphan_favorites_question": """
+        SELECT COUNT(*) FROM favorites f
+        LEFT JOIN questions q ON q.id = f.question_id
+        WHERE q.id IS NULL
+    """,
+    "orphan_user_targets_user": """
+        SELECT COUNT(*) FROM user_exam_targets t
+        LEFT JOIN users u ON u.id = t.user_id
+        WHERE u.id IS NULL
+    """,
+    "answer_paper_owner_mismatch": """
+        SELECT COUNT(*) FROM answer_records a
+        INNER JOIN papers p ON p.id = a.paper_id
+        WHERE a.user_id <> p.user_id
+    """,
+    "orphan_paper_question_json": """
+        SELECT COUNT(*)
+        FROM papers p
+        JOIN JSON_TABLE(
+            p.question_ids,
+            '$[*]' COLUMNS(question_id INT PATH '$')
+        ) AS paper_question
+        LEFT JOIN questions q ON q.id = paper_question.question_id
+        WHERE q.id IS NULL
+    """,
+}
+
+EXPECTED_FOREIGN_KEYS = {
+    "fk_papers_user",
+    "fk_answer_records_user",
+    "fk_answer_records_paper",
+    "fk_answer_records_question",
+    "fk_wrong_book_user",
+    "fk_wrong_book_question",
+    "fk_knowledge_stats_user",
+    "fk_streak_records_user",
+    "fk_favorites_user",
+    "fk_favorites_question",
+    "fk_user_exam_targets_user",
 }
 
 
@@ -89,6 +133,9 @@ def main() -> int:
                 "wrong_book",
                 "knowledge_stats",
                 "streak_records",
+                "favorites",
+                "user_exam_targets",
+                "content_items",
             }
             missing = sorted(required - tables)
             if missing:
@@ -108,6 +155,20 @@ def main() -> int:
                 count = connection.execute(text(statement)).scalar_one()
                 print(f"{name}={count}")
                 issues += count
+
+            inspector = inspect(connection)
+            actual_foreign_keys = {
+                foreign_key["name"]
+                for table_name in required
+                for foreign_key in inspector.get_foreign_keys(table_name)
+                if foreign_key.get("name")
+            }
+            missing_foreign_keys = sorted(EXPECTED_FOREIGN_KEYS - actual_foreign_keys)
+            print(
+                "missing_foreign_keys="
+                + (",".join(missing_foreign_keys) if missing_foreign_keys else "0")
+            )
+            issues += len(missing_foreign_keys)
             print("integrity=clean" if issues == 0 else f"integrity=failed issues={issues}")
             return 0 if issues == 0 else 1
     except SQLAlchemyError as exc:

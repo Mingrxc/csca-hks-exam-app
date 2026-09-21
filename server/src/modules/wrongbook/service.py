@@ -300,7 +300,8 @@ def get_related(db: Session, question_id: int, limit: int = 3) -> list[dict]:
             Question.id != question.id,
             Question.is_active == 1,
             Question.exam_type == question.exam_type,
-            Question.subject == question.subject if question.exam_type == "CSCA" else Question.knowledge_point == question.knowledge_point,
+            Question.subject == question.subject,
+            Question.knowledge_point == question.knowledge_point,
         )
         .limit(limit)
         .all()

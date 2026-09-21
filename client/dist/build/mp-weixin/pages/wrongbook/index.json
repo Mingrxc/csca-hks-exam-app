@@ -1,8 +1,0 @@
-{
-  "navigationBarTitleText": "错题本",
-  "usingComponents": {
-    "t-tag": "../../node-modules/@tdesign/uniapp/dist/tag/tag",
-    "t-button": "../../node-modules/@tdesign/uniapp/dist/button/button",
-    "t-empty": "../../node-modules/@tdesign/uniapp/dist/empty/empty"
-  }
-}

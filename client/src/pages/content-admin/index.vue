@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { contentApi } from '@/api'
+import { contentApi } from '@/features/content/api'
 import type { ApiContentItem } from '@/api/contracts'
 
 const categoryOptions = [

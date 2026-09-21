@@ -1,8 +1,19 @@
 <script setup lang="ts">
-import { onShow, onHide } from '@dcloudio/uni-app'
+import { onHide, onLaunch, onShow } from '@dcloudio/uni-app'
+import { useUserStore } from '@/stores/user'
+import { useExamStore } from '@/stores/exam'
+
+const userStore = useUserStore()
+const examStore = useExamStore()
+
+onLaunch(() => {
+  userStore.login().catch(() => {})
+})
 
 onShow(() => {})
-onHide(() => {})
+onHide(() => {
+  examStore.persistProgress()
+})
 </script>
 
 <style lang="scss">

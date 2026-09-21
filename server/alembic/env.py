@@ -1,13 +1,11 @@
 """Alembic migration environment."""
 
 from logging.config import fileConfig
-from urllib.parse import quote_plus
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from src.config.database import Base
-from src.config.settings import settings
+from src.config.database import Base, sync_url
 
 # Register all tables on Base.metadata before Alembic compares schemas.
 from src.modules.content.models import ContentItem  # noqa: F401
@@ -24,10 +22,7 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 config.set_main_option(
     "sqlalchemy.url",
-    "mysql+pymysql://"
-    f"{quote_plus(settings.MYSQL_USER)}:{quote_plus(settings.MYSQL_PASSWORD)}"
-    f"@{settings.MYSQL_HOST}:{settings.MYSQL_PORT}/{settings.MYSQL_DATABASE}"
-    "?charset=utf8mb4",
+    sync_url.render_as_string(hide_password=False).replace("%", "%%"),
 )
 
 

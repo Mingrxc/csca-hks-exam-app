@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.common.exceptions import AppException
@@ -17,7 +18,13 @@ def normalize_answer(answer: str) -> str:
     return "".join(sorted(answer.replace(" ", "").upper()))
 
 
-def submit_answer(db: Session, user_id: int, payload: SubmitAnswerRequest) -> dict:
+def submit_answer(
+    db: Session,
+    user_id: int,
+    payload: SubmitAnswerRequest,
+    *,
+    retry_on_conflict: bool = True,
+) -> dict:
     paper = db.query(Paper).filter(Paper.id == payload.paper_id, Paper.user_id == user_id).first()
     if not paper:
         raise AppException(40411, "试卷不存在", status_code=404)
@@ -65,13 +72,24 @@ def submit_answer(db: Session, user_id: int, payload: SubmitAnswerRequest) -> di
         update_wrong_book(db, user_id, question, is_correct)
         update_knowledge_stat(db, user_id, paper.exam_type, question, is_correct)
     elif previous_correct != is_correct:
-        # 仅在首次记录发生变化时反向修正，避免重复提交重复加总
+        # Reverse aggregate counters only when a revised answer changes correctness.
         adjust_user_counters(db, user_id, previous_correct, is_correct)
         adjust_question_counters(db, question, previous_correct, is_correct)
         adjust_wrong_book(db, user_id, question, previous_correct, is_correct)
         adjust_knowledge_stat(db, user_id, paper.exam_type, question, previous_correct, is_correct)
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        if retry_on_conflict:
+            return submit_answer(
+                db,
+                user_id,
+                payload,
+                retry_on_conflict=False,
+            )
+        raise
 
     response_payload = {
         "paper_id": payload.paper_id,

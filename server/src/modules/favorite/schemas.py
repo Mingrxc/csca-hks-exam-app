@@ -27,3 +27,7 @@ class FavoriteStatusResponse(BaseModel):
     question_id: int
     is_favorite: bool
     favorite_count: int
+
+
+class FavoriteCountResponse(BaseModel):
+    favorite_count: int

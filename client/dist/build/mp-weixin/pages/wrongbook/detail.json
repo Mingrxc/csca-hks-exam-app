@@ -1,7 +1,0 @@
-{
-  "navigationBarTitleText": "错题详情",
-  "usingComponents": {
-    "t-tag": "../../node-modules/@tdesign/uniapp/dist/tag/tag",
-    "t-button": "../../node-modules/@tdesign/uniapp/dist/button/button"
-  }
-}

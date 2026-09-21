@@ -14,3 +14,11 @@ def test_cors_origins_keeps_local_wildcard():
     settings = Settings(CORS_ORIGINS="*")
 
     assert settings.cors_origins == ["*"]
+
+
+def test_environment_mode_exposes_production_state():
+    production = Settings(APP_ENV="production")
+    development = Settings(APP_ENV="development")
+
+    assert production.is_production is True
+    assert development.is_production is False

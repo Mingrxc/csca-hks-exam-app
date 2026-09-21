@@ -72,7 +72,7 @@ def test_load_questions_normalizes_raw_hsk4_quiz_and_skips_resources(tmp_path):
     questions, report = load_questions(source)
 
     assert report.invalid == {}
-    assert report.skipped_resources == {"HSK\\4级\\vocabulary.json": 1}
+    assert report.skipped_resources == {"HSK/4级/vocabulary.json": 1}
     assert [question.question_type for question in questions] == ["single", "fill"]
     assert questions[0].options[0]["text"] == "学校"
     assert questions[0].answer == "B"

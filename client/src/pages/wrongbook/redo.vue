@@ -54,7 +54,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { examApi, wrongBookApi } from '@/api'
+import { examApi } from '@/features/exam/api'
+import { wrongBookApi } from '@/features/wrongbook/api'
 import { toQuestion } from '@/api/contracts'
 import { useExamStore } from '@/stores/exam'
 import type { ExamType, Question } from '@/types/exam'

@@ -80,7 +80,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { wrongBookApi } from '@/api'
+import { wrongBookApi } from '@/features/wrongbook/api'
 import { toRelatedQuestion, toWrongBookDetail } from '@/api/contracts'
 import { getQuestionDomain, getQuestionDomainLabel } from '@/constants/exam'
 import type { RelatedQuestion, WrongBookDetail } from '@/types/wrongbook'

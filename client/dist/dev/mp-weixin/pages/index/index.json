@@ -1,7 +1,0 @@
-{
-  "navigationBarTitleText": "老外1点通",
-  "usingComponents": {
-    "t-icon": "../../node-modules/@tdesign/uniapp/dist/icon/icon",
-    "t-empty": "../../node-modules/@tdesign/uniapp/dist/empty/empty"
-  }
-}

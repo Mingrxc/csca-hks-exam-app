@@ -5,7 +5,6 @@ from __future__ import annotations
 from textwrap import dedent
 
 import httpx
-from sqlalchemy.orm import Session
 
 from src.common.exceptions import AppException
 from src.config.settings import settings
@@ -38,7 +37,7 @@ def build_system_prompt(payload: AIChatRequest) -> str:
     return base
 
 
-async def chat_with_qwen(db: Session, payload: AIChatRequest) -> dict:
+async def chat_with_qwen(payload: AIChatRequest) -> dict:
     if not settings.QWEN_API_KEY:
         return {
             "reply": "AI 服务暂未配置密钥。你可以先把题目、选项和你的困惑发给我，我会按接入后的格式继续整理。",  # pragma: no cover

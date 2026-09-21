@@ -22,5 +22,6 @@
 ## 共享层
 
 - `src/constants/`：题型、难度、组卷策略等共享配置
-- `src/mock/`：页面示例数据
+- `src/features/`：领域 API 和页面级服务端状态
+- `src/shared/`：领域无关 composable 与 UI 工具
 - `src/types/`：前端共享类型

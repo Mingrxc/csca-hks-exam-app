@@ -3,6 +3,7 @@
 from datetime import date, datetime, time, timedelta
 
 import httpx
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.common.exceptions import AppException
@@ -10,6 +11,7 @@ from src.config.settings import settings
 from src.modules.exam.models import AnswerRecord
 from src.modules.question.service import list_papers
 from src.modules.user.models import StreakRecord, User, UserExamTarget
+from src.modules.user.schemas import UserProfileUpdate
 from src.modules.wrongbook.models import WrongBook
 
 
@@ -61,7 +63,14 @@ def get_or_create_user_by_openid(
 
     user = User(openid=openid, nickname=nickname)
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        existing = db.query(User).filter(User.openid == openid).first()
+        if existing:
+            return existing
+        raise
     db.refresh(user)
     return user
 
@@ -205,3 +214,32 @@ def count_user_favorites(db: Session, user_id: int) -> int:
     from src.modules.favorite.models import Favorite
 
     return db.query(Favorite).filter(Favorite.user_id == user_id).count()
+
+
+def update_user_profile(
+    db: Session,
+    openid: str,
+    payload: UserProfileUpdate,
+) -> dict:
+    """Update a profile and its per-exam targets in one service-owned transaction."""
+    user = get_or_create_user_by_openid(db, openid)
+    data = payload.model_dump(exclude_unset=True)
+    target_dates = data.pop("target_dates", None)
+    for key in ("nickname", "avatar_url", "target_exam", "target_date"):
+        if key in data:
+            setattr(user, key, data[key])
+    if target_dates is not None:
+        update_target_dates(db, user.id, target_dates)
+        primary_exam = data.get("target_exam") or user.target_exam
+        if "target_date" not in data and primary_exam in target_dates:
+            user.target_date = target_dates[primary_exam]
+    elif "target_date" in data and user.target_exam:
+        update_target_dates(db, user.id, {user.target_exam: data["target_date"]})
+
+    db.commit()
+    db.refresh(user)
+    return serialize_user(
+        user,
+        count_user_favorites(db, user.id),
+        get_target_dates(db, user),
+    )

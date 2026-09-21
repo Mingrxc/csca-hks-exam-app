@@ -1,8 +1,10 @@
 """题库模块 Pydantic 模型"""
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from datetime import datetime
 from typing import List, Literal, Optional
 from enum import Enum
+
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 
 class ExamType(str, Enum):
@@ -83,3 +85,21 @@ class PaperResponse(BaseModel):
     mode: str
     difficulty: str
     questions: List[QuestionResponse] = Field(default_factory=list)
+
+
+class HistoryPaperResponse(BaseModel):
+    id: int
+    title: str
+    exam_type: str
+    question_count: int
+    score: float
+    correct_rate: float
+    time_used: int
+    passed: bool
+    finished_at: datetime
+
+
+class SpecialOptionResponse(BaseModel):
+    value: str
+    label: str
+    count: int

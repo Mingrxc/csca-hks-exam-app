@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { ensureLogin, userApi } from '@/api'
+import { ensureLogin } from '@/api/client'
+import { userApi } from '@/features/user/api'
 import type { ExamType } from '@/types/exam'
 
 const defaultUserInfo = {

@@ -1,108 +1,226 @@
 # Codex Project Memory
 
-## Project
+## Authoritative Current Snapshot
 
-- Project: 留学考霸 - CSCA & HKS exam-prep WeChat mini-program.
-- Workspace: `E:\Deng\csca-hks-exam-app`
-- Current date: 2026-08-30.
-- Paper: none provided. All decisions are engineering decisions, not paper claims.
+- Snapshot date: 2026-09-21.
+- Project: CSCA & HKS exam-prep WeChat mini-program for international students.
+- Workspace: `D:\Projects\Deng\csca-hks-exam-app`.
+- External question source: `D:\Projects\Deng\original_question_bank`.
+- Git branch: `main`.
+- Version `v1.2.0` is commit `88a06dcf`. All approved work after it is consolidated locally into one `V1.3.0 后端结构重构完毕 前端未优化` commit.
+- The remote `origin/main` currently retains the pre-squash multi-commit history. Do not force-push or otherwise rewrite the remote without separate explicit user approval.
+- Phases 0 through 4 are complete. Phase 5 product and visual direction is agreed, but implementation is deliberately paused for a server/deployment selection discussion.
 
-## Product Goal
+## Product Goal and Direction
 
-Build a complete learning loop:
+The core learning loop remains:
 
 `刷题 -> 组卷 -> 答题 -> 成绩反馈 -> 错题本 -> 复习`
 
-## Stack Order
+The current product is a functional MVP, not yet a production-quality experience. The agreed direction is to stabilize the repository, backend contracts, data flow, and network behavior first, then perform a substantial frontend UX and visual redesign.
 
-1. `uni-app + Vue 3`
-2. `Pinia`
-3. `TypeScript`
-4. `FastAPI`
-5. `SQLAlchemy`
-6. `MySQL`
-7. `Redis` reserved for sessions and cache
-8. `JWT`
-9. `OSS / 微信云存储` reserved for media and PDF assets
+Confirmed Phase 5 product decisions:
 
-## Completed
+1. Keep the public name `老外1点通` for now. `DYH` is a friend's name and is not a product brand.
+2. Use a warm academic companion style: warm, restrained, scholarly, and youthful rather than blue exam-software, childish gamification, or an administrative-system appearance.
+3. Make the home page approximately 70% study dashboard and 30% international-study content. Goals, countdown, resume/next action, daily metrics, practice entries, and recent learning precede content.
+4. Current consultation/content and club-ad entries are placeholders, not real editorial content. Remove fictional promotional cards during redesign, show a professional empty state, and preserve a future real-content module.
+5. Keep one dominant action per screen, a restrained radius/elevation system, semantic colors beyond the warm primary palette, and consistent TDesign-based components.
+6. Phase 5 order: design baseline plus App Shell/navigation/home; paper/answer; results/review/wrong-book/favorites/history; AI/profile/content. Validate each vertical slice before continuing.
 
-- Removed the old `CLAUDE.md` file and Claude-specific references.
-- Refactored frontend shared types, constants, mocks, API contracts, and exam store.
-- Added FastAPI application factory and versioned API router.
-- Added backend service layers for users, questions, exams, and wrongbook.
-- Added exam and wrongbook API routes.
-- Fixed a circular import in `server/src/common/deps.py`.
-- Added frontend API integration for:
-  - paper generation
-  - answer submission
-  - result reports
-  - knowledge-point statistics
-  - wrongbook list/detail/mastered state
-  - related-question navigation
-- Added `client/src` uni-app entry files and corrected page/component resolution.
-- Corrected the uni-app dependency versions in `client/package.json`.
-- MySQL80 is running.
-- Database `csca_hks_exam` was created successfully.
-- Database schema and 5 sample questions were imported successfully.
-- Backend dependencies are installed in `server/.venv`.
-- Frontend dependencies are installed in `client/node_modules`.
-- Backend starts on `http://127.0.0.1:8000`.
-- Frontend MP-Weixin compilation succeeds and outputs to:
-  `client/dist/dev/mp-weixin`.
-- Exam-mode paper generation no longer returns `answer` or `analysis`.
-- Exam-mode answer submission no longer returns `is_correct` or `correct_answer`.
-- Practice mode still returns immediate correctness and solution fields.
-- Frontend API base URL now comes from `VITE_API_BASE_URL`.
-- Frontend request layer no longer sends an empty `Authorization` header.
+## Current Technology Baseline
 
-## Known Risks
+1. Frontend: `uni-app + Vue 3 + Pinia + TypeScript + TDesign UniApp + Vite`.
+2. Backend: `FastAPI + Pydantic + SQLAlchemy + Alembic`.
+3. Database: MySQL 8.4.11, Windows service `MySQL84`.
+4. Local database: `csca_hks_exam`; application user is `deng@localhost`.
+5. Python: Miniforge Conda environment `deng`, Python 3.11.16 at `C:\Users\Theo\miniforge3\envs\deng\python.exe`.
+6. Backend packages match `server/requirements.txt` exactly.
+7. Redis remains reserved and is not required by the current core flow.
+8. JWT is used for API authentication; OSS / WeChat cloud storage remain future media-storage options.
 
-- Real WeChat login still needs WeChat DevTools and physical-device regression with valid `WX_APPID` and `WX_SECRET`.
-- Database foreign keys are intentionally deferred; the read-only integrity audit is currently clean, but application-level ownership checks remain important.
-- The database contains 5 legacy sample questions in addition to the 2562 imported questions.
-- The real-API smoke test left one legitimate development paper/answer/wrongbook record under the configured development user.
-- Sass emits legacy API deprecation warnings; this is non-blocking.
-- `python-jose` emits one third-party `datetime.utcnow()` deprecation warning during tests; this is non-blocking.
+Never store passwords, JWT secrets, API keys, or other secret values in this memory file.
 
-## Current Development Plan
+## Current Database and Data State
 
-### Phase 1: Release Regression
+- Local configuration is in ignored `server/.env.local`; it overrides the legacy tracked `server/.env`.
+- The user has authorized direct use of the local MySQL credentials stored in `server/.env.local`. Load them through the application settings; do not ask for, echo, copy, or record the plaintext password elsewhere.
+- Alembic is at `0006_ownership_foreign_keys`.
+- All 92 column comments and 10 table comments in the local database are English.
+- `alembic check` reports no pending schema operations.
+- `scripts/check_database_integrity.py` reports `integrity=clean`.
+- Current imported question count is 1,876:
+  - CSCA: 265
+  - HKS: 1,611
+  - easy: 242
+  - medium: 1,634
+  - single: 1,515
+  - judge: 136
+  - fill: 225
+- The importer skipped 14 duplicate source questions and 8 non-question grammar resources.
+- The current source contains 28 JSON files and one PDF; older memory entries describing 60 JSON files and 2,562 imported questions are historical and no longer authoritative.
+- Phase 0 read-only baseline verification passed on 2026-09-21: Alembic is at head with no pending operations, database integrity is clean, importer database statistics match 1,876 questions, and real local HTTP smoke checks returned 200 for health, CSCA/HKS special options, and question detail. Question detail did not expose solution fields. The temporary Uvicorn process was stopped after verification.
 
-1. Import `client/dist/build/mp-weixin` into WeChat DevTools and test the complete learning loop.
-2. Test real `code2session` login with valid WeChat credentials and production auth settings.
-3. Run physical-device checks for PDF download/preview, long question text, result review, and date editing.
+## Current Working Tree State
 
-### Phase 2: Deployment Hardening
+The approved work after `v1.2.0` is represented by one local `V1.3.0` commit. It includes database/schema cleanup, repository hygiene, backend contract and integrity restructuring, runtime reliability, frontend architecture foundations, active-exam recovery, and documentation. Phase 5 visual redesign has not started.
 
-1. Document production environment variables and startup/migration order.
-2. Decide whether to add foreign keys after reviewing deletion and retention requirements.
-3. Separate or remove the 5 legacy sample questions before production data preparation.
+`server/.env.local`, frontend mode-local environment files, installed dependencies, and build output are intentionally ignored and must never be committed. The expired `trycloudflare.com` URL was removed from both local frontend mode files; they now target the local API for development. No GitHub push has been performed for this refactor stage.
 
-### Phase 3: Product Polish
+Current backend test result: 40 passed, 0 failed, with one third-party Starlette/AnyIO deprecation warning. Alembic is at `0006_ownership_foreign_keys`; database integrity, required foreign keys, paper JSON references, and answer ownership are clean.
 
-1. Fix issues found in DevTools/device regression before adding new feature scope.
-2. Review remaining loading, empty, and error states on all main pages.
-3. Address Sass and dependency deprecations during a controlled dependency upgrade.
+### Progress Update (2026-09-21, Baseline, Cleanup, and Frontend Runtime)
 
-## Environment Rules
+- Phase 0 is complete: database migration, import verification, integrity checks, backend tests, and local API smoke tests are green.
+- The repository no longer tracks 26,454 dependency files, 116 generated build files, 38 Python cache files, `server/.env`, or `client/.env.development`. Local copies were preserved.
+- `.gitignore` now matches the intended policy: project memory and sanitized `.env.example` files are tracked; real environment files and generated output are ignored.
+- README commands now use `conda activate deng`, MySQL 8.4, `server/.env.local`, the current migration/import workflow, and the verified 40-test baseline.
+- Local frontend environment overrides no longer reference the expired temporary tunnel.
+- The active uni-app source root is confirmed as `client/src`. Root-level duplicate entry/config files were removed after their valid startup-login logic was merged.
+- The frontend now uses one explicit API base URL per build, a configurable 15-second timeout, one network retry for GET requests only, no automatic write retry, one 401 re-login attempt, and normalized request errors.
+- Phase 2 is complete for the current `v1` scope: blocking database routes run synchronously, async routes are limited to external HTTP I/O, routers no longer own write commits, all JSON routes have typed OpenAPI envelopes, all errors are normalized, and request IDs correlate client errors with server logs.
+- Ownership foreign keys now enforce cascade/restrict policies. Ordered `papers.question_ids` remains JSON by explicit decision until question versioning, per-question scoring, sharing, or SQL analytics justify normalization.
+- Phase 3 is complete for local/runtime implementation: one endpoint per environment, production missing-address failure, 15-second timeout, GET-only retry, no write retry, one 401 refresh, deterministic messages, and documented local/LAN/tunnel/production workflows.
+- Post-change verification passed: 40 backend tests, Alembic at `0006_ownership_foreign_keys` with no pending operations, clean database integrity, successful WeChat mini-program build, and typed HTTP 200 responses for health, content, question options/detail, user, dashboard, favorites, wrong book, and OpenAPI. Question detail does not expose solution fields.
+- Phase 4 is complete: transport is centralized, domain APIs and page-query composables live under `features`, durable state boundaries are documented, shared loading/empty/error/confirmation foundations are available, dead mocks are removed, and active exam progress survives route exit and app background/restart for up to seven days.
+- Local runtime incident on 2026-09-21: MySQL84 was healthy, but no FastAPI process was listening on port 8000. Starting Uvicorn restored live content, user, dashboard, option, and paper-generation requests. The frontend now waits for login recovery before loading authenticated home/exam data when those pages are shown.
+- Phase 5 direction is approved, but no Phase 5 visual code has started. The next discussion is production server/deployment selection.
 
-- User handles network, proxy, or package-download issues.
-- Retry an environment or network operation at most three times, then give the user a concrete action to perform.
-- Do not expose or request MySQL passwords in chat.
-- Keep backend and frontend dev servers running in separate terminals.
-- Backend command:
-  `server/.venv/Scripts/python.exe -m uvicorn main:app --reload`
-- Frontend command:
+## Confirmed Remaining Repository Problems
+
+1. Several legacy Vue pages remain visually large. Their shared architecture is now available, and they should be decomposed only while each Phase 5 vertical slice is redesigned.
+2. Production device behavior for local-progress storage still requires WeChat DevTools and physical-device regression during release hardening.
+3. Aggregate counters use transactional read-modify-write logic. Unique-key races are handled, but high-volume horizontal scaling would require database-native atomic counter updates and load tests.
+4. `papers.question_ids` intentionally remains an ordered JSON snapshot. The decision and triggers for future normalization are recorded in `docs/backend-architecture.md`.
+5. The formerly tracked `server/.env` contained a non-placeholder database password. It is no longer tracked in the current tree, but credentials exposed in Git history must be rotated before publication; history rewriting requires a separate explicit decision.
+6. The frontend build passes but reports Dart Sass legacy API and `@import` deprecation warnings. These should be addressed with the planned style-system refactor rather than a standalone dependency upgrade.
+7. Production WeChat credentials, fixed HTTPS hosting, and physical-device weak-network acceptance remain Phase 6 work; they cannot be completed from the local development configuration alone.
+
+## Agreed Optimization Path
+
+### Phase 0: Establish a Reproducible Green Baseline
+
+1. Fix the related-question correctness failure and run the complete backend test suite.
+2. Verify Alembic state, database integrity, importer idempotency, and a minimal real-MySQL API smoke test.
+3. Separate the current approved schema/comment work into a focused, reviewable commit.
+4. Record exact baseline commands and expected results.
+
+Exit gate: clean working tree after intentional commits, all backend tests pass, database integrity is clean, and the health/core API smoke tests pass.
+
+### Phase 1: Repository Hygiene and Configuration
+
+1. Remove tracked generated artifacts and local dependencies from the Git index: `node_modules`, `dist`, Python caches, test caches, and local runtime output.
+2. Stop tracking real `.env` and mode-specific `.local` files; retain sanitized `.env.example` templates only.
+3. Decide separately whether Git history should be rewritten. Do not rewrite history without explicit user approval.
+4. Consolidate the frontend onto one source root, expected to be `client/src`, after verifying the uni-app build entry behavior.
+5. Update README with Conda `deng`, MySQL 8.4, migration, import, start, test, build, and troubleshooting workflows.
+6. Add only lightweight, justified repository conventions; do not add dependencies merely for tooling aesthetics.
+
+Exit gate: a clean clone can be configured from documented templates without hidden local files, generated output, or duplicate entry points.
+
+### Phase 2: Backend Structure and Contract Stabilization
+
+Status: complete for the current `v1` scope on 2026-09-21. High-scale counter atomics remain a documented scaling trigger, not a current blocking defect.
+
+1. Preserve domain modules (`user`, `question`, `exam`, `wrongbook`, `favorite`, `content`, `ai`) rather than performing a wholesale rewrite.
+2. Make boundaries explicit: router handles HTTP, schemas define contracts, services enforce business rules and transactions, and query persistence is isolated where it reduces coupling.
+3. Decide and document synchronous versus asynchronous database access; do not keep async route signatures around blocking work without intent.
+4. Standardize errors, pagination, logging/request IDs, transaction ownership, and API response rules.
+5. Review foreign keys, deletion/retention policy, paper-question normalization, counter concurrency, and importer natural keys before changing schema relationships.
+6. Treat OpenAPI as the authoritative frontend/backend contract and reduce duplicated hand-maintained types.
+
+Exit gate: stable versioned API contracts, explicit transaction/integrity rules, focused tests for every critical learning-loop transition, and no known blocking correctness defects.
+
+### Phase 3: Network and Runtime Reliability
+
+Status: implementation complete on 2026-09-21. Production-host and physical-device acceptance remains part of Phase 6.
+
+1. Use one explicit API endpoint per environment. Remove the expired temporary tunnel and implicit multi-host guessing.
+2. Define development, LAN-device, temporary-tunnel, and production configurations separately.
+3. Add intentional request timeouts, safe retry rules for idempotent operations, normalized network errors, and observable authentication refresh behavior.
+4. Keep localhost for DevTools/H5, allow LAN IP for controlled same-network testing, and use a fixed HTTPS endpoint for production.
+5. A permanent traditional server is not required for local development; production still requires a reachable HTTPS API through a VM, container, serverless platform, WeChat cloud hosting, or another stable deployment target.
+
+Exit gate: no recurring `request fail` in local DevTools, deterministic error messages, and a documented path for physical-device testing.
+
+### Phase 4: Frontend Architecture Foundation
+
+Status: complete on 2026-09-21. Visual redesign is intentionally deferred to Phase 5.
+
+1. Establish one app shell, one router/page manifest, one API client, and one environment-loading strategy.
+2. Organize frontend code by feature domain while keeping genuinely shared components, types, styles, and utilities centralized.
+3. Define the state boundary: Pinia for cross-page durable application state; composables/query helpers for page-scoped server state; pages do not construct URLs or duplicate authentication behavior.
+4. Introduce design tokens for color, typography, spacing, radius, elevation, and semantic states.
+5. Build reusable loading, empty, error, confirmation, question, answer, result, and navigation components.
+6. Add answer-progress persistence and deliberate weak-network/background-resume behavior before visual polish.
+
+Exit gate: new screens can be built without duplicating networking, state logic, or page-level visual rules.
+
+### Phase 5: Incremental Product and Visual Redesign
+
+Status: direction approved on 2026-09-21; implementation paused until the server/deployment discussion is complete.
+
+Confirmed direction: keep `老外1点通`, use a warm academic companion visual language, structure the home page as roughly 70% study dashboard and 30% future real content, and remove fictional placeholder advertising during redesign.
+
+Recommended order:
+
+1. App shell, navigation, and brand system.
+2. Study dashboard/home page after its product role is decided.
+3. Paper configuration.
+4. Answering experience, including audio/image questions and progress recovery.
+5. Results and full review.
+6. Wrong-book list, detail, redo, and PDF flow.
+7. Profile, goals, history, favorites, and AI integration.
+8. Decide whether content administration belongs in the learner mini-program or a separate administrative surface.
+
+Each vertical slice must preserve the working learning loop and pass functional/device checks before the next slice begins.
+
+### Phase 6: Release Hardening
+
+1. Production WeChat `code2session`, AppID/secret, fail-closed auth, CORS, and request-domain configuration.
+2. Fixed HTTPS endpoint and deployment decision.
+3. Database backup/restore rehearsal, migration procedure, logging, rate limits, and secret rotation.
+4. WeChat DevTools regression followed by physical-device tests for login, weak network, audio/image questions, PDF preview, long content, background/resume, and token expiry.
+
+Exit gate: documented deployment/rollback process and end-to-end acceptance on a physical device.
+
+## Change and Commit Strategy
+
+- Prefer incremental vertical changes over a big-bang rewrite.
+- Keep commits single-purpose: baseline correctness, schema/comment migration, repository hygiene, backend contracts, network layer, frontend foundation, then individual screen redesigns.
+- Never mix generated-file cleanup, secret removal, architecture changes, and visual redesign in one commit.
+- Preserve user work and review `git status` before and after every stage.
+- Run verification proportional to the change: unit tests, Alembic checks, integrity audit, frontend build, and targeted real-API/device smoke tests.
+- Do not push, rewrite history, deploy, or publish without the user's explicit approval for that stage.
+- Do not create Git commits automatically. Leave changes uncommitted unless the user explicitly requests a commit. The requested V1.3.0 squash is the current one-time exception.
+
+## Environment and Cleanliness Rules
+
+- Do not autonomously download environments, packages, configuration files, binaries, readers, or other tools.
+- Python work must use the Conda environment `deng`; do not create `.venv`.
+- If another Python version or environment is required, discuss it with the user first.
+- Use existing installed tools whenever possible. Ask before introducing any new dependency.
+- Never echo or record MySQL passwords, JWT secrets, WeChat secrets, Qwen keys, or other credentials.
+- Keep backend and frontend development servers in separate terminals.
+- Backend development command from `server`:
+  `C:\Users\Theo\miniforge3\envs\deng\python.exe -m uvicorn main:app --reload --host 127.0.0.1 --port 8000`
+- Frontend development command from `client`:
   `npm.cmd run dev:mp-weixin`
+- Retry a network/environment operation at most three times, then report the concrete blocker.
 
-## Working Style
+## Immediate Next Decision Gate
 
-- Prefer small, reviewable changes.
-- Preserve existing user changes.
-- Use `apply_patch` for manual edits.
-- Run static checks after each implementation stage.
-- Report completed work, remaining risks, and the next concrete action.
+Before Phase 5 code work begins, discuss and select the production server/deployment shape. Compare at minimum:
+
+1. A conventional cloud VM with FastAPI, MySQL, reverse proxy, HTTPS, backups, and process supervision.
+2. Managed application/container hosting plus managed MySQL.
+3. WeChat/Tencent cloud-native hosting where it fits the current FastAPI/MySQL architecture.
+
+Evaluate mainland-China WeChat request-domain requirements, ICP implications, HTTPS/domain ownership, expected traffic, operational effort, database backup/recovery, media storage, AI outbound access, cost, and migration lock-in. Do not purchase, deploy, or create cloud resources without explicit user approval.
+
+## Historical Review and Progress Log
+
+Everything below this heading is historical context. When it conflicts with the authoritative snapshot above, the authoritative snapshot wins.
 
 ## Review Snapshot (2026-08-11)
 

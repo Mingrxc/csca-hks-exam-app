@@ -1,16 +1,19 @@
-"""应用配置"""
+"""Application settings loaded from environment variables."""
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
+from typing import Literal, Optional
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=(".env", ".env.local"), env_file_encoding="utf-8")
 
+    # Runtime
+    APP_ENV: Literal["development", "testing", "production"] = "development"
+
     # API
     CORS_ORIGINS: str = "*"
 
-    # 数据库
+    # Database
     MYSQL_HOST: str = "localhost"
     MYSQL_PORT: int = 3306
     MYSQL_USER: str = "root"
@@ -30,7 +33,7 @@ class Settings(BaseSettings):
     AUTH_ALLOW_DEV_OPENID: bool = True
     DEV_OPENID: str = "dev-openid"
 
-    # 微信小程序
+    # WeChat Mini Program
     WX_APPID: str = ""
     WX_SECRET: str = ""
 
@@ -42,10 +45,10 @@ class Settings(BaseSettings):
     QWEN_MAX_TOKENS: int = 1024
     QWEN_TIMEOUT_SECONDS: int = 45
 
-    # 内容管理
+    # Content administration
     CONTENT_ADMIN_OPENIDS: str = "dev-openid"
 
-    # 文件存储
+    # Object storage
     OSS_ENDPOINT: str = ""
     OSS_BUCKET: str = ""
     OSS_ACCESS_KEY: str = ""
@@ -58,6 +61,10 @@ class Settings(BaseSettings):
     @property
     def content_admin_openids(self) -> list[str]:
         return [openid.strip() for openid in self.CONTENT_ADMIN_OPENIDS.split(",") if openid.strip()]
+
+    @property
+    def is_production(self) -> bool:
+        return self.APP_ENV == "production"
 
 
 settings = Settings()

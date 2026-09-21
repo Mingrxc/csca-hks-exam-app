@@ -181,7 +181,7 @@ def normalize_file(source: Path, path: Path, data: Any, report: ImportReport) ->
                 yield normalized
         return
 
-    report.skipped_resources[str(path.relative_to(source))] += count_resource_records(data)
+    report.skipped_resources[path.relative_to(source).as_posix()] += count_resource_records(data)
 
 
 def is_canonical_question_list(data: Any) -> bool:

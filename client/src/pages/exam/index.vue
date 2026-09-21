@@ -41,6 +41,20 @@
       </view>
     </view>
 
+    <view v-if="examStore.hasActiveProgress" class="app-section">
+      <view class="resume-card app-card app-card-pad" @click="goResume">
+        <view class="app-list-row">
+          <view class="app-list-main">
+            <text class="app-card-title">继续上次答题</text>
+            <text class="app-card-desc">
+              {{ examStore.config.examType }} · 已答 {{ examStore.answeredCount }} / {{ examStore.totalCount }} 题
+            </text>
+          </view>
+          <t-button theme="primary" size="small" shape="round">继续</t-button>
+        </view>
+      </view>
+    </view>
+
     <view class="app-section exam-group">
       <view class="section-head">
         <text class="app-section-title">快速开始</text>
@@ -93,19 +107,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import { computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { userApi } from '@/api'
-import { toDashboardData } from '@/api/contracts'
 import type { PaperStrategy } from '@/types/exam'
 import { useUserStore } from '@/stores/user'
+import { useExamStore } from '@/stores/exam'
+import { useExamDashboard } from '@/features/exam/useExamDashboard'
 
 const userStore = useUserStore()
-const dashboard = reactive({
-  todayStats: { questionCount: 0, correctRate: 0, wrongCount: 0 },
-  pendingWrongCount: 0,
-  favoriteCount: 0,
-})
+const examStore = useExamStore()
+const { data: dashboard, load: loadDashboard } = useExamDashboard()
 const strategyCards = computed(
   () =>
     [
@@ -145,27 +156,21 @@ const selectedExamLabels = computed(() =>
 )
 const defaultExamType = computed(() => userStore.primaryExam)
 
-const loadDashboard = async () => {
-  try {
-    const data = toDashboardData(await userApi.getDashboard())
-    dashboard.todayStats = data.todayStats
-    dashboard.pendingWrongCount = data.pendingWrongCount
-    dashboard.favoriteCount = data.favoriteCount
-  } catch {}
-}
-
 const goPaper = (strategy: PaperStrategy) => {
   uni.navigateTo({ url: `/pages/exam/paper?strategy=${strategy}&examType=${defaultExamType.value}` })
 }
+const goResume = () => uni.navigateTo({ url: '/pages/exam/answer' })
 
 const goHistory = () => uni.navigateTo({ url: '/pages/exam/history' })
 const goWrongBook = () => uni.navigateTo({ url: '/pages/wrongbook/index' })
 const goFavorite = () => uni.navigateTo({ url: '/pages/favorite/index' })
 const goRedo = () => uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${defaultExamType.value}` })
 
-onShow(() => {
-  if (!userStore.isLogin) userStore.login().catch(() => {})
-  loadDashboard()
+onShow(async () => {
+  if (!userStore.isLogin) {
+    try { await userStore.login() } catch {}
+  }
+  await loadDashboard()
 })
 </script>
 
@@ -173,6 +178,11 @@ onShow(() => {
 .hero {
   border-radius: var(--app-radius-xl);
   background: linear-gradient(180deg, #fffaf4 0%, #f8ecdf 100%);
+}
+
+.resume-card {
+  border-color: rgba(199, 127, 94, 0.28);
+  background: linear-gradient(135deg, var(--app-primary-soft), var(--app-surface));
 }
 
 .exam-page .app-card {
