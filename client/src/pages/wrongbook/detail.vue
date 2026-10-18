@@ -53,7 +53,9 @@
           <text class="app-section-title">举一反三</text>
           <text class="app-section-subtitle">以下题目基于相同{{ domainLabel }}「{{ domainValue }}」推荐。</text>
         </view>
-        <view class="related-list">
+        <c-app-state v-if="relatedLoading" compact state="loading" title="正在寻找相关练习" />
+        <c-app-state v-else-if="relatedError" compact state="error" title="相关练习暂时无法加载" @retry="loadRelated" />
+        <view v-else class="related-list">
           <view class="related-item app-card" v-for="item in relatedQuestions" :key="item.id" @click="goRelated">
             <view class="related-tags">
               <t-tag theme="primary" variant="light" shape="round" size="small">{{ item.diffLabel }}</t-tag>
@@ -63,6 +65,7 @@
             <text class="related-action">去练习 ›</text>
           </view>
         </view>
+        <c-app-state v-if="!relatedLoading && !relatedError && !relatedQuestions.length" compact state="empty" title="暂时没有相关练习" />
       </view>
     </view>
 
@@ -71,10 +74,15 @@
         {{ question.mastered ? '已掌握' : '标记为已掌握' }}
       </t-button>
       <t-button theme="default" variant="outline" block shape="round" @click="sendToAI">发给 AI</t-button>
-      <t-button theme="default" variant="outline" block shape="round" @click="goRedo">加入重做列表</t-button>
+      <t-button theme="default" variant="outline" block shape="round" @click="goRedo">重做错题</t-button>
     </view>
   </view>
-  <view class="loading-state" v-else>正在加载错题详情...</view>
+  <view class="app-shell" v-else>
+    <view class="app-section">
+      <c-app-state v-if="isLoading" state="loading" title="正在加载错题详情" />
+      <c-app-state v-else state="error" title="错题详情暂时无法加载" :description="loadError" @retry="loadDetail(detailId, detailQuestionId)" />
+    </view>
+  </view>
 </template>
 
 <script setup lang="ts">
@@ -82,26 +90,52 @@ import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { wrongBookApi } from '@/features/wrongbook/api'
 import { toRelatedQuestion, toWrongBookDetail } from '@/api/contracts'
-import { getQuestionDomain, getQuestionDomainLabel } from '@/constants/exam'
+import { getExamLabel, getQuestionDomain, getQuestionDomainLabel } from '@/constants/exam'
 import type { RelatedQuestion, WrongBookDetail } from '@/types/wrongbook'
 
 const question = ref<WrongBookDetail | null>(null)
 const wrongBookId = ref<number | null>(null)
+const isLoading = ref(true)
+const loadError = ref('')
+const detailId = ref<number>()
+const detailQuestionId = ref<number>()
+const relatedQuestionId = ref(0)
+const relatedLoading = ref(false)
+const relatedError = ref(false)
 
 const relatedQuestions = ref<RelatedQuestion[]>([])
 const domainLabel = computed(() => (question.value ? getQuestionDomainLabel(question.value.examType) : '专项'))
 const domainValue = computed(() => (question.value ? getQuestionDomain(question.value) : ''))
 
 const loadDetail = async (id?: number, questionId?: number) => {
+  if (!id && !questionId) return
+  isLoading.value = true
+  loadError.value = ''
   try {
     const payload = questionId ? await wrongBookApi.getDetailByQuestion(questionId) : await wrongBookApi.getDetail(id as number)
     question.value = toWrongBookDetail(payload)
     wrongBookId.value = payload.id
+    relatedQuestionId.value = payload.question_id
 
-    const related = await wrongBookApi.getRelated(payload.question_id)
-    relatedQuestions.value = related.map(toRelatedQuestion)
+    void loadRelated()
   } catch {
-    // The shared request layer already displays the error message.
+    loadError.value = '请检查网络连接后重试。'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const loadRelated = async () => {
+  if (!question.value || relatedLoading.value) return
+  relatedLoading.value = true
+  relatedError.value = false
+  try {
+    const items = await wrongBookApi.getRelated(relatedQuestionId.value)
+    relatedQuestions.value = items.map(toRelatedQuestion)
+  } catch {
+    relatedError.value = true
+  } finally {
+    relatedLoading.value = false
   }
 }
 
@@ -109,13 +143,17 @@ onLoad((query) => {
   const id = Number(query?.id)
   const questionId = Number(query?.questionId)
   if (Number.isInteger(questionId) && questionId > 0) {
+    detailQuestionId.value = questionId
     loadDetail(undefined, questionId)
     return
   }
   if (Number.isInteger(id) && id > 0) {
+    detailId.value = id
     loadDetail(id)
     return
   }
+  isLoading.value = false
+  loadError.value = '未找到这道错题的记录。'
   uni.showToast({ title: '未找到错题记录', icon: 'none' })
   setTimeout(() => uni.navigateBack(), 300)
 })
@@ -148,9 +186,9 @@ const sendToAI = () => {
   if (!question.value) return
   uni.setStorageSync('ai_prefill', {
     content: question.value.stem,
-    topic: `${question.value.examType} 错题咨询`,
+    topic: `${getExamLabel(question.value.examType)} 错题咨询`,
     context: [
-      `考试类型：${question.value.examType}`,
+      `考试类型：${getExamLabel(question.value.examType)}`,
       `${domainLabel.value}：${domainValue.value}`,
       `我的答案：${question.value.myAnswer || '未作答'}`,
       `正确答案：${question.value.answer || '暂无'}`,
@@ -219,14 +257,14 @@ const sendToAI = () => {
 }
 
 .option.my {
-  box-shadow: inset 0 0 0 1rpx rgba(199, 127, 94, 0.18);
+  box-shadow: inset 0 0 0 1rpx rgba(184, 107, 75, 0.18);
 }
 
 .option-key {
   width: 44rpx;
   height: 44rpx;
   border-radius: 999px;
-  background: #f7efe5;
+  background: var(--app-surface-quiet);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -280,7 +318,7 @@ const sendToAI = () => {
 .analysis-text {
   font-size: 26rpx;
   line-height: 1.7;
-  color: #524740;
+  color: var(--app-text-weak);
 }
 
 .confusion-box {

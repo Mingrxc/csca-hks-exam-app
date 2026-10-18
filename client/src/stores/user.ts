@@ -2,7 +2,9 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { ensureLogin } from '@/api/client'
 import { userApi } from '@/features/user/api'
+import { getExamLabel } from '@/constants/exam'
 import type { ExamType } from '@/types/exam'
+import type { ExamTargetDates } from '@/types/user'
 
 const defaultUserInfo = {
   id: 0,
@@ -10,7 +12,7 @@ const defaultUserInfo = {
   avatarUrl: '',
   targetExam: 'CSCA' as 'CSCA' | 'HKS',
   targetDate: '',
-  targetDates: {},
+  targetDates: {} as ExamTargetDates,
   totalQuestions: 0,
   totalCorrect: 0,
   streakDays: 0,
@@ -41,7 +43,7 @@ export const useUserStore = defineStore('user', () => {
   const isLogin = computed(() => !!token.value)
   const isBrowseMode = computed(() => selectedExams.value.length === 0)
   const selectedExamText = computed(() =>
-    selectedExams.value.length ? selectedExams.value.join(' / ') : '随便看看',
+    selectedExams.value.length ? selectedExams.value.map(getExamLabel).join(' / ') : '随便看看',
   )
   const primaryExam = computed<ExamType>(() => selectedExams.value[0] || userInfo.value.targetExam)
   const correctRate = computed(() => {

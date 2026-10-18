@@ -7,7 +7,7 @@
           <text class="app-section-subtitle">查看每一次练习的成绩和答题表现</text>
         </view>
         <view class="history-count">
-          <text class="history-count-value">{{ historyPapers.length }}</text>
+          <text class="history-count-value">{{ loading || error ? '—' : historyPapers.length }}</text>
           <text class="history-count-label">份</text>
         </view>
       </view>
@@ -22,7 +22,7 @@
         :description="error"
         @retry="load"
       />
-      <view class="history-list app-list">
+      <view v-else class="history-list app-list">
         <view
           v-for="paper in historyPapers"
           :key="paper.id"
@@ -31,12 +31,12 @@
         >
           <view class="app-list-row">
             <view class="app-list-main">
-              <text class="app-list-title">{{ paper.title }}</text>
+              <text class="app-list-title">{{ getPaperTitle(paper.title) }}</text>
               <text class="app-list-desc">{{ paper.correctRate }}% · {{ paper.timeUsed }}</text>
             </view>
             <view class="paper-side">
               <t-tag :theme="paper.passed ? 'success' : 'danger'" variant="light" shape="round" size="small">
-                {{ paper.passed ? '通过' : '未通过' }}
+                {{ paper.passed ? '表现不错' : '继续巩固' }}
               </t-tag>
               <text class="app-list-meta">{{ paper.date }}</text>
             </view>
@@ -51,6 +51,7 @@
 </template>
 
 <script setup lang="ts">
+import { getPaperTitle } from '@/constants/exam'
 import { onShow } from '@dcloudio/uni-app'
 import { useExamHistory } from '@/features/exam/useExamHistory'
 
@@ -94,12 +95,11 @@ onShow(load)
 }
 
 .history-count-label {
-  font-size: 20rpx;
+  font-size: var(--app-font-xs);
 }
 
 .history-paper {
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 28rpx !important;
+  background: var(--app-surface);
   transition: opacity 0.15s ease;
 }
 

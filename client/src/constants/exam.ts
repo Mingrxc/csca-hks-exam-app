@@ -7,6 +7,15 @@ import type {
   QuestionType,
 } from '@/types/exam'
 
+// Preserve the existing API/database identifier; show the correct exam name.
+export function getExamLabel(examType: string): string {
+  return examType === 'HKS' ? 'HSK' : examType
+}
+
+export function getPaperTitle(title: string): string {
+  return title.replace(/\bHKS\b/g, 'HSK')
+}
+
 export const QUESTION_TYPE_MAP: Record<QuestionType, string> = {
   single: '单选',
   multi: '多选',
@@ -24,8 +33,8 @@ export const PAPER_STRATEGIES: PaperStrategyItem[] = [
   {
     key: 'random',
     icon: '随机',
-    title: '随机组卷',
-    desc: '从题库随机抽取，全面检测',
+    title: '随机练习',
+    desc: '选择题量和难度，开始一组日常练习',
     shortDesc: '从题库随机抽取题目',
   },
   {
@@ -44,10 +53,10 @@ export const PAPER_STRATEGIES: PaperStrategyItem[] = [
   },
   {
     key: 'real',
-    icon: '真题',
-    title: '模拟真题',
-    desc: '按历年真题比例组卷',
-    shortDesc: '按真题比例组卷',
+    icon: '模拟',
+    title: '模拟考试',
+    desc: '在限定时间内完成练习，熟悉答题节奏',
+    shortDesc: '限时练习，熟悉答题节奏',
   },
 ]
 

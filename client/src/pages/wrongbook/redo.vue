@@ -175,7 +175,7 @@ const finishRedo = () => {
 
 const chooseExamType = () => {
   uni.showActionSheet({
-    itemList: ['CSCA 错题', 'HKS 错题'],
+    itemList: ['CSCA 错题', 'HSK 错题'],
     success: ({ tapIndex }) => loadRedoPaper(tapIndex === 0 ? 'CSCA' : 'HKS'),
     fail: () => uni.navigateBack(),
   })
@@ -192,7 +192,8 @@ onLoad((query) => {
 
 <style lang="scss" scoped>
 .page {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   background: var(--app-bg);
@@ -204,7 +205,8 @@ onLoad((query) => {
   justify-content: space-between;
   gap: 12rpx;
   padding: 16rpx 20rpx;
-  margin: 20rpx 24rpx 0;
+  margin: calc(88rpx + env(safe-area-inset-top)) 28rpx 0;
+  flex-shrink: 0;
 }
 
 .progress-info {
@@ -222,23 +224,25 @@ onLoad((query) => {
 .progress-bar {
   height: 4rpx;
   margin: 14rpx 24rpx 0;
-  background: #eadfce;
+  background: var(--app-border);
   border-radius: 999px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--app-danger), var(--app-accent));
+  background: var(--app-primary);
 }
 
 .question-area {
   flex: 1;
-  padding: 24rpx;
+  padding: 24rpx 28rpx;
+  height: 0;
+  min-height: 0;
 }
 
 .question-card {
-  min-height: 100%;
+  min-height: 0;
 }
 
 .empty-question {
@@ -253,7 +257,8 @@ onLoad((query) => {
   align-items: center;
   gap: 12rpx;
   padding: 16rpx 20rpx calc(28rpx + env(safe-area-inset-bottom));
-  margin: 0 24rpx 24rpx;
+  margin: 0 28rpx 20rpx;
+  flex-shrink: 0;
 }
 
 .bar-btn {

@@ -54,7 +54,7 @@ onUnmounted(() => {
   gap: 10rpx;
   padding: 8rpx 14rpx;
   border-radius: 999px;
-  background: #fbf3e8;
+  background: var(--app-surface-quiet);
   border: 1rpx solid var(--app-border);
 }
 

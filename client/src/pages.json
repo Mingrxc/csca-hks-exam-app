@@ -58,7 +58,7 @@
     {
       "path": "pages/profile/index",
       "style": {
-        "navigationBarTitleText": "个人信息"
+        "navigationBarTitleText": "我的"
       }
     },
     {
@@ -82,14 +82,14 @@
     }
   ],
   "globalStyle": {
-    "navigationBarTextStyle": "white",
+    "navigationBarTextStyle": "black",
     "navigationBarTitleText": "老外1点通",
-    "navigationBarBackgroundColor": "#c77f5e",
+    "navigationBarBackgroundColor": "#f7f1e8",
     "backgroundColor": "#f7f1e8"
   },
   "tabBar": {
-    "color": "#8d7f75",
-    "selectedColor": "#c77f5e",
+    "color": "#7f746c",
+    "selectedColor": "#b86b4b",
     "backgroundColor": "#fffaf3",
     "borderStyle": "white",
     "list": [
@@ -113,7 +113,7 @@
       },
       {
         "pagePath": "pages/profile/index",
-        "text": "个人信息",
+        "text": "我的",
         "iconPath": "static/tabbar/profile.png",
         "selectedIconPath": "static/tabbar/profile-active.png"
       }
@@ -127,6 +127,7 @@
       "^c-countdown-bar$": "@/components/CountdownBar/index.vue",
       "^c-answer-card$": "@/components/AnswerCard/index.vue",
       "^c-app-state$": "@/components/AppState/index.vue",
+      "^c-exam-selection$": "@/components/ExamSelection/index.vue",
       "^c-ring-chart$": "@/components/RingChart/index.vue"
     }
   }

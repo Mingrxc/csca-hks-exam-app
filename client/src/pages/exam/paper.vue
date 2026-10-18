@@ -10,7 +10,7 @@
           </view>
           <view class="hero-visual">
             <view class="visual-main">
-              <text class="visual-value">{{ form.examType }}</text>
+              <text class="visual-value">{{ getExamLabel(form.examType) }}</text>
               <text class="visual-label">考试类型</text>
             </view>
             <view class="visual-stack">
@@ -23,7 +23,7 @@
                   {{ form.mode === 'exam' ? (form.timeLimit ?? '未选') : form.mode === 'practice' ? '练习' : '未选' }}
                 </text>
                 <text class="visual-mini-label">
-                  {{ form.mode === 'exam' ? '限时分钟' : form.mode === 'practice' ? '练习模式' : '答题模式' }}
+                  {{ form.mode === 'exam' ? '限时' : '模式' }}
                 </text>
               </view>
             </view>
@@ -49,9 +49,7 @@
             class="option-tag"
             :class="{ active: form.examType === 'HKS' }"
             @click="setExamType('HKS')"
-          >
-            HKS
-          </view>
+          >HSK</view>
         </view>
       </view>
 
@@ -140,7 +138,7 @@
 
     <view class="footer">
       <view class="summary">
-        <text>{{ form.examType }} · {{ summaryText }}</text>
+        <text>{{ getExamLabel(form.examType) }} · {{ summaryText }}</text>
       </view>
       <t-button theme="primary" block size="large" shape="round" :loading="isGenerating" @click="startExam">
         开始刷题
@@ -150,6 +148,7 @@
 </template>
 
 <script setup lang="ts">
+import { getExamLabel } from '@/constants/exam'
 import { computed, reactive, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { questionApi } from '@/features/exam/api'
@@ -235,7 +234,7 @@ const summaryText = computed(() => {
     !showsDifficulty.value
       ? isProgressiveStrategy.value
         ? '自动递进'
-        : '按真实考试'
+        : '综合练习'
       : form.difficulty === null
       ? '难度未选择'
       : form.difficulty === 'all'
@@ -383,13 +382,13 @@ const startExam = async () => {
 
 <style lang="scss" scoped>
 .hero {
-  border-radius: 30rpx;
+  border-radius: var(--app-radius-lg);
   overflow: hidden;
 }
 
 .hero-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 20rpx;
 }
@@ -426,7 +425,7 @@ const startExam = async () => {
 
 .hero-visual {
   flex: none;
-  width: 210rpx;
+  width: 170rpx;
   display: flex;
   flex-direction: column;
   gap: 12rpx;
@@ -456,7 +455,7 @@ const startExam = async () => {
 .visual-label {
   display: block;
   margin-top: 4rpx;
-  font-size: 20rpx;
+  font-size: var(--app-font-xs);
   color: var(--app-text-weak);
 }
 
@@ -481,7 +480,7 @@ const startExam = async () => {
 .visual-mini-label {
   display: block;
   margin-top: 4rpx;
-  font-size: 18rpx;
+  font-size: var(--app-font-xs);
   white-space: nowrap;
   color: var(--app-text-weak);
 }
@@ -521,7 +520,7 @@ const startExam = async () => {
 
 .config-note {
   flex: none;
-  font-size: 20rpx;
+  font-size: var(--app-font-xs);
   color: var(--app-text-mute);
 }
 
@@ -532,20 +531,21 @@ const startExam = async () => {
 }
 
 .option-tag {
-  padding: 10rpx 22rpx;
-  border-radius: 999px;
-  background: #fffdf9;
+  min-height: 72rpx;
+  padding: 18rpx 24rpx;
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface);
   color: var(--app-text);
-  font-size: 23rpx;
+  font-size: 24rpx;
   line-height: 1.35;
   border: 1rpx solid var(--app-border);
 }
 
 .option-tag.active {
   background: var(--app-primary);
-  color: var(--app-text);
+  color: #fffaf3;
   border-color: var(--app-primary);
-  box-shadow: 0 6rpx 14rpx rgba(199, 127, 94, 0.2);
+  box-shadow: none;
   font-weight: 600;
 }
 
@@ -554,8 +554,9 @@ const startExam = async () => {
   bottom: 0;
   z-index: 5;
   margin-top: 28rpx;
-  padding: 18rpx 24rpx 34rpx;
-  background: linear-gradient(180deg, rgba(247, 241, 232, 0) 0%, rgba(247, 241, 232, 0.92) 16%, #f7f1e8 100%);
+  padding: 20rpx 28rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: var(--app-bg);
+  border-top: 1rpx solid var(--app-border);
 }
 
 .summary {

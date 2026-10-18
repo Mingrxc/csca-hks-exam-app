@@ -3,7 +3,7 @@
     <view class="q-header">
       <view class="q-index-wrap">
         <text class="q-index">第 {{ index + 1 }} 题</text>
-        <text class="q-index-sub">{{ question.examType }}</text>
+        <text class="q-index-sub">{{ getExamLabel(question.examType) }}</text>
       </view>
       <view class="q-tags">
         <t-tag theme="primary" variant="light" shape="round" size="small">{{ typeLabel }}</t-tag>
@@ -55,7 +55,7 @@
 import { computed } from 'vue'
 import type { Question } from '@/types/exam'
 import { DIFFICULTY_MAP, QUESTION_TYPE_MAP } from '@/utils'
-import { getQuestionDomain, getQuestionDomainLabel } from '@/constants/exam'
+import { getQuestionDomain, getQuestionDomainLabel, getExamLabel } from '@/constants/exam'
 
 const props = defineProps<{
   question: Question
@@ -94,8 +94,9 @@ function getOptionClass(key: string) {
 .q-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 16rpx;
+  align-items: flex-start;
+  gap: 18rpx;
+  flex-wrap: wrap;
 }
 
 .q-index-wrap {
@@ -111,7 +112,7 @@ function getOptionClass(key: string) {
 }
 
 .q-index-sub {
-  font-size: 20rpx;
+  font-size: var(--app-font-xs);
   color: var(--app-text-mute);
 }
 
@@ -131,9 +132,9 @@ function getOptionClass(key: string) {
   position: relative;
   padding: 16rpx 18rpx 16rpx 24rpx;
   border-radius: var(--app-radius-md);
-  background: linear-gradient(180deg, rgba(255, 252, 246, 0.96) 0%, rgba(250, 242, 232, 0.92) 100%);
+  background: var(--app-surface-quiet);
   border: 1rpx solid rgba(201, 151, 118, 0.12);
-  font-size: 28rpx;
+  font-size: 30rpx;
   line-height: 1.8;
   color: var(--app-text);
 }
@@ -145,7 +146,7 @@ function getOptionClass(key: string) {
   bottom: 18rpx;
   width: 6rpx;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--app-primary), var(--app-accent));
+  background: var(--app-primary);
 }
 
 .q-options {
@@ -157,14 +158,15 @@ function getOptionClass(key: string) {
 .option-item {
   display: flex;
   align-items: center;
-  padding: 20rpx 18rpx;
+  min-height: 96rpx;
+  padding: 22rpx 20rpx;
   border-radius: var(--app-radius-md);
   border: 1rpx solid var(--app-border);
   background: rgba(255, 253, 249, 0.94);
 }
 
 .option-item.selected {
-  border-color: rgba(199, 127, 94, 0.28);
+  border-color: rgba(184, 107, 75, 0.28);
   background: var(--app-primary-soft);
 }
 
@@ -182,7 +184,7 @@ function getOptionClass(key: string) {
   width: 44rpx;
   height: 44rpx;
   border-radius: 999px;
-  background: #f7efe5;
+  background: var(--app-surface-quiet);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -209,7 +211,8 @@ function getOptionClass(key: string) {
 .option-text {
   flex: 1;
   margin-left: 12rpx;
-  font-size: 26rpx;
+  font-size: 28rpx;
+  line-height: 1.7;
   color: var(--app-text);
 }
 
@@ -226,7 +229,7 @@ function getOptionClass(key: string) {
 .analysis {
   margin-top: 4rpx;
   padding: 18rpx;
-  background: linear-gradient(180deg, #f4efe6 0%, #f7efe5 100%);
+  background: var(--app-secondary-soft);
   border-radius: var(--app-radius-md);
   border: 1rpx solid rgba(126, 154, 128, 0.12);
 }
@@ -241,7 +244,7 @@ function getOptionClass(key: string) {
 
 .analysis-text {
   font-size: 24rpx;
-  color: #374151;
+  color: var(--app-text-weak);
   line-height: 1.7;
 }
 </style>

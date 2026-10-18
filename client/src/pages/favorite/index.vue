@@ -1,14 +1,14 @@
 <template>
   <view class="page app-shell">
     <view class="app-section">
-      <view class="hero app-card app-card-soft app-card-pad">
+      <view class="hero app-heading">
         <view class="hero-head">
           <view class="hero-copy">
             <text class="hero-brand">收藏题目</text>
-            <text class="hero-title">把值得反复看的题留住</text>
-            <text class="hero-subtitle">答题时顺手收藏，后面集中复习会更省力。</text>
+            <text class="hero-title">我的收藏</text>
+            <text class="hero-subtitle">值得反复看的题目，集中留在这里。</text>
           </view>
-          <t-tag theme="primary" variant="light" shape="round">{{ items.length }}</t-tag>
+          <t-tag theme="primary" variant="light" shape="round">{{ loading || error ? '—' : items.length }}</t-tag>
         </view>
       </view>
     </view>
@@ -19,7 +19,7 @@
       <view v-else class="favorite-list">
         <view v-for="item in items" :key="item.id" class="favorite-item app-card app-card-compact">
           <view class="meta">
-            <t-tag theme="primary" variant="light" shape="round" size="small">{{ item.question.exam_type }}</t-tag>
+            <t-tag theme="primary" variant="light" shape="round" size="small">{{ getExamLabel(item.question.exam_type) }}</t-tag>
             <t-tag theme="warning" variant="light" shape="round" size="small">
               {{ item.question.exam_type === 'CSCA' ? item.question.subject : item.question.knowledge_point }}
             </t-tag>
@@ -43,6 +43,7 @@
 </template>
 
 <script setup lang="ts">
+import { getExamLabel } from '@/constants/exam'
 import { onShow } from '@dcloudio/uni-app'
 import type { ApiFavoriteItem } from '@/api/contracts'
 import { useFavorites } from '@/features/favorite/useFavorites'
@@ -58,7 +59,7 @@ const askAI = (item: ApiFavoriteItem) => {
     content: item.question.stem_text,
     topic: '收藏题目咨询',
     context: [
-      `考试类型：${item.question.exam_type}`,
+      `考试类型：${getExamLabel(item.question.exam_type)}`,
       item.question.exam_type === 'CSCA'
         ? `科目：${item.question.subject}`
         : `知识点：${item.question.knowledge_point}`,
@@ -132,7 +133,7 @@ onShow(load)
 
 .date {
   margin-left: auto;
-  font-size: 21rpx;
+  font-size: var(--app-font-xs);
   color: var(--app-text-mute);
 }
 

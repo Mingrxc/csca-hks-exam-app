@@ -1,13 +1,18 @@
 <template>
   <view class="page app-shell">
+    <view v-if="isLoading || loadError" class="app-section">
+      <c-app-state v-if="isLoading" state="loading" title="正在整理本次成绩" />
+      <c-app-state v-else state="error" title="成绩暂时无法加载" :description="loadError" @retry="loadResult(resultPaperId)" />
+    </view>
+    <template v-else>
     <view class="app-section">
       <view class="score-header app-card app-card-pad" :class="passed ? 'passed' : 'failed'">
         <view class="score-head">
           <view class="score-copy">
             <t-tag :theme="passed ? 'success' : 'warning'" variant="light" shape="round">
-              {{ passed ? '通过' : '继续加油' }}
+              {{ passed ? '表现不错' : '继续巩固' }}
             </t-tag>
-            <text class="score-title">{{ passed ? '恭喜通过！' : '这次已经比上次更接近了' }}</text>
+            <text class="score-title">{{ passed ? '本次练习表现不错' : '复习错题，再向前一步' }}</text>
             <text class="score-subtitle">本次答题结果会和错题记录一起保留，方便后面回看。</text>
           </view>
           <view class="score-ring-wrap">
@@ -38,7 +43,7 @@
           <text class="app-section-title">{{ analysisTitle }}</text>
           <text class="app-section-subtitle">{{ analysisSubtitle }}</text>
         </view>
-        <t-tag theme="primary" variant="light" shape="round" size="small">{{ paperExamType }}</t-tag>
+        <t-tag theme="primary" variant="light" shape="round" size="small">{{ getExamLabel(paperExamType) }}</t-tag>
       </view>
       <view class="analysis-card app-card" v-if="analysisItems.length">
         <view class="analysis-item" v-for="item in analysisItems" :key="item.name">
@@ -117,10 +122,12 @@
       <t-button theme="primary" block shape="round" @click="goHome">返回首页</t-button>
       <t-button theme="default" variant="outline" block shape="round" @click="retryWrong">错题重做</t-button>
     </view>
+    </template>
   </view>
 </template>
 
 <script setup lang="ts">
+import { getExamLabel } from '@/constants/exam'
 import { computed, nextTick, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { examApi } from '@/features/exam/api'
@@ -137,7 +144,9 @@ const result = ref<ExamResultSummary>({
   correctRate: 0,
   timeUsed: '00:00',
 })
-const isLoading = ref(false)
+const isLoading = ref(true)
+const loadError = ref('')
+const resultPaperId = ref(0)
 const showReview = ref(false)
 const paperExamType = ref<ExamType>(examStore.config.examType)
 const paperQuestions = ref<ApiQuestion[]>([])
@@ -184,9 +193,9 @@ const timeUsagePercent = computed(() => {
 })
 
 const loadResult = async (paperId: number) => {
-  if (isLoading.value) return
-
+  if (!paperId) return
   isLoading.value = true
+  loadError.value = ''
   try {
     const payload = await examApi.getResult(paperId)
     result.value = toExamResultSummary(payload)
@@ -198,7 +207,7 @@ const loadResult = async (paperId: number) => {
       payload.review_questions.map((question) => [question.id, question.is_correct]),
     )
   } catch {
-    // The shared request layer already displays the error message.
+    loadError.value = '请检查网络连接后重试。'
   } finally {
     isLoading.value = false
   }
@@ -207,10 +216,13 @@ const loadResult = async (paperId: number) => {
 onLoad((query) => {
   const paperId = Number(query?.paperId || query?.id || examStore.paperId)
   if (!Number.isInteger(paperId) || paperId <= 0) {
+    isLoading.value = false
+    loadError.value = '未找到这次练习的成绩记录。'
     uni.showToast({ title: '未找到试卷结果', icon: 'none' })
     setTimeout(() => uni.navigateBack(), 300)
     return
   }
+  resultPaperId.value = paperId
   loadResult(paperId)
 })
 
@@ -234,11 +246,11 @@ const retryWrong = () => {
 
 <style lang="scss" scoped>
 .score-header {
-  background: linear-gradient(180deg, rgba(199, 127, 94, 0.08), rgba(255, 251, 246, 0.9));
+  background: var(--app-surface);
 }
 
 .score-header.failed {
-  background: linear-gradient(180deg, rgba(208, 161, 106, 0.12), rgba(255, 251, 246, 0.92));
+  background: var(--app-accent-soft);
 }
 
 .score-head {
@@ -284,8 +296,8 @@ const retryWrong = () => {
 .stat-item {
   padding: 16rpx 12rpx;
   border-radius: var(--app-radius-md);
-  background: rgba(255, 251, 246, 0.74);
-  border: 1rpx solid var(--app-border);
+  background: transparent;
+  border: 0;
   text-align: center;
 }
 
@@ -342,7 +354,7 @@ const retryWrong = () => {
 
 .analysis-track {
   height: 12rpx;
-  background: #f2e7db;
+  background: var(--app-border);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -350,13 +362,13 @@ const retryWrong = () => {
 .analysis-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--app-primary), var(--app-accent));
+  background: var(--app-secondary);
 }
 
 .analysis-desc {
   display: block;
   margin-top: 8rpx;
-  font-size: 20rpx;
+  font-size: var(--app-font-xs);
   color: var(--app-text-weak);
 }
 
@@ -376,7 +388,7 @@ const retryWrong = () => {
 .bar-track {
   flex: 1;
   height: 12rpx;
-  background: #f2e7db;
+  background: var(--app-border);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -384,7 +396,7 @@ const retryWrong = () => {
 .bar-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--app-secondary), var(--app-primary));
+  background: var(--app-primary);
 }
 
 .bar-time {
@@ -422,7 +434,7 @@ const retryWrong = () => {
 
 .wrong-your,
 .wrong-correct {
-  font-size: 21rpx;
+  font-size: var(--app-font-xs);
 }
 
 .wrong-your {
@@ -465,9 +477,9 @@ const retryWrong = () => {
 }
 
 .review-option {
-  font-size: 23rpx;
+  font-size: 24rpx;
   line-height: 1.6;
-  color: #524740;
+  color: var(--app-text-weak);
 }
 
 .review-answer-row {
@@ -489,10 +501,10 @@ const retryWrong = () => {
   margin-top: 14rpx;
   padding: 16rpx;
   border-radius: var(--app-radius-md);
-  background: #faf4ec;
-  font-size: 23rpx;
+  background: var(--app-surface-quiet);
+  font-size: 24rpx;
   line-height: 1.65;
-  color: #524740;
+  color: var(--app-text-weak);
 }
 
 .actions {

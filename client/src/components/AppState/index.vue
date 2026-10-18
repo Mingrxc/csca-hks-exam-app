@@ -1,5 +1,5 @@
 <template>
-  <view class="app-state" :class="`app-state--${state}`">
+  <view class="app-state" :class="[`app-state--${state}`, { 'app-state--compact': compact }]">
     <view v-if="state === 'loading'" class="app-state__spinner"></view>
     <t-icon v-else :name="state === 'error' ? 'error-circle' : icon" size="52rpx" :color="iconColor" />
     <text class="app-state__title">{{ resolvedTitle }}</text>
@@ -26,8 +26,9 @@ const props = withDefaults(defineProps<{
   title?: string
   description?: string
   icon?: string
+  compact?: boolean
 }>(), {
-  title: '', description: '', icon: 'inbox',
+  title: '', description: '', icon: 'inbox', compact: false,
 })
 
 defineEmits<{ (event: 'retry'): void }>()
@@ -57,6 +58,9 @@ const iconColor = computed(() => props.state === 'error' ? 'var(--app-danger)' :
   border-radius: 50%;
   animation: app-state-spin 0.8s linear infinite;
 }
+
+.app-state--compact { min-height: 0; padding: 28rpx 20rpx; }
+.app-state--compact .app-state__title { font-size: 26rpx; }
 
 .app-state__title {
   margin-top: var(--app-space-3);

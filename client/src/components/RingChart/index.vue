@@ -24,8 +24,8 @@ const props = defineProps<{
 }>()
 
 const size = ref(props.size || 200)
-const color = ref(props.color || '#C77F5E')
-const bgColor = ref(props.bgColor || '#E2E8F0')
+const color = ref(props.color || '#B86B4B')
+const bgColor = ref(props.bgColor || '#EADFCE')
 const lineWidth = ref(props.lineWidth || 12)
 
 function drawRing() {

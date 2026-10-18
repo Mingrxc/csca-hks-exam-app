@@ -7,13 +7,14 @@
   "transformPx": false,
   "uniStatistics": { "enable": false },
   "mp-weixin": {
-    "appid": "",
+    "appid": "wxdbaa16080f5dadf5",
     "setting": {
-      "urlCheck": false,
+      "urlCheck": true,
       "es6": true,
       "postcss": true,
       "minified": true
     },
+    "lazyCodeLoading": "requiredComponents",
     "usingComponents": true
   }
 }

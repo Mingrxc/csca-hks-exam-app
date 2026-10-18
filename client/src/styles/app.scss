@@ -1,8 +1,11 @@
-@import '@tdesign/uniapp/theme.css';
-
-:root {
+:root,
+page,
+.page,
+.app-shell,
+.app-page {
   --app-font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei UI',
     'Microsoft YaHei', 'Source Han Sans SC', 'Hiragino Sans GB', 'Noto Sans SC', sans-serif;
+  --app-number-font: Georgia, 'Times New Roman', serif;
   --app-bg: #f7f1e8;
   --app-surface: #fffaf3;
   --app-surface-quiet: #fbf4eb;
@@ -10,20 +13,20 @@
   --app-border: #eadfce;
   --app-text: #2f2926;
   --app-text-weak: #6f645c;
-  --app-text-mute: #9d8f84;
-  --app-primary: #c77f5e;
-  --app-primary-strong: #a95f45;
+  --app-text-mute: #857970;
+  --app-primary: #b86b4b;
+  --app-primary-strong: #965238;
   --app-primary-soft: #f4e4d8;
-  --app-secondary: #d9a08d;
-  --app-secondary-soft: #f7ebe6;
+  --app-secondary: #7e9a80;
+  --app-secondary-soft: #edf4ee;
   --app-accent: #d0a16a;
   --app-accent-soft: #fbf0dd;
   --app-danger: #c65f52;
   --app-danger-soft: #fbeceb;
-  --app-success: #7e9a80;
+  --app-success: #667f69;
   --app-success-soft: #edf4ee;
-  --app-font-xs: 20rpx;
-  --app-font-sm: 22rpx;
+  --app-font-xs: 22rpx;
+  --app-font-sm: 24rpx;
   --app-font-md: 28rpx;
   --app-font-lg: 32rpx;
   --app-font-xl: 40rpx;
@@ -35,36 +38,51 @@
   --app-space-6: 32rpx;
   --app-space-8: 48rpx;
   --app-space-10: 64rpx;
-  --app-radius-sm: 14rpx;
-  --app-radius-md: 22rpx;
-  --app-radius-lg: 30rpx;
-  --app-radius-xl: 40rpx;
-  --app-shadow-sm: 0 8rpx 20rpx rgba(98, 76, 57, 0.045);
-  --app-shadow-md: 0 14rpx 36rpx rgba(98, 76, 57, 0.08);
-  --app-shadow-lg: 0 20rpx 48rpx rgba(98, 76, 57, 0.11);
+  --app-radius-sm: 12rpx;
+  --app-radius-md: 20rpx;
+  --app-radius-lg: 28rpx;
+  --app-radius-xl: 32rpx;
+  --app-shadow-sm: 0 4rpx 16rpx rgba(98, 76, 57, 0.025);
+  --app-shadow-md: 0 10rpx 28rpx rgba(98, 76, 57, 0.06);
+  --app-shadow-lg: 0 18rpx 40rpx rgba(98, 76, 57, 0.1);
 
   --td-brand-color: var(--app-primary);
+  --td-brand-color-1: var(--app-primary-soft);
+  --td-brand-color-2: #ebccb7;
+  --td-brand-color-3: #dfbaa4;
+  --td-brand-color-7: var(--app-primary);
+  --td-brand-color-8: var(--app-primary-strong);
+  --td-brand-color-disabled: #dfbaa4;
   --td-brand-color-hover: var(--app-primary-strong);
   --td-brand-color-active: var(--app-primary-strong);
   --td-brand-color-light: var(--app-primary-soft);
   --td-brand-color-light-active: #efcfbf;
   --td-success-color: var(--app-success);
   --td-success-color-1: var(--app-success-soft);
-  --td-warning-color: var(--app-accent);
+  --td-warning-color: #8b6740;
   --td-warning-color-1: var(--app-accent-soft);
   --td-error-color: var(--app-danger);
   --td-error-color-1: var(--app-danger-soft);
   --td-text-color-primary: var(--app-text);
   --td-text-color-secondary: var(--app-text-weak);
   --td-text-color-placeholder: var(--app-text-mute);
+  --td-text-color-disabled: var(--app-text-mute);
+  --td-text-color-anti: #fffaf3;
   --td-bg-color-page: var(--app-bg);
   --td-bg-color-container: var(--app-surface);
+  --td-bg-color-secondarycontainer: var(--app-surface-quiet);
+  --td-bg-color-component: var(--app-surface-soft);
+  --td-bg-color-component-disabled: var(--app-surface-quiet);
   --td-bg-color-container-hover: #f8f1e8;
   --td-component-stroke: var(--app-border);
   --td-border-level-1-color: var(--app-border);
-  --td-button-border-radius: 22rpx;
+  --td-component-border: var(--app-border);
+  --td-button-border-radius: var(--app-radius-md);
   --td-button-primary-bg-color: var(--app-primary);
   --td-button-primary-border-color: var(--app-primary);
+  --td-button-primary-disabled-bg: var(--app-primary-soft);
+  --td-button-primary-disabled-color: var(--app-text-mute);
+  --td-button-primary-disabled-border-color: var(--app-primary-soft);
   --td-button-primary-active-bg-color: var(--app-primary-strong);
   --td-button-primary-active-border-color: var(--app-primary-strong);
   --td-button-primary-outline-color: var(--app-primary);
@@ -78,6 +96,14 @@
   --td-tag-round-border-radius: 999px;
   --td-tag-primary-color: var(--app-primary);
   --td-tag-primary-light-color: var(--app-primary-soft);
+  --td-tag-default-light-color: var(--app-surface-quiet);
+  --td-tag-default-font-color: var(--app-text-weak);
+  --td-tag-warning-color: #8b6740;
+  --td-tag-warning-light-color: var(--app-accent-soft);
+  --td-tag-success-color: var(--app-success);
+  --td-tag-success-light-color: var(--app-success-soft);
+  --td-tag-danger-color: var(--app-danger);
+  --td-tag-danger-light-color: var(--app-danger-soft);
   --td-input-border-color: var(--app-border);
   --td-input-bg-color: var(--app-surface);
   --td-input-default-text-color: var(--app-text);
@@ -93,7 +119,7 @@
 page {
   min-height: 100%;
   box-sizing: border-box;
-  background: linear-gradient(180deg, #fbf7f0 0%, #f7f1e8 100%);
+  background: var(--app-bg);
   color: var(--app-text);
   font-family: var(--app-font-family);
   font-size: 28rpx;
@@ -117,20 +143,23 @@ button::after {
   border: 0;
 }
 
+button { font-size: var(--app-font-md); }
+button:focus-visible { outline: 2px solid var(--app-primary); outline-offset: 3px; }
+
 .app-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #fbf7f0 0%, #f7f1e8 100%);
+  background: var(--app-bg);
   color: var(--app-text);
   font-family: var(--app-font-family);
 }
 
 .app-shell {
   min-height: 100vh;
-  padding-bottom: 36rpx;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 
 .app-section {
-  padding: 0 24rpx;
+  padding: 0 28rpx;
   margin-top: 24rpx;
 }
 
@@ -159,7 +188,7 @@ button::after {
 }
 
 .app-card-soft {
-  background: linear-gradient(180deg, #fffdf8 0%, #fff7ee 100%);
+  background: var(--app-surface);
 }
 
 .app-card-pad {
@@ -221,11 +250,11 @@ button::after {
 .app-icon-badge {
   width: 64rpx;
   height: 64rpx;
-  border-radius: 24rpx;
+  border-radius: var(--app-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #fff7ef 0%, #f8eadf 100%);
+  background: var(--app-primary-soft);
   color: var(--app-primary);
   flex: none;
 }
@@ -427,19 +456,23 @@ button::after {
 .app-visual-card {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(255, 250, 243, 0.95) 0%, rgba(248, 236, 224, 0.92) 100%);
-  border: 1rpx solid rgba(201, 151, 118, 0.16);
+  background: var(--app-surface);
+  border: 1rpx solid var(--app-border);
 }
 
 .app-visual-card::before {
-  content: '';
-  position: absolute;
-  right: -22rpx;
-  bottom: 28rpx;
-  width: 128rpx;
-  height: 10rpx;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(199, 127, 94, 0), rgba(199, 127, 94, 0.24), rgba(199, 127, 94, 0));
-  transform: rotate(-16deg);
-  pointer-events: none;
+  display: none;
 }
+
+.app-section-head { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; margin-bottom: 20rpx; }
+.app-text-link { display: inline-flex; align-items: center; gap: 6rpx; color: var(--app-primary); font-size: var(--app-font-sm); line-height: 1.5; }
+.app-heading { margin-bottom: 24rpx; }
+.app-heading-title { display: block; color: var(--app-text); font-size: var(--app-font-xl); line-height: 1.35; font-weight: 600; }
+.app-heading-desc { display: block; margin-top: 10rpx; color: var(--app-text-weak); font-size: var(--app-font-sm); line-height: 1.6; }
+.app-number { font-family: var(--app-number-font); font-variant-numeric: tabular-nums; }
+.app-pill { min-height: 64rpx; padding: 12rpx 26rpx; border: 1rpx solid var(--app-border); border-radius: 999px; background: var(--app-surface); color: var(--app-text-weak); font-size: var(--app-font-sm); line-height: 1.5; }
+.app-pill--active { border-color: var(--app-primary); background: var(--app-primary); color: #fffaf3; }
+
+/* #ifdef H5 */
+.app-shell, .app-page { max-width: 480px; margin-left: auto; margin-right: auto; }
+/* #endif */

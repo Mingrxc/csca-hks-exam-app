@@ -156,7 +156,8 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .page {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   background: var(--app-bg);
@@ -168,7 +169,8 @@ onMounted(() => {
   justify-content: space-between;
   gap: 12rpx;
   padding: 16rpx 20rpx;
-  margin: 20rpx 24rpx 0;
+  margin: calc(88rpx + env(safe-area-inset-top)) 28rpx 0;
+  flex-shrink: 0;
 }
 
 .top-action {
@@ -194,24 +196,26 @@ onMounted(() => {
 .progress-bar {
   height: 4rpx;
   margin: 14rpx 24rpx 0;
-  background: #eadfce;
+  background: var(--app-border);
   border-radius: 999px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--app-primary), var(--app-secondary));
+  background: var(--app-primary);
   transition: width 0.25s ease;
 }
 
 .question-area {
   flex: 1;
-  padding: 24rpx;
+  padding: 24rpx 28rpx;
+  height: 0;
+  min-height: 0;
 }
 
 .question-card {
-  min-height: 100%;
+  min-height: 0;
 }
 
 .empty-question {
@@ -241,7 +245,7 @@ onMounted(() => {
 .reason-tag {
   padding: 8rpx 18rpx;
   border-radius: 999px;
-  background: #f8fafc;
+  background: var(--app-surface-quiet);
   border: 1rpx solid var(--app-border);
   font-size: 22rpx;
   color: var(--app-text-weak);
@@ -265,8 +269,10 @@ onMounted(() => {
 
 .answer-sheet {
   width: 100%;
-  padding: 28rpx 24rpx 40rpx;
-  background: #fffaf3;
+  padding: 28rpx 28rpx calc(32rpx + env(safe-area-inset-bottom));
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--app-surface);
   border-radius: 32rpx 32rpx 0 0;
 }
 
@@ -279,7 +285,8 @@ onMounted(() => {
   align-items: center;
   gap: 12rpx;
   padding: 16rpx 20rpx calc(28rpx + env(safe-area-inset-bottom));
-  margin: 0 24rpx 24rpx;
+  margin: 0 28rpx 20rpx;
+  flex-shrink: 0;
 }
 
 .bar-btn {

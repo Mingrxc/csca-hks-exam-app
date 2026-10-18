@@ -16,6 +16,8 @@ onHide(() => {
 })
 </script>
 
+<style src="@tdesign/uniapp/theme.css"></style>
+
 <style lang="scss">
-@import '@/styles/app.scss';
+@use '@/styles/app.scss';
 </style>

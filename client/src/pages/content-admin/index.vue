@@ -1,7 +1,7 @@
 <template>
   <view class="page app-shell">
     <view class="app-section">
-      <view class="hero app-card app-card-soft app-card-pad">
+      <view class="hero app-heading">
         <view class="hero-head">
           <view class="hero-copy">
             <text class="hero-brand">首页内容管理</text>
@@ -195,7 +195,7 @@ onShow(load)
   border-radius: var(--app-radius-md);
   color: var(--app-primary);
   font-size: 24rpx;
-  background: #ffffff;
+  background: var(--app-surface);
 }
 
 .body {
@@ -232,7 +232,7 @@ onShow(load)
 .content-summary {
   display: block;
   margin-top: 10rpx;
-  font-size: 23rpx;
+  font-size: 24rpx;
   line-height: 1.65;
   color: var(--app-text-weak);
 }

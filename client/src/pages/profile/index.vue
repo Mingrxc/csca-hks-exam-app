@@ -40,25 +40,26 @@
     </view>
 
     <view class="app-section" v-if="loadError">
-      <view class="error-card app-card" @click="loadProfile">个人资料加载失败，点击重试</view>
+      <view class="app-card"><c-app-state compact state="error" title="个人资料暂时无法加载" description="请检查网络连接后重试。" @retry="loadAll" /></view>
     </view>
 
     <view class="app-section">
-      <view class="stats-grid">
+      <c-app-state v-if="isLoading" compact state="loading" title="正在整理学习记录" />
+      <view v-else class="stats-grid">
         <view class="stat-card app-card">
-          <text class="stat-value">{{ userInfo.totalQuestions }}</text>
+          <text class="stat-value">{{ profileLoaded ? userInfo.totalQuestions : '—' }}</text>
           <text class="stat-label">累计刷题数</text>
         </view>
         <view class="stat-card app-card">
-          <text class="stat-value">{{ userInfo.correctRate }}%</text>
+          <text class="stat-value">{{ profileLoaded ? userInfo.correctRate + '%' : '—' }}</text>
           <text class="stat-label">正确率</text>
         </view>
         <view class="stat-card app-card">
-          <text class="stat-value">{{ userInfo.streakDays }}</text>
+          <text class="stat-value">{{ profileLoaded ? userInfo.streakDays : '—' }}</text>
           <text class="stat-label">连续学习天数</text>
         </view>
         <view class="stat-card app-card">
-          <text class="stat-value">{{ dashboard.pendingWrongCount }}</text>
+          <text class="stat-value">{{ dashboardLoaded ? dashboard.pendingWrongCount : '—' }}</text>
           <text class="stat-label">错题数量</text>
         </view>
       </view>
@@ -77,14 +78,12 @@
           <view class="mode-chip" :class="{ active: targetDraftExams.includes('CSCA') }" @click="toggleDraftExam('CSCA')">
             CSCA
           </view>
-          <view class="mode-chip" :class="{ active: targetDraftExams.includes('HKS') }" @click="toggleDraftExam('HKS')">
-            HKS
-          </view>
+          <view class="mode-chip" :class="{ active: targetDraftExams.includes('HKS') }" @click="toggleDraftExam('HKS')">HSK</view>
         </view>
 
         <view v-if="targetDraftExams.length > 0" class="target-dates">
           <view v-for="exam in targetDraftExams" :key="exam" class="target-date-row">
-            <text class="target-date-label">{{ exam }} 考试日期</text>
+            <text class="target-date-label">{{ getExamLabel(exam) }} 考试日期</text>
             <picker mode="date" :value="targetDraftDates[exam]" :start="today" @change="selectTargetDate(exam, $event)">
               <view class="date-picker">{{ targetDraftDates[exam] || '选择考试日期' }}</view>
             </picker>
@@ -115,6 +114,7 @@
 </template>
 
 <script setup lang="ts">
+import { getExamLabel } from '@/constants/exam'
 import { computed, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { userApi } from '@/features/user/api'
@@ -147,7 +147,10 @@ const dashboard = reactive<DashboardData>({
   recentPapers: [],
 })
 const loadError = ref(false)
-const targetDraftExams = ref<ExamType[]>([])
+const isLoading = ref(false)
+const profileLoaded = ref(false)
+const dashboardLoaded = ref(false)
+const targetDraftExams = ref<ExamType[]>([...userStore.selectedExams])
 const targetDraftDates = reactive<Record<ExamType, string>>({ CSCA: '', HKS: '' })
 const savingTarget = ref(false)
 const now = new Date()
@@ -156,15 +159,15 @@ const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0'
 const selectedExamLabels = computed(() =>
   targetDraftExams.value.map((exam) => ({
     value: exam,
-    label: exam,
+    label: getExamLabel(exam),
     theme: exam === 'CSCA' ? ('primary' as const) : ('warning' as const),
   })),
 )
 
 const loadProfile = async () => {
-  loadError.value = false
   try {
     userInfo.value = toUserProfile(await userApi.getUserInfo())
+    profileLoaded.value = true
     targetDraftDates.CSCA = userInfo.value.targetDates.CSCA || ''
     targetDraftDates.HKS = userInfo.value.targetDates.HKS || ''
     targetDraftExams.value = [...userStore.selectedExams]
@@ -176,11 +179,18 @@ const loadProfile = async () => {
 const loadDashboard = async () => {
   try {
     Object.assign(dashboard, toDashboardData(await userApi.getDashboard()))
-  } catch {}
+    dashboardLoaded.value = true
+  } catch {
+    loadError.value = true
+  }
 }
 
 const loadAll = async () => {
+  if (isLoading.value) return
+  isLoading.value = true
+  loadError.value = false
   await Promise.all([loadProfile(), loadDashboard()])
+  isLoading.value = false
 }
 
 const selectTargetDate = (exam: ExamType, event: any) => {
@@ -211,7 +221,7 @@ const setBrowseMode = () => {
 const saveTarget = async () => {
   const missingExam = targetDraftExams.value.find((exam) => !targetDraftDates[exam])
   if (missingExam) {
-    uni.showToast({ title: `请选择 ${missingExam} 考试日期`, icon: 'none' })
+    uni.showToast({ title: `请选择 ${getExamLabel(missingExam)} 考试日期`, icon: 'none' })
     return
   }
   savingTarget.value = true
@@ -300,12 +310,15 @@ const handleLogout = () => {
           avatarUrl: '',
           targetExam: 'CSCA',
           targetDate: '',
+          targetDates: {},
           totalQuestions: 0,
           correctRate: 0,
           streakDays: 0,
           favoriteCount: 0,
         }
         targetDraftExams.value = []
+        profileLoaded.value = false
+        dashboardLoaded.value = false
         loadError.value = false
         uni.showToast({ title: '已退出登录', icon: 'success' })
       }
@@ -314,13 +327,14 @@ const handleLogout = () => {
 }
 
 onShow(async () => {
+  targetDraftExams.value = [...userStore.selectedExams]
   await loadAll()
 })
 </script>
 
 <style lang="scss" scoped>
 .profile-card {
-  background: linear-gradient(180deg, rgba(199, 127, 94, 0.08), rgba(255, 251, 246, 0.94));
+  background: var(--app-surface);
 }
 
 .profile-top {
@@ -392,15 +406,16 @@ onShow(async () => {
   min-height: 124rpx;
   padding: 20rpx 16rpx;
   text-align: center;
-  background: #fffdf9;
-  border: 1rpx solid #efe5d8;
-  border-radius: 30rpx;
-  box-shadow: 0 8rpx 20rpx rgba(98, 76, 57, 0.035);
+  background: var(--app-surface);
+  border: 1rpx solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .stat-value {
   display: block;
-  font-size: 34rpx;
+  font-size: 42rpx;
+  font-family: var(--app-number-font);
   line-height: 1.1;
   font-weight: 600;
   color: var(--app-text);
@@ -427,7 +442,7 @@ onShow(async () => {
 .mode-chip {
   padding: 14rpx 0;
   border-radius: 999px;
-  background: #f8efe4;
+  background: var(--app-surface-quiet);
   color: var(--app-text-weak);
   font-size: 24rpx;
   text-align: center;
@@ -465,7 +480,7 @@ onShow(async () => {
   border-radius: var(--app-radius-md);
   color: var(--app-text);
   font-size: 24rpx;
-  background: #ffffff;
+  background: var(--app-surface);
 }
 
 .target-date-row .date-picker {
@@ -484,10 +499,10 @@ onShow(async () => {
   gap: 14rpx;
   min-height: 88rpx;
   padding: 14rpx 22rpx;
-  border-radius: 999px;
-  background: #fffdf9;
-  border: 1rpx solid #efe5d8;
-  box-shadow: 0 8rpx 20rpx rgba(98, 76, 57, 0.035);
+  border-radius: var(--app-radius-lg);
+  background: var(--app-surface);
+  border: 1rpx solid var(--app-border);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .menu-card.danger .app-card-title {

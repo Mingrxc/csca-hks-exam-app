@@ -1,14 +1,14 @@
 <template>
   <view class="page app-shell">
     <view class="app-section">
-      <view class="hero app-card app-card-soft app-card-pad">
+      <view class="hero app-heading">
         <view class="hero-head">
           <view class="hero-copy">
             <text class="hero-brand">错题本</text>
-            <text class="hero-title">把容易错的地方收拢起来</text>
-            <text class="hero-subtitle">先筛选，再复习，最后重做，顺着来会更清楚。</text>
+            <text class="hero-title">错题复习</text>
+            <text class="hero-subtitle">查看解析，重做练习，巩固掌握。</text>
           </view>
-          <t-tag theme="danger" variant="light" shape="round">{{ wrongList.length }}</t-tag>
+          <t-tag theme="default" variant="light" shape="round">{{ isLoading || loadError ? '—' : wrongList.length }}</t-tag>
         </view>
       </view>
     </view>
@@ -50,7 +50,7 @@
             class="dropdown-tag"
             :class="{ active: filters.examType === 'HKS' }"
             @click="setExamTypeFilter('HKS')"
-          >HKS</view>
+          >HSK</view>
         </view>
       </view>
       <view class="dropdown-section">
@@ -104,11 +104,13 @@
     </view>
 
     <view class="app-section">
-      <view class="wrong-list">
+      <c-app-state v-if="isLoading" state="loading" title="正在加载错题" />
+      <c-app-state v-else-if="loadError" state="error" title="错题暂时无法加载" :description="loadError" @retry="loadWrongList" />
+      <view v-else class="wrong-list">
         <view class="wrong-card app-card" v-for="item in wrongList" :key="item.id" @click="goDetail(item.id)">
           <view class="card-header">
           <view class="card-tags">
-            <t-tag theme="primary" variant="light" shape="round" size="small">{{ item.examType }}</t-tag>
+            <t-tag theme="primary" variant="light" shape="round" size="small">{{ getExamLabel(item.examType) }}</t-tag>
             <t-tag theme="warning" variant="light" shape="round" size="small">{{ domainLabel(item) }}·{{ domainValue(item) }}</t-tag>
             <t-tag theme="default" variant="light" shape="round" size="small">{{ item.typeLabel }}</t-tag>
             <t-tag :theme="item.mastered ? 'success' : 'danger'" variant="light" shape="round" size="small">
@@ -124,7 +126,7 @@
         </view>
       </view>
 
-      <t-empty v-if="!isLoading && wrongList.length === 0" description="太棒了！没有错题" />
+      <c-app-state v-if="!isLoading && !loadError && wrongList.length === 0" state="empty" title="这里还没有错题" description="练习中的错题会收集在这里，方便集中复习。" icon="book" />
     </view>
 
     <view class="footer-actions" v-if="wrongList.length > 0">
@@ -135,6 +137,7 @@
 </template>
 
 <script setup lang="ts">
+import { getExamLabel } from '@/constants/exam'
 import { computed, ref, reactive } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { questionApi } from '@/features/exam/api'
@@ -153,11 +156,12 @@ import type { ExamType } from '@/types/exam'
 const activeTab = ref('all')
 const showFilters = ref(false)
 const isLoading = ref(false)
+const loadError = ref('')
 
 const tabs = [
   { key: 'all', label: '全部' },
   { key: 'CSCA', label: 'CSCA' },
-  { key: 'HKS', label: 'HKS' },
+  { key: 'HKS', label: 'HSK' },
 ]
 
 const filters = reactive({
@@ -188,7 +192,7 @@ const specialOptions = computed(() => {
 
 const activeFilterLabel = computed(() => {
   const parts = []
-  if (filters.examType !== 'all') parts.push(filters.examType)
+  if (filters.examType !== 'all') parts.push(getExamLabel(filters.examType))
   if (filters.knowledge !== 'all') parts.push(filters.knowledge)
   if (filters.wrongCount !== 'all') parts.push(filters.wrongCount === '1' ? '错1次' : '错2次+')
   return parts.length > 0 ? parts.join(' · ') : '筛选'
@@ -218,6 +222,7 @@ const loadWrongList = async () => {
   if (isLoading.value) return
 
   isLoading.value = true
+  loadError.value = ''
   try {
     const items = await wrongBookApi.getList({
       examType: filters.examType,
@@ -226,7 +231,7 @@ const loadWrongList = async () => {
     })
     wrongList.value = items.map(toWrongBookListItem)
   } catch {
-    // The shared request layer already displays the error message.
+    loadError.value = '请检查网络连接后重试。'
   } finally {
     isLoading.value = false
   }
@@ -271,7 +276,7 @@ const goRedo = () => {
   }
 
   uni.showActionSheet({
-    itemList: ['CSCA 错题', 'HKS 错题'],
+    itemList: ['CSCA 错题', 'HSK 错题'],
     success: ({ tapIndex }) => openRedo(tapIndex === 0 ? 'CSCA' : 'HKS'),
   })
 }
@@ -368,9 +373,9 @@ onShow(loadWrongList)
 .filter-tab {
   padding: 8rpx 18rpx;
   border-radius: 999px;
-  background: #f8efe4;
+  background: var(--app-surface-quiet);
   color: var(--app-text-weak);
-  font-size: 23rpx;
+  font-size: 24rpx;
 }
 
 .filter-tab.active {
@@ -384,7 +389,7 @@ onShow(loadWrongList)
   padding: 20rpx;
   border: 1rpx solid var(--app-border);
   border-radius: var(--app-radius-lg);
-  background: #fffaf3;
+  background: var(--app-surface);
   box-shadow: var(--app-shadow-sm);
 }
 
@@ -412,7 +417,7 @@ onShow(loadWrongList)
 .dropdown-tag {
   padding: 8rpx 18rpx;
   border-radius: 999px;
-  background: #f8efe4;
+  background: var(--app-surface-quiet);
   color: var(--app-text-weak);
   font-size: 22rpx;
 }
@@ -477,7 +482,7 @@ onShow(loadWrongList)
 }
 
 .card-date {
-  font-size: 21rpx;
+  font-size: var(--app-font-xs);
   color: var(--app-text-mute);
 }
 

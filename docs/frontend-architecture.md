@@ -30,6 +30,7 @@ Dependencies point downward. Shared code cannot import pages or feature-specific
 ## State ownership
 
 - Pinia stores hold state that must survive page changes or app lifecycle transitions. The user store owns authentication and selected exams. The exam store owns the active paper and its recoverable progress.
+- Home, practice and profile share `userStore.selectedExams`: zero selections means browsing, one means a single goal, and two means both goals. `ExamSelection` emits independent toggles. `useExamNavigation` asks which exam to practice when there are zero or two goals; the session choice does not change the stored goals. Active paper recovery retains its original exam type.
 - Feature composables own page-scoped server state such as loading, error, empty, and loaded data.
 - Pages compose views and navigation. They do not implement authentication, raw networking, or reusable request-state machinery.
 - Components receive data through props and emit user intent; they do not fetch server data.
@@ -66,6 +67,17 @@ Global `--app-*` tokens in `styles/app.scss` are the source of truth for:
 - success, warning, and danger states.
 
 Page styles may define layout, but should not introduce a second brand palette or arbitrary replacements for existing token values.
+
+### Approved visual baseline (2026-10-11)
+
+- Background `#F7F1E8`, card surface `#FFFAF3`, primary terracotta `#B86B4B`, charcoal text `#2F2926`, and sage accent `#7E9A80`.
+- Use quiet solid surfaces, light borders and shadows, readable sans-serif text, and serif accents for dashboard numbers.
+- Keep the native navigation and four tabs: 首页、刷题、AI问答、我的.
+- Home prioritizes goals, a resume/start action, live study metrics, review tools and recent practice. News remains a preparation state until real content is available.
+- Display HSK in UI text through `getExamLabel` / `getPaperTitle`; preserve the existing `HKS` backend identifier.
+- `AppState` supports `compact` for inline cards. Failed data requests should expose retry, not fabricate zero metrics or successful empty lists.
+- AI uses a full-width conversation and flex composer. Failed sends retain the draft; new conversations retain previous sessions. Photo controls are deferred until actual image submission is supported.
+- Vite uses the already available esbuild minifier, so local builds do not require the absent optional terser package.
 
 ## Adding a feature
 

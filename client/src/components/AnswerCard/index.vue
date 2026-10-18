@@ -88,7 +88,7 @@ defineEmits<{
 .card-subtitle {
   display: block;
   margin-top: 4rpx;
-  font-size: 20rpx;
+  font-size: var(--app-font-xs);
   color: var(--app-text-weak);
 }
 
@@ -98,7 +98,7 @@ defineEmits<{
   border-radius: 999px;
   background: var(--app-primary-soft);
   color: var(--app-primary);
-  font-size: 20rpx;
+  font-size: var(--app-font-xs);
 }
 
 .card-grid {
@@ -112,7 +112,7 @@ defineEmits<{
   width: 64rpx;
   height: 64rpx;
   border-radius: 999px;
-  background: #f8f1e8;
+  background: var(--app-surface-quiet);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,7 +124,7 @@ defineEmits<{
 .card-item.answered {
   background: var(--app-primary-soft);
   color: var(--app-primary);
-  border-color: rgba(199, 127, 94, 0.18);
+  border-color: rgba(184, 107, 75, 0.18);
 }
 
 .card-item.current {
@@ -148,7 +148,7 @@ defineEmits<{
   display: flex;
   align-items: center;
   gap: 8rpx;
-  font-size: 20rpx;
+  font-size: var(--app-font-xs);
   color: var(--app-text-weak);
 }
 
@@ -156,7 +156,7 @@ defineEmits<{
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
-  background: #efe5d8;
+  background: var(--app-border);
 }
 
 .dot.answered {
