@@ -2,7 +2,7 @@
   <view class="timeline-preview app-shell">
     <view class="app-section">
       <view class="preview-hero app-card app-card-pad">
-        <image class="preview-icon" src="/static/brand/icon.png" mode="aspectFit" />
+        <image class="preview-icon" :src="APP_ICON_PATH" mode="aspectFit" />
         <text class="preview-brand">老外一点通</text>
         <text class="preview-title">留学备考，从每一题开始</text>
         <text class="preview-description">面向 CSCA 与 HSK 备考的学习助手，结合题库练习、模拟考试和错题复习，循序渐进地积累。</text>
@@ -39,6 +39,10 @@
     </view>
   </view>
 </template>
+
+<script setup lang="ts">
+import { APP_ICON_PATH } from '@/constants/brand'
+</script>
 
 <style lang="scss" scoped>
 .timeline-preview { padding-top: 28rpx; padding-bottom: 32rpx; }
