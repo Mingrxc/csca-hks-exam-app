@@ -129,7 +129,8 @@
 <script setup lang="ts">
 import { getExamLabel } from '@/constants/exam'
 import { computed, nextTick, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onShareAppMessage, onLoad } from '@dcloudio/uni-app'
+import { createAppShareMessage } from '@/constants/share'
 import { examApi } from '@/features/exam/api'
 import { toExamResultSummary, toResultReviewQuestions, toResultWrongQuestions } from '@/api/contracts'
 import { useExamStore } from '@/stores/exam'
@@ -242,6 +243,9 @@ const goHome = () => uni.switchTab({ url: '/pages/index/index' })
 const retryWrong = () => {
   uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${paperExamType.value}` })
 }
+// #ifdef MP-WEIXIN
+onShareAppMessage(createAppShareMessage)
+// #endif
 </script>
 
 <style lang="scss" scoped>

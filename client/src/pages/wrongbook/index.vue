@@ -139,7 +139,8 @@
 <script setup lang="ts">
 import { getExamLabel } from '@/constants/exam'
 import { computed, ref, reactive } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
+import { createAppShareMessage } from '@/constants/share'
 import { questionApi } from '@/features/exam/api'
 import { wrongBookApi } from '@/features/wrongbook/api'
 import { toWrongBookListItem } from '@/api/contracts'
@@ -313,6 +314,9 @@ void loadSpecialOptions('CSCA')
 void loadSpecialOptions('HKS')
 
 onShow(loadWrongList)
+// #ifdef MP-WEIXIN
+onShareAppMessage(createAppShareMessage)
+// #endif
 </script>
 
 <style lang="scss" scoped>

@@ -53,7 +53,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onShareAppMessage, onLoad } from '@dcloudio/uni-app'
+import { createAppShareMessage } from '@/constants/share'
 import { examApi } from '@/features/exam/api'
 import { wrongBookApi } from '@/features/wrongbook/api'
 import { toQuestion } from '@/api/contracts'
@@ -188,6 +189,9 @@ onLoad((query) => {
   }
   chooseExamType()
 })
+// #ifdef MP-WEIXIN
+onShareAppMessage(createAppShareMessage)
+// #endif
 </script>
 
 <style lang="scss" scoped>

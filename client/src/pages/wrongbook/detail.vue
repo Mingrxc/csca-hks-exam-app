@@ -87,7 +87,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onShareAppMessage, onLoad } from '@dcloudio/uni-app'
+import { createAppShareMessage } from '@/constants/share'
 import { wrongBookApi } from '@/features/wrongbook/api'
 import { toRelatedQuestion, toWrongBookDetail } from '@/api/contracts'
 import { getExamLabel, getQuestionDomain, getQuestionDomainLabel } from '@/constants/exam'
@@ -201,6 +202,9 @@ const sendToAI = () => {
   })
   uni.switchTab({ url: '/pages/ai/index' })
 }
+// #ifdef MP-WEIXIN
+onShareAppMessage(createAppShareMessage)
+// #endif
 </script>
 
 <style lang="scss" scoped>

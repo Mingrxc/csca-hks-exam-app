@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import { onHide, onLaunch, onShow } from '@dcloudio/uni-app'
+import { isTimelinePreview } from '@/constants/share'
 import { useUserStore } from '@/stores/user'
 import { useExamStore } from '@/stores/exam'
 
 const userStore = useUserStore()
 const examStore = useExamStore()
 
-onLaunch(() => {
+onLaunch((options) => {
+  if (isTimelinePreview(options?.scene)) return
   userStore.login().catch(() => {})
 })
 
 onShow(() => {})
 onHide(() => {
+  if (isTimelinePreview()) return
   examStore.persistProgress()
 })
 </script>

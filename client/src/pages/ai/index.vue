@@ -40,7 +40,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
+import { createAppShareMessage } from '@/constants/share'
 import { aiApi } from '@/features/ai/api'
 import { useUserStore } from '@/stores/user'
 import { getExamLabel } from '@/constants/exam'
@@ -277,6 +278,9 @@ onShow(() => {
   syncExamType()
   consumePrefill()
 })
+// #ifdef MP-WEIXIN
+onShareAppMessage(createAppShareMessage)
+// #endif
 </script>
 
 <style lang="scss" scoped>

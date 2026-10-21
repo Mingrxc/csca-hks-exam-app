@@ -52,7 +52,8 @@
 
 <script setup lang="ts">
 import { getPaperTitle } from '@/constants/exam'
-import { onShow } from '@dcloudio/uni-app'
+import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
+import { createAppShareMessage } from '@/constants/share'
 import { useExamHistory } from '@/features/exam/useExamHistory'
 
 const { data: historyPapers, loading, error, load } = useExamHistory()
@@ -62,6 +63,9 @@ const goResult = (id: number) => {
 }
 
 onShow(load)
+// #ifdef MP-WEIXIN
+onShareAppMessage(createAppShareMessage)
+// #endif
 </script>
 
 <style lang="scss" scoped>

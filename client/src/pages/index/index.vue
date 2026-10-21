@@ -1,5 +1,6 @@
 <template>
-  <view class="home-page app-shell">
+  <TimelinePreview v-if="timelinePreview" />
+  <view v-else class="home-page app-shell">
     <view class="home-header">
       <view class="home-greeting">
         <text class="greeting-title">{{ greeting }}，{{ displayName }}</text>
@@ -98,7 +99,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShareAppMessage, onShareTimeline, onShow } from '@dcloudio/uni-app'
+import { createAppShareMessage, createTimelineShareMessage, isTimelinePreview } from '@/constants/share'
+import TimelinePreview from '@/components/TimelinePreview/index.vue'
 import { getExamLabel, getPaperTitle } from '@/constants/exam'
 import { useUserStore } from '@/stores/user'
 import { useExamStore } from '@/stores/exam'
@@ -112,6 +115,7 @@ const { dashboardState, recentPapers, loadDashboard } = useHomePage()
 const { goPractice } = useExamNavigation()
 const examTabs: ExamType[] = ['HKS', 'CSCA']
 const now = ref(Date.now())
+const timelinePreview = ref(isTimelinePreview())
 const studyLoading = ref(false)
 const dashboard = computed(() => dashboardState.data.value)
 const displayName = computed(() => dashboard.value?.userName || userStore.userInfo.nickname || '留学同学')
@@ -132,7 +136,7 @@ const goalTargets = computed(() => examTabs.filter((exam) => userStore.selectedE
 }))
 
 async function loadStudyData() {
-  if (studyLoading.value) return
+  if (timelinePreview.value || studyLoading.value) return
   studyLoading.value = true
   dashboardState.error.value = ''
   try {
@@ -157,9 +161,18 @@ const goPrimaryAction = () => {
 }
 
 onShow(() => {
+  timelinePreview.value = isTimelinePreview()
+  if (timelinePreview.value) return
+  // #ifdef MP-WEIXIN
+  uni.showShareMenu({ menus: ['shareAppMessage', 'shareTimeline'] })
+  // #endif
   now.value = Date.now()
   loadStudyData()
 })
+// #ifdef MP-WEIXIN
+onShareAppMessage(createAppShareMessage)
+onShareTimeline(createTimelineShareMessage)
+// #endif
 </script>
 
 <style lang="scss" scoped>

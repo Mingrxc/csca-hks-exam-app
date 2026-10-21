@@ -116,7 +116,8 @@
 <script setup lang="ts">
 import { getExamLabel } from '@/constants/exam'
 import { computed, reactive, ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
+import { createAppShareMessage } from '@/constants/share'
 import { userApi } from '@/features/user/api'
 import { toDashboardData, toUserProfile } from '@/api/contracts'
 import { useUserStore } from '@/stores/user'
@@ -330,6 +331,9 @@ onShow(async () => {
   targetDraftExams.value = [...userStore.selectedExams]
   await loadAll()
 })
+// #ifdef MP-WEIXIN
+onShareAppMessage(createAppShareMessage)
+// #endif
 </script>
 
 <style lang="scss" scoped>

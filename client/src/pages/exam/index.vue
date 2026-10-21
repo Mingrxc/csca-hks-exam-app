@@ -57,7 +57,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
+import { createAppShareMessage } from '@/constants/share'
 import type { PaperStrategy } from '@/types/exam'
 import { getExamLabel } from '@/constants/exam'
 import { useUserStore } from '@/stores/user'
@@ -97,6 +98,9 @@ const loadStudyData = async () => {
 }
 
 onShow(loadStudyData)
+// #ifdef MP-WEIXIN
+onShareAppMessage(createAppShareMessage)
+// #endif
 </script>
 
 <style lang="scss" scoped>

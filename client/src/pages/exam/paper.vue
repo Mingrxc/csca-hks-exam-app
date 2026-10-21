@@ -150,7 +150,8 @@
 <script setup lang="ts">
 import { getExamLabel } from '@/constants/exam'
 import { computed, reactive, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onShareAppMessage, onLoad } from '@dcloudio/uni-app'
+import { createAppShareMessage } from '@/constants/share'
 import { questionApi } from '@/features/exam/api'
 import { toQuestion } from '@/api/contracts'
 import {
@@ -378,6 +379,9 @@ const startExam = async () => {
     isGenerating.value = false
   }
 }
+// #ifdef MP-WEIXIN
+onShareAppMessage(createAppShareMessage)
+// #endif
 </script>
 
 <style lang="scss" scoped>

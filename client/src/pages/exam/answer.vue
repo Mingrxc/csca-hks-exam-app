@@ -86,6 +86,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { onShareAppMessage } from '@dcloudio/uni-app'
+import { createAppShareMessage } from '@/constants/share'
 import { confirmAction } from '@/shared/ui/confirm'
 import { useAnswerSession } from '@/features/exam/useAnswerSession'
 
@@ -152,6 +154,9 @@ onMounted(() => {
     examStore.acknowledgeRestore()
   }
 })
+// #ifdef MP-WEIXIN
+onShareAppMessage(createAppShareMessage)
+// #endif
 </script>
 
 <style lang="scss" scoped>

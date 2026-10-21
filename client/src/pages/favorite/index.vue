@@ -44,7 +44,8 @@
 
 <script setup lang="ts">
 import { getExamLabel } from '@/constants/exam'
-import { onShow } from '@dcloudio/uni-app'
+import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
+import { createAppShareMessage } from '@/constants/share'
 import type { ApiFavoriteItem } from '@/api/contracts'
 import { useFavorites } from '@/features/favorite/useFavorites'
 
@@ -74,6 +75,9 @@ const askAI = (item: ApiFavoriteItem) => {
 }
 
 onShow(load)
+// #ifdef MP-WEIXIN
+onShareAppMessage(createAppShareMessage)
+// #endif
 </script>
 
 <style lang="scss" scoped>
