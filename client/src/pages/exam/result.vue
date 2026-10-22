@@ -1,253 +1,72 @@
 <template>
   <view class="page app-shell">
-    <view v-if="isLoading || loadError" class="app-section">
-      <c-app-state v-if="isLoading" state="loading" title="正在整理本次成绩" />
-      <c-app-state v-else state="error" title="成绩暂时无法加载" :description="loadError" @retry="loadResult(resultPaperId)" />
-    </view>
+    <view v-if="isLoading || loadError" class="app-section"><c-app-state v-if="isLoading" state="loading" title="正在整理本次练习" /><c-app-state v-else state="error" title="成绩暂时无法加载" :description="loadError" @retry="loadResult()" /></view>
     <template v-else>
-    <view class="app-section">
-      <view class="score-header app-card app-card-pad" :class="passed ? 'passed' : 'failed'">
-        <view class="score-head">
-          <view class="score-copy">
-            <t-tag :theme="passed ? 'success' : 'warning'" variant="light" shape="round">
-              {{ passed ? '表现不错' : '继续巩固' }}
-            </t-tag>
-            <text class="score-title">{{ passed ? '本次练习表现不错' : '复习错题，再向前一步' }}</text>
-            <text class="score-subtitle">本次答题结果会和错题记录一起保留，方便后面回看。</text>
-          </view>
-          <view class="score-ring-wrap">
-            <c-ring-chart :percent="result.correctRate" :size="180" :line-width="14" :label="'正确率'" />
-          </view>
-        </view>
-
-        <view class="score-stats">
-          <view class="stat-item">
-            <text class="stat-value">{{ result.correctCount }}/{{ result.totalCount }}</text>
-            <text class="stat-label">正确</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-value">{{ result.correctRate }}%</text>
-            <text class="stat-label">正确率</text>
-          </view>
-          <view class="stat-item">
-            <text class="stat-value">{{ result.timeUsed }}</text>
-            <text class="stat-label">用时</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <view class="app-section">
-      <view class="analysis-head app-row">
-        <view>
-          <text class="app-section-title">{{ analysisTitle }}</text>
-          <text class="app-section-subtitle">{{ analysisSubtitle }}</text>
-        </view>
-        <t-tag theme="primary" variant="light" shape="round" size="small">{{ getExamLabel(paperExamType) }}</t-tag>
-      </view>
-      <view class="analysis-card app-card" v-if="analysisItems.length">
-        <view class="analysis-item" v-for="item in analysisItems" :key="item.name">
-          <view class="analysis-top">
-            <text class="analysis-name">{{ item.name }}</text>
-            <text class="analysis-rate">{{ item.correctRate }}%</text>
-          </view>
-          <view class="analysis-track">
-            <view class="analysis-fill" :style="{ width: item.correctRate + '%' }"></view>
-          </view>
-          <text class="analysis-desc">{{ item.correct }}/{{ item.total }} 题答对</text>
-        </view>
-      </view>
-      <t-empty v-else :description="analysisEmptyText" />
-    </view>
-
-    <view class="app-section">
-      <text class="app-section-title">答题用时</text>
-      <text class="app-section-subtitle">用时越稳定，节奏就越容易保持。</text>
-      <view class="time-card app-card">
-        <view class="time-row">
-          <view class="bar-label">总用时</view>
-          <view class="bar-track">
-            <view class="bar-fill" :style="{ width: timeUsagePercent + '%' }"></view>
-          </view>
-          <view class="bar-time">{{ result.timeUsed }}</view>
-        </view>
-      </view>
-    </view>
-
-    <view class="app-section" v-if="wrongQuestions.length > 0">
-      <text class="app-section-title">错题回顾（{{ wrongQuestions.length }}题）</text>
-      <text class="app-section-subtitle">先看错在哪里，再决定下一步怎么练。</text>
-      <view class="wrong-list">
-        <view class="wrong-item app-card" v-for="q in wrongQuestions" :key="q.id" @click="goDetail(q.id)">
-          <text class="wrong-stem">{{ q.stem }}</text>
-          <view class="wrong-info">
-            <t-tag theme="default" variant="light" shape="round" size="small">{{ q.typeLabel }}</t-tag>
-            <text class="wrong-your">你的答案：{{ q.yourAnswer }}</text>
-            <text class="wrong-correct">正确答案：{{ q.correctAnswer }}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <view class="app-section" id="all-review" v-if="showReview">
-      <text class="app-section-title">全部解析（{{ reviewQuestions.length }}题）</text>
-      <text class="app-section-subtitle">如果想一次看全，直接往下展开。</text>
-      <view class="review-list">
-        <view class="review-item app-card" v-for="(question, index) in reviewQuestions" :key="question.id">
-          <view class="review-header">
-            <text class="review-index">第 {{ index + 1 }} 题 · {{ question.typeLabel }}</text>
-            <t-tag :theme="question.correct ? 'success' : 'danger'" variant="light" shape="round" size="small">
-              {{ question.correct ? '正确' : '错误' }}
-            </t-tag>
-          </view>
-          <text class="review-stem">{{ question.stem }}</text>
-          <view class="review-options" v-if="question.options.length">
-            <text class="review-option" v-for="option in question.options" :key="option.key">
-              {{ option.key }}. {{ option.text }}
-            </text>
-          </view>
-          <view class="review-answer-row">
-            <text>你的答案：{{ question.userAnswer || '未作答' }}</text>
-            <text class="review-correct-answer">正确答案：{{ question.correctAnswer }}</text>
-          </view>
-          <view class="review-analysis">{{ question.analysis }}</view>
-        </view>
-      </view>
-    </view>
-
-    <view class="actions">
-      <t-button theme="default" variant="outline" block shape="round" @click="reviewAll">
-        {{ showReview ? '收起全部解析' : '查看全部解析' }}
-      </t-button>
-      <t-button theme="primary" block shape="round" @click="goHome">返回首页</t-button>
-      <t-button theme="default" variant="outline" block shape="round" @click="retryWrong">错题重做</t-button>
-    </view>
+      <view class="app-section"><view class="score-header app-card app-card-pad">
+        <text class="score-title">本次练习已完成</text><text class="score-subtitle">{{ getExamLabel(paperExamType) }} · 自动判分与开放题自评分开记录</text><text v-if="result.unansweredCount" class="score-subtitle">本次有 {{ result.unansweredCount }} 题未作答</text>
+        <view class="score-stats"><view class="stat-item"><text class="stat-value">{{ result.correctCount }}/{{ result.objectiveCount || 0 }}</text><text class="stat-label">客观题答对</text></view><view class="stat-item"><text class="stat-value">{{ result.objectiveCount ? result.correctRate + '%' : '—' }}</text><text class="stat-label">客观题正确率</text></view><view class="stat-item"><text class="stat-value">{{ result.timeUsed }}</text><text class="stat-label">用时</text></view></view>
+      </view></view>
+      <view v-if="result.subjectiveCount" class="app-section"><view class="app-card app-card-pad"><text class="app-section-title">开放题自评</text><text class="score-subtitle">共 {{ result.subjectiveCount }} 题，已作答 {{ result.subjectiveAnsweredCount || 0 }} 题，{{ result.pendingSelfReview }} 题待自评</text><text class="score-subtitle">已自评得分：{{ result.selfScore || 0 }} / {{ result.selfMaxScore || 0 }}。自评不会计入客观题正确率或自动错题。</text></view></view>
+      <view class="app-section" v-if="analysisItems.length"><text class="app-section-title">客观题分析</text><view class="analysis-card app-card"><view class="analysis-item" v-for="item in analysisItems" :key="item.name"><view class="analysis-top"><text>{{ item.name }}</text><text>{{ item.correct }}/{{ item.total }}</text></view><view class="analysis-track"><view class="analysis-fill" :style="{width:item.correctRate + '%'}" /></view></view></view></view>
+      <view class="app-section" v-if="wrongQuestions.length"><text class="app-section-title">错题回顾（{{ wrongQuestions.length }}题）</text><view class="wrong-list"><view class="wrong-item app-card" v-for="q in wrongQuestions" :key="q.id" @tap="goDetail(q.id)"><text class="wrong-stem">{{ q.stem }}</text><text class="wrong-your">你的答案：{{ q.yourAnswer }}</text><text class="wrong-correct">正确答案：{{ q.correctAnswer }}</text></view></view></view>
+      <view class="app-section"><t-button theme="default" variant="outline" block shape="round" @click="showReview = !showReview">{{ showReview ? '收起题目与解析' : '查看题目、解析与自评' }}</t-button></view>
+      <view class="app-section" v-if="showReview"><view class="review-list"><view class="review-item app-card app-card-pad" v-for="(q,index) in reviewQuestions" :key="q.id">
+        <text class="score-subtitle">{{ q.evaluationStatus === 'unanswered' ? '未作答' : q.correct === null ? (q.selfScore == null ? '待自评' : '已自评 ' + q.selfScore + ' 分') : q.correct ? '回答正确' : '需要巩固' }}</text>
+        <c-question-item v-if="q.question" :question="q.question" :index="index" :user-answer="q.userAnswer" :show-result="true" :readonly="true" @self-review="selfReview(q.id, $event)" />
+      </view></view></view>
+      <view class="actions"><t-button theme="primary" block shape="round" @click="goHome">返回首页</t-button><t-button v-if="wrongQuestions.length" theme="default" variant="outline" block shape="round" @click="retryWrong">错题重做</t-button></view>
     </template>
   </view>
 </template>
-
 <script setup lang="ts">
-import { getExamLabel } from '@/constants/exam'
-import { computed, nextTick, ref } from 'vue'
-import { onShareAppMessage, onLoad } from '@dcloudio/uni-app'
+import { ref } from 'vue'
+import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
+import { getExamLabel } from '@/constants/exam'
 import { examApi } from '@/features/exam/api'
 import { toExamResultSummary, toResultReviewQuestions, toResultWrongQuestions } from '@/api/contracts'
 import { useExamStore } from '@/stores/exam'
-import type { ApiQuestion } from '@/api/contracts'
 import type { ExamResultSummary, ExamType, ResultReviewQuestion, ResultWrongQuestion } from '@/types/exam'
-
 const examStore = useExamStore()
-const result = ref<ExamResultSummary>({
-  score: 0,
-  correctCount: 0,
-  totalCount: 0,
-  correctRate: 0,
-  timeUsed: '00:00',
-})
+const resultPaperId = ref(0)
 const isLoading = ref(true)
 const loadError = ref('')
-const resultPaperId = ref(0)
-const showReview = ref(false)
-const paperExamType = ref<ExamType>(examStore.config.examType)
-const paperQuestions = ref<ApiQuestion[]>([])
-const questionResultMap = ref<Record<number, boolean>>({})
-
-const passed = computed(() => result.value.correctRate >= 60)
-
-const wrongQuestions = ref<ResultWrongQuestion[]>([])
+const paperExamType = ref<ExamType>('CSCA')
+const showReview = ref(true)
 const reviewQuestions = ref<ResultReviewQuestion[]>([])
-const analysisTitle = computed(() => (paperExamType.value === 'CSCA' ? '科目分析' : '知识点分析'))
-const analysisSubtitle = computed(() =>
-  paperExamType.value === 'CSCA'
-    ? 'CSCA 按科目回看表现，方便定位哪一门最需要补。'
-    : 'HSK 按知识点回看表现，便于找到该补的细分项。',
-)
-const analysisEmptyText = computed(() =>
-  paperExamType.value === 'CSCA' ? '暂无科目统计' : '暂无知识点统计',
-)
-const analysisItems = computed(() => {
-  const map = new Map<string, { total: number; correct: number }>()
-  const questions = paperQuestions.value
-  questions.forEach((question) => {
-    const name = paperExamType.value === 'CSCA' ? question.subject : question.knowledge_point
-    if (!name) return
-    const bucket = map.get(name) || { total: 0, correct: 0 }
-    bucket.total += 1
-    bucket.correct += questionResultMap.value[question.id] ? 1 : 0
-    map.set(name, bucket)
-  })
-  return Array.from(map.entries()).map(([name, value]) => ({
-    name,
-    total: value.total,
-    correct: value.correct,
-    correctRate: value.total ? Math.round((value.correct / value.total) * 100) : 0,
-  }))
-})
-
-const timeUsagePercent = computed(() => {
-  const [minutes, seconds] = result.value.timeUsed.split(':').map(Number)
-  const usedSeconds = minutes * 60 + seconds
-  const configuredSeconds = examStore.config.timeLimit * 60
-  if (!configuredSeconds) return 100
-  return Math.min(100, Math.max(6, Math.round((usedSeconds / configuredSeconds) * 100)))
-})
-
-const loadResult = async (paperId: number) => {
-  if (!paperId) return
-  isLoading.value = true
+const wrongQuestions = ref<ResultWrongQuestion[]>([])
+const analysisItems = ref<Array<{name:string; total:number; correct:number; correctRate:number}>>([])
+const result = ref<ExamResultSummary>({score:0, correctCount:0, totalCount:0, correctRate:0, timeUsed:'00:00'})
+const selfReviewing = ref(false)
+async function loadResult(quiet = false) {
+  if (!resultPaperId.value) return
+  if (!quiet) isLoading.value = true
   loadError.value = ''
   try {
-    const payload = await examApi.getResult(paperId)
+    const payload = await examApi.getResult(resultPaperId.value)
     result.value = toExamResultSummary(payload)
-    wrongQuestions.value = toResultWrongQuestions(payload)
-    reviewQuestions.value = toResultReviewQuestions(payload)
-    paperQuestions.value = payload.paper.questions
     paperExamType.value = payload.paper.exam_type
-    questionResultMap.value = Object.fromEntries(
-      payload.review_questions.map((question) => [question.id, question.is_correct]),
-    )
-  } catch {
-    loadError.value = '请检查网络连接后重试。'
-  } finally {
-    isLoading.value = false
-  }
+    wrongQuestions.value = toResultWrongQuestions(payload)
+    reviewQuestions.value = toResultReviewQuestions(payload).map(q => {
+      if (q.question) Object.assign(q.question, {evaluationStatus:q.evaluationStatus, selfScore:q.selfScore})
+      return q
+    })
+    analysisItems.value = Object.entries(payload.knowledge_analysis).map(([name,bucket]) => ({name, total:bucket.total, correct:bucket.correct, correctRate:bucket.correct_rate}))
+  } catch { loadError.value = '请检查网络后重试。' } finally { isLoading.value = false }
 }
-
-onLoad((query) => {
-  const paperId = Number(query?.paperId || query?.id || examStore.paperId)
-  if (!Number.isInteger(paperId) || paperId <= 0) {
-    isLoading.value = false
-    loadError.value = '未找到这次练习的成绩记录。'
-    uni.showToast({ title: '未找到试卷结果', icon: 'none' })
-    setTimeout(() => uni.navigateBack(), 300)
-    return
-  }
-  resultPaperId.value = paperId
-  loadResult(paperId)
-})
-
-const goDetail = (id: number) => {
-  uni.navigateTo({ url: `/pages/wrongbook/detail?questionId=${id}` })
+async function selfReview(questionId:number, score:number) {
+  if (selfReviewing.value) return
+  selfReviewing.value = true
+  try { await examApi.selfReview({paperId:resultPaperId.value, questionId, score}); await loadResult(true) } catch {} finally { selfReviewing.value = false }
 }
-
-const reviewAll = async () => {
-  showReview.value = !showReview.value
-  if (showReview.value) {
-    await nextTick()
-    uni.pageScrollTo({ selector: '#all-review', duration: 250 })
-  }
-}
-
-const goHome = () => uni.switchTab({ url: '/pages/index/index' })
-const retryWrong = () => {
-  uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${paperExamType.value}` })
-}
+onLoad(query => { resultPaperId.value = Number(query?.paperId || examStore.paperId); if (resultPaperId.value) loadResult(); else { isLoading.value = false; loadError.value = '未找到练习记录。' } })
+const goHome = () => uni.switchTab({url:'/pages/index/index'})
+const goDetail = (id:number) => uni.navigateTo({url:'/pages/wrongbook/detail?questionId=' + id})
+const retryWrong = () => uni.navigateTo({url:'/pages/wrongbook/redo?examType=' + paperExamType.value})
 // #ifdef MP-WEIXIN
 onShareAppMessage(createAppShareMessage)
 // #endif
 </script>
-
 <style lang="scss" scoped>
 .score-header {
   background: var(--app-surface);

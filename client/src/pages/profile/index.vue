@@ -51,7 +51,7 @@
           <text class="stat-label">累计刷题数</text>
         </view>
         <view class="stat-card app-card">
-          <text class="stat-value">{{ profileLoaded ? userInfo.correctRate + '%' : '—' }}</text>
+          <text class="stat-value">{{ profileLoaded && userInfo.objectiveCount !== 0 ? userInfo.correctRate + '%' : '—' }}</text>
           <text class="stat-label">正确率</text>
         </view>
         <view class="stat-card app-card">

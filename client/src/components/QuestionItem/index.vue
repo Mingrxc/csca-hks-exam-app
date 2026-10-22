@@ -3,84 +3,106 @@
     <view class="q-header">
       <view class="q-index-wrap">
         <text class="q-index">第 {{ index + 1 }} 题</text>
-        <text class="q-index-sub">{{ getExamLabel(question.examType) }}</text>
+        <text class="q-index-sub">{{ getExamLabel(question.examType) }} {{ question.level ? question.level + '级' : '' }}</text>
+        <text v-if="question.bankId" class="q-index-sub">{{ question.bankId }}</text>
       </view>
       <view class="q-tags">
-        <t-tag theme="primary" variant="light" shape="round" size="small">{{ typeLabel }}</t-tag>
+        <t-tag theme="primary" variant="light" shape="round" size="small">{{ question.nativeTask || typeLabel }}</t-tag>
         <t-tag theme="default" variant="light" shape="round" size="small">{{ diffLabel }}</t-tag>
-        <t-tag theme="warning" variant="light" shape="round" size="small">
-          {{ domainLabel }}·{{ domainValue }}
-        </t-tag>
-        <t-button
-          class="favorite-btn"
-          theme="default"
-          :variant="isFavorite ? 'outline' : 'text'"
-          size="small"
-          shape="round"
-          @click.stop="$emit('favorite')"
-        >
-          {{ isFavorite ? '已收藏' : '收藏' }}
-        </t-button>
+        <t-tag v-if="question.sourceType" theme="default" variant="light" size="small">{{ question.sourceType }}</t-tag>
+        <t-button v-if="!readonly" theme="default" variant="text" size="small" @click.stop="$emit('favorite')">{{ isFavorite ? '已收藏' : '收藏' }}</t-button>
       </view>
     </view>
-
-    <view class="q-stem">
-      <view class="stem-ribbon"></view>
-      <rich-text :nodes="question.stem"></rich-text>
+    <text class="q-index-sub">{{ domainLabel }} · {{ domainValue }}</text>
+    <text v-if="question.sourceLanguage && question.targetLanguage" class="q-index-sub">翻译方向：{{ languageLabel(question.sourceLanguage) }} → {{ languageLabel(question.targetLanguage) }}</text>
+    <text v-if="question.stimulusNote" class="q-index-sub">{{ question.stimulusNote }}</text>
+    <view v-if="question.stemAudio" class="media-card">
+      <button class="audio-button" @tap="toggleAudio">{{ audioError ? '重试播放' : playing ? '暂停音频' : '播放音频' }}</button>
+      <text>{{ audioError || (clock(audioPosition) + ' / ' + clock(audioDuration)) }}</text>
     </view>
-
-    <view class="q-options">
-      <view
-        class="option-item"
-        :class="getOptionClass(opt.key)"
-        v-for="opt in question.options"
-        :key="opt.key"
-        @click="$emit('select', opt.key)"
-      >
+    <view class="q-stem"><text user-select>{{ question.stem }}</text></view>
+    <image v-if="question.stemImage" class="stem-image" :src="question.stemImage" mode="widthFix" @tap="preview(question.stemImage)" />
+    <view class="q-options" v-if="question.options.length">
+      <view class="option-item" :class="getOptionClass(opt.key)" v-for="opt in question.options" :key="opt.key" @click="!readonly && $emit('select', opt.key)">
         <view class="option-key">{{ opt.key }}</view>
-        <text class="option-text">{{ opt.text }}</text>
+        <view class="option-body">
+          <image v-if="opt.image" class="option-image" :src="opt.image" mode="aspectFit" />
+          <text v-if="opt.image" class="q-index-sub" @tap.stop="preview(opt.image)">查看大图</text>
+          <text v-else class="option-text">{{ opt.text }}</text>
+        </view>
         <text class="option-icon" v-if="showResult && opt.key === question.answer">✓</text>
         <text class="option-icon wrong" v-else-if="showResult && userAnswer === opt.key">✗</text>
       </view>
     </view>
-
-    <view class="analysis" v-if="showResult && question.analysis">
-      <text class="analysis-label">解析</text>
-      <text class="analysis-text">{{ question.analysis }}</text>
+    <view v-else-if="!readonly" class="written-answer">
+      <text v-if="question.minimumCharacters" class="q-index-sub">不少于 {{ question.minimumCharacters }} 字</text>
+      <textarea class="response-input" :value="userAnswer" :maxlength="20000" :disabled="showResult || submitting" :auto-height="true" placeholder="写下你的答案或思路" @input="$emit('draft', $event.detail.value)" />
+      <text class="q-index-sub">已输入 {{ userAnswer.length }} 字</text>
+      <button v-if="!showResult" class="submit-answer" :disabled="!userAnswer.trim() || submitting" @tap="$emit('submit', userAnswer)">{{ submitting ? '正在保存…' : '提交答案' }}</button>
     </view>
+    <view v-if="readonly && userAnswer" class="media-card"><text user-select>你的作答：{{ userAnswer }}</text></view>
+    <template v-if="showResult">
+      <view v-if="!question.options.length" class="analysis"><text class="analysis-label">参考答案</text><text class="analysis-text" user-select>{{ question.answer }}</text></view>
+      <view v-if="question.transcript" class="analysis"><text class="analysis-label">听力原文</text><text class="analysis-text" user-select>{{ question.transcript }}</text></view>
+      <view v-if="question.termNotes" class="analysis"><text class="analysis-label">术语参考</text><text v-for="(note, term) in question.termNotes" :key="term" class="analysis-text">{{ term }}：{{ note }}</text></view>
+      <view v-if="question.analysis" class="analysis"><text class="analysis-label">解析</text><text class="analysis-text" user-select>{{ question.analysis }}</text></view>
+      <view v-if="question.gradingKeyPoints?.length" class="analysis">
+        <text class="analysis-label">评分要点</text>
+        <text v-for="(point, i) in question.gradingKeyPoints" :key="i" class="analysis-text">{{ i + 1 }}. {{ point }}</text>
+        <view v-for="item in question.gradingRubric || []" :key="item.dimension" class="rubric-item"><text>{{ item.dimension }}（{{ item.max_score }}分）</text><text class="analysis-text">{{ item.criteria }}</text></view>
+      </view>
+      <view v-if="selfReview && question.evaluationStatus !== 'unanswered'" class="media-card self-review">
+        <text class="analysis-label">练习自评 · 满分 {{ question.maxScore || 10 }} 分</text>
+        <text class="q-index-sub">对照参考答案和评分要点自评，结果单独记录。</text>
+        <picker :range="scoreOptions" :value="Math.max(0, scoreOptions.indexOf(question.selfScore || 0))" @change="$emit('self-review', scoreOptions[Number($event.detail.value)])">
+          <view class="score-picker">{{ question.selfScore != null ? '当前自评：' + question.selfScore + ' 分（点击调整）' : '点击选择自评分' }}</view>
+        </picker>
+      </view>
+    </template>
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch, onBeforeUnmount } from 'vue'
+import { onHide } from '@dcloudio/uni-app'
 import type { Question } from '@/types/exam'
-import { DIFFICULTY_MAP, QUESTION_TYPE_MAP } from '@/utils'
-import { getQuestionDomain, getQuestionDomainLabel, getExamLabel } from '@/constants/exam'
-
-const props = defineProps<{
-  question: Question
-  index: number
-  userAnswer: string
-  showResult: boolean
-  isFavorite?: boolean
-}>()
-
-defineEmits<{
-  (e: 'select', key: string): void
-  (e: 'favorite'): void
-}>()
-
+import { DIFFICULTY_MAP, QUESTION_TYPE_MAP, getQuestionDomain, getQuestionDomainLabel, getExamLabel } from '@/constants/exam'
+const props = defineProps<{ question: Question; index: number; userAnswer: string; showResult: boolean; isFavorite?: boolean; readonly?: boolean; submitting?: boolean }>()
+defineEmits<{ (e: 'select', key: string): void; (e: 'favorite'): void; (e: 'draft', value: string): void; (e: 'submit', value: string): void; (e: 'self-review', score: number): void }>()
 const typeLabel = computed(() => QUESTION_TYPE_MAP[props.question.type] || props.question.type)
 const diffLabel = computed(() => DIFFICULTY_MAP[props.question.difficulty] || props.question.difficulty)
 const domainLabel = computed(() => getQuestionDomainLabel(props.question.examType))
 const domainValue = computed(() => getQuestionDomain(props.question))
-
-function getOptionClass(key: string) {
-  return {
-    selected: props.userAnswer === key && !props.showResult,
-    correct: props.showResult && key === props.question.answer,
-    wrong: props.showResult && props.userAnswer === key && key !== props.question.answer,
+const selfReview = computed(() => ['written_response', 'essay', 'short_answer', 'translation'].includes(props.question.responseMode || ''))
+const scoreOptions = computed(() => Array.from({ length: Math.floor(props.question.maxScore || 10) + 1 }, (_, i) => i))
+const playing = ref(false)
+const audioError = ref('')
+const audioPosition = ref(0)
+const audioDuration = ref(0)
+let audio: ReturnType<typeof uni.createInnerAudioContext> | undefined
+function clock(seconds: number) { const value = Math.floor(seconds || 0); return Math.floor(value / 60) + ':' + String(value % 60).padStart(2, '0') }
+function languageLabel(value: string) { return ({ en: '英语', zh: '中文' } as Record<string, string>)[value] || value }
+function stopAudio() { if (audio) { audio.stop(); audio.destroy(); audio = undefined } playing.value = false; audioPosition.value = 0; audioDuration.value = 0; audioError.value = '' }
+function toggleAudio() {
+  if (!props.question.stemAudio) return
+  if (!audio) {
+    audio = uni.createInnerAudioContext()
+    audio.src = props.question.stemAudio
+    audio.onPlay(() => { playing.value = true; audioError.value = '' })
+    audio.onPause(() => { playing.value = false })
+    audio.onEnded(() => { playing.value = false; audioPosition.value = 0 })
+    audio.onTimeUpdate(() => { audioPosition.value = audio?.currentTime || 0; audioDuration.value = audio?.duration || 0 })
+    audio.onError(() => { playing.value = false; audioError.value = '音频暂时无法播放，请重试'; audio?.destroy(); audio = undefined })
   }
+  if (playing.value) audio.pause()
+  else audio.play()
+}
+function preview(url: string) { uni.previewImage({ urls: [url], current: url }) }
+watch(() => props.question.id, stopAudio)
+onHide(() => { audio?.pause(); playing.value = false })
+onBeforeUnmount(stopAudio)
+function getOptionClass(key: string) {
+  return { selected: props.userAnswer === key && !props.showResult, correct: props.showResult && key === props.question.answer, wrong: props.showResult && props.userAnswer === key && key !== props.question.answer }
 }
 </script>
 
@@ -247,4 +269,16 @@ function getOptionClass(key: string) {
   color: var(--app-text-weak);
   line-height: 1.7;
 }
+
+.q-stem, .analysis-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.media-card, .written-answer { padding: 22rpx; border: 1rpx solid var(--app-border); border-radius: 22rpx; background: var(--app-surface); display: flex; flex-direction: column; gap: 18rpx; }
+.audio-button, .submit-answer { margin: 0; border: 0; border-radius: 18rpx; color: #fff; background: var(--app-primary); font-size: 28rpx; }
+.submit-answer[disabled] { opacity: .5; }
+.response-input { width: 100%; min-height: 180rpx; font-size: 29rpx; line-height: 1.8; }
+.stem-image { width: 100%; }
+.option-body { flex: 1; min-width: 0; }
+.option-image { width: 100%; height: 180rpx; }
+.rubric-item { margin-top: 16rpx; }
+.score-picker { padding: 18rpx; color: var(--app-primary); background: var(--app-primary-soft); border-radius: 14rpx; }
+
 </style>

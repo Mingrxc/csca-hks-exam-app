@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.common.exceptions import AppException
+from src.common.time import study_today, study_day_utc_bounds
 from src.config.settings import settings
 from src.modules.exam.models import AnswerRecord
 from src.modules.question.service import list_papers
@@ -131,7 +132,8 @@ def serialize_user(
 ) -> dict:
     total_questions = user.total_questions or 0
     total_correct = user.total_correct or 0
-    correct_rate = round(total_correct / total_questions * 100) if total_questions else 0
+    objective_count = user.total_objective or (total_questions if total_correct else 0)
+    correct_rate = round(total_correct / objective_count * 100) if objective_count else 0
 
     return {
         "id": user.id,
@@ -143,6 +145,7 @@ def serialize_user(
         "target_dates": target_dates if target_dates is not None else {},
         "total_questions": total_questions,
         "total_correct": total_correct,
+        "total_objective": objective_count,
         "correct_rate": correct_rate,
         "streak_days": user.streak_days or 0,
         "favorite_count": favorite_count,
@@ -152,7 +155,7 @@ def serialize_user(
 
 def record_daily_answer(db: Session, user: User, answered_on: date | None = None) -> None:
     """Record one newly answered question without double-counting resubmissions."""
-    streak_date = answered_on or date.today()
+    streak_date = answered_on or study_today()
     record = (
         db.query(StreakRecord)
         .filter(
@@ -174,9 +177,7 @@ def record_daily_answer(db: Session, user: User, answered_on: date | None = None
 
 
 def get_dashboard(db: Session, user: User) -> dict:
-    today = date.today()
-    day_start = datetime.combine(today, time.min)
-    day_end = day_start + timedelta(days=1)
+    day_start, day_end = study_day_utc_bounds()
     today_records = (
         db.query(AnswerRecord)
         .filter(
@@ -188,7 +189,8 @@ def get_dashboard(db: Session, user: User) -> dict:
     )
     question_count = len(today_records)
     correct_count = sum(1 for record in today_records if record.is_correct)
-    wrong_count = question_count - correct_count
+    objective_count = sum(record.is_correct is not None for record in today_records)
+    wrong_count = sum(record.is_correct == 0 for record in today_records)
     pending_wrong_count = (
         db.query(WrongBook)
         .filter(WrongBook.user_id == user.id, WrongBook.is_mastered == 0)
@@ -200,8 +202,9 @@ def get_dashboard(db: Session, user: User) -> dict:
         "target_date": user.target_date,
         "target_dates": get_target_dates(db, user),
         "today_stats": {
+            "objective_count": objective_count,
             "question_count": question_count,
-            "correct_rate": round(correct_count / question_count * 100) if question_count else 0,
+            "correct_rate": round(correct_count / objective_count * 100) if objective_count else 0,
             "wrong_count": wrong_count,
         },
         "pending_wrong_count": pending_wrong_count,

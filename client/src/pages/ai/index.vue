@@ -31,7 +31,26 @@
 
       <view class="composer">
         <view v-if="contextDraft" class="attachment-row"><view class="attachment-chip"><t-icon name="book" size="24rpx" /><text>已带上题目上下文</text><button class="attachment-close" aria-label="移除上下文" @click="contextDraft = ''"><t-icon name="close" size="22rpx" /></button></view></view>
-        <view class="composer-input-bar"><t-textarea v-model:value="draft" class="composer-textarea" :maxlength="1000" autosize :disabled="sending" :custom-style="{ padding: '0', backgroundColor: 'transparent' }" placeholder="输入题目或你的困惑" /><t-button class="composer-send" theme="primary" size="small" :loading="sending" :disabled="!canSend || sending" @click="send">发送</t-button></view>
+        <view class="composer-input-bar">
+          <view class="composer-field">
+            <textarea
+              class="composer-textarea"
+              :value="draft"
+              :maxlength="1000"
+              :disabled="sending"
+              auto-height
+              confirm-type="send"
+              :show-confirm-bar="false"
+              :cursor-spacing="20"
+              aria-label="输入题目或你的困惑"
+              placeholder="输入题目或你的困惑"
+              placeholder-style="color: #857970"
+              @input="onDraftInput"
+              @confirm="onDraftConfirm"
+            />
+          </view>
+          <button class="composer-send" aria-label="发送消息" :loading="sending" :disabled="!canSend || sending" @tap="send">{{ sending ? '发送中' : '发送' }}</button>
+        </view>
         <text class="composer-hint">结合题目与解析，理解每一步思路</text>
       </view>
     </view>
@@ -226,6 +245,21 @@ function useSuggestion(item: (typeof suggestions)[number]) {
   contextDraft.value = ''
 }
 
+interface ComposerInputEvent {
+  detail: { value: string }
+}
+
+function onDraftInput(event: ComposerInputEvent) {
+  if (!sending.value) draft.value = event.detail.value
+}
+
+function onDraftConfirm(event: ComposerInputEvent) {
+  if (sending.value) return
+  // The confirm event carries the latest text, including the last input update.
+  draft.value = event.detail.value
+  return send()
+}
+
 async function send() {
   const questionText = draft.value.trim()
   const contextText = contextDraft.value.trim()
@@ -311,11 +345,12 @@ onShareAppMessage(createAppShareMessage)
 .message-content { display: block; margin-top: 10rpx; font-size: 28rpx; line-height: 1.75; color: var(--app-text); white-space: pre-wrap; overflow-wrap: anywhere; }
 .typing { color: var(--app-text-weak); }
 .composer { flex-shrink: 0; padding: 20rpx 0 calc(18rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid var(--app-border); }
-.composer-input-bar { display: flex; align-items: flex-end; gap: 18rpx; padding: 20rpx; border: 1rpx solid var(--app-border); border-radius: var(--app-radius-lg); background: var(--app-surface); }
-.composer-textarea { flex: 1; min-width: 0; }
-.composer-textarea :deep(.t-textarea), .composer-textarea :deep(.t-textarea__wrapper-inner) { padding: 0; background: transparent; }
-.composer-textarea :deep(textarea) { max-height: 240rpx; font-size: 26rpx; line-height: 1.6; }
-.composer-send { flex: none; }
+.composer-input-bar { display: flex; align-items: flex-end; gap: 16rpx; padding: 14rpx 18rpx; min-height: 96rpx; border: 1rpx solid var(--app-border); border-radius: var(--app-radius-lg); background: var(--app-surface); }
+// Native layout containers avoid custom-component host sizing on WeChat.
+.composer-field { flex: 1; width: 0; min-width: 0; padding: 10rpx 0; }
+.composer-textarea { display: block; width: 100%; min-height: 44rpx; max-height: 220rpx; padding: 0; color: var(--app-text); background: transparent; font-size: 26rpx; line-height: 44rpx; }
+.composer-send { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; min-width: 104rpx; height: 68rpx; margin: 0; padding: 0 20rpx; border: 0; border-radius: 16rpx; color: #fffaf3; background: var(--app-primary); font-size: 26rpx; font-weight: 500; line-height: 68rpx; white-space: nowrap; }
+.composer-send[disabled] { color: var(--app-text-mute); background: var(--app-primary-soft); }
 .composer-hint { display: block; margin-top: 10rpx; color: var(--app-text-mute); text-align: center; font-size: 20rpx; }
 .attachment-row { margin-bottom: 12rpx; }
 .attachment-chip { display: inline-flex; align-items: center; gap: 8rpx; padding: 8rpx 14rpx; border-radius: 999px; background: var(--app-secondary-soft); color: var(--app-success); font-size: 20rpx; }

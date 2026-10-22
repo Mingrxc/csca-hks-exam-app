@@ -43,7 +43,7 @@ def test_generate_exam_paper_hides_solution_fields(db_session):
     assert "analysis" not in question
 
 
-def test_generate_practice_paper_includes_solution_fields(db_session):
+def test_generate_practice_paper_hides_solution_until_submission(db_session):
     user = User(openid="paper-practice-user")
     db_session.add_all([user, make_question("practice question")])
     db_session.commit()
@@ -59,8 +59,8 @@ def test_generate_practice_paper_includes_solution_fields(db_session):
     )
 
     question = paper["questions"][0]
-    assert question["answer"] == "A"
-    assert question["analysis"] == "because alpha is correct"
+    assert "answer" not in question
+    assert "analysis" not in question
 
 
 def test_generate_random_paper_preserves_sample_order(db_session, monkeypatch):
@@ -112,7 +112,7 @@ def test_generate_progressive_paper_orders_sample_by_difficulty(db_session, monk
 def test_generate_hks_paper_filters_by_top_level_subject(db_session):
     user = User(openid="paper-hks-subject-user")
     listening = Question(
-        exam_type="HKS",
+        exam_type="HKS", exam_version="HSK3.0", level="1",
         subject="听力",
         knowledge_point="听力选择",
         difficulty="medium",
@@ -124,7 +124,7 @@ def test_generate_hks_paper_filters_by_top_level_subject(db_session):
         is_active=1,
     )
     reading = Question(
-        exam_type="HKS",
+        exam_type="HKS", exam_version="HSK3.0", level="1",
         subject="阅读",
         knowledge_point="阅读理解",
         difficulty="medium",
@@ -142,20 +142,21 @@ def test_generate_hks_paper_filters_by_top_level_subject(db_session):
         db_session,
         user.id,
         GeneratePaperRequest(
-            exam_type="HKS",
+            exam_type="HKS", exam_version="HSK3.0", level="1",
             question_count=1,
             strategy="knowledge",
-            knowledge_points=["听力"],
+            subjects=["听力"],
         ),
     )
 
     assert [question["stem_text"] for question in paper["questions"]] == ["listening question"]
 
 
-def test_generate_hks_real_paper_covers_all_subjects(db_session):
+def test_generate_hks_real_paper_covers_all_subjects(db_session, monkeypatch):
+    monkeypatch.setitem(service.PRACTICE_PROFILES, "1", {"听力": 1, "阅读": 1})
     user = User(openid="paper-hks-real-user")
     listening = Question(
-        exam_type="HKS",
+        exam_type="HKS", exam_version="HSK3.0", level="1",
         subject="听力",
         knowledge_point="听力选择",
         difficulty="easy",
@@ -167,7 +168,7 @@ def test_generate_hks_real_paper_covers_all_subjects(db_session):
         is_active=1,
     )
     reading = Question(
-        exam_type="HKS",
+        exam_type="HKS", exam_version="HSK3.0", level="1",
         subject="阅读",
         knowledge_point="阅读理解",
         difficulty="hard",
@@ -185,10 +186,9 @@ def test_generate_hks_real_paper_covers_all_subjects(db_session):
         db_session,
         user.id,
         GeneratePaperRequest(
-            exam_type="HKS",
+            exam_type="HKS", exam_version="HSK3.0", level="1",
             question_count=1,
             strategy="real",
-            knowledge_points=["听力"],
             mode="exam",
         ),
     )

@@ -3,6 +3,7 @@ import { WRONG_REASONS } from '@/constants/exam'
 import { favoriteApi } from '@/features/favorite/api'
 import { useExamStore } from '@/stores/exam'
 import { examApi } from './api'
+import { toQuestion } from '@/api/contracts'
 
 export function useAnswerSession() {
   const examStore = useExamStore()
@@ -22,10 +23,11 @@ export function useAnswerSession() {
   const progressPercent = computed(() => examStore.progressPercent)
   const answeredCount = computed(() => examStore.answeredCount)
   const currentCorrect = computed(() => answerCorrectness.value[currentIndex.value] === true)
+  const currentWrong = computed(() => answerCorrectness.value[currentIndex.value] === false)
   const currentSelectedReason = computed(() => selectedReasons.value[currentIndex.value] || '')
   const answerSheetItems = computed(() => questions.value.map((_, index) => ({
     index,
-    answered: answers.value[index] != null,
+    answered: !!submitted.value[index],
     marked: !!showResult.value[index],
   })))
 
@@ -63,6 +65,11 @@ export function useAnswerSession() {
         wrongReason: currentSelectedReason.value || undefined,
       })
       examStore.markSubmitted(index, response.is_correct)
+      if (response.solution) Object.assign(questions.value[index], toQuestion(response.solution), {
+        isFavorite: questions.value[index].isFavorite,
+        evaluationStatus: response.evaluation_status, selfScore: response.self_score,
+      })
+      examStore.persistProgress()
     } catch {
       if (previousAnswer == null) examStore.clearAnswer(index)
       else examStore.setAnswer(index, previousAnswer)
@@ -101,15 +108,27 @@ export function useAnswerSession() {
   }
 
   const moveTo = (index: number) => {
+    if (isSubmitting.value) return
     if (index === currentIndex.value) return
     commitElapsedTime()
     examStore.setCurrentIndex(index)
   }
 
+  const setDraft = (value: string) => examStore.setAnswer(currentIndex.value, value)
+  const submitSelfReview = async (score: number) => {
+    if (!currentQuestion.value || !examStore.paperId || isSubmitting.value) return
+    isSubmitting.value = true
+    try {
+      const response = await examApi.selfReview({ paperId: examStore.paperId, questionId: currentQuestion.value.id, score })
+      Object.assign(currentQuestion.value, { selfScore: response.self_score, evaluationStatus: response.evaluation_status })
+      examStore.persistProgress()
+    } catch {} finally { isSubmitting.value = false }
+  }
+
   return {
     examStore, mode, currentIndex, answers, showResult, questions, remainingSeconds,
-    currentQuestion, progressPercent, answeredCount, currentCorrect, currentSelectedReason,
+    currentQuestion, progressPercent, answeredCount, currentCorrect, currentWrong, currentSelectedReason,
     answerSheetItems, wrongReasons: WRONG_REASONS, toggleFavorite, selectOption, selectWrongReason,
-    commitElapsedTime, moveTo,
+    commitElapsedTime, moveTo, setDraft, submitSelfReview, isSubmitting,
   }
 }

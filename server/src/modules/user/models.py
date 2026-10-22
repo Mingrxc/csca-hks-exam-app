@@ -21,6 +21,7 @@ class User(Base):
     target_exam = Column(SAEnum("CSCA", "HKS"), default="CSCA", comment="Primary target exam")
     target_date = Column(Date, nullable=True, comment="Primary target exam date")
     total_questions = Column(Integer, default=0, comment="Total questions answered")
+    total_objective = Column(Integer, default=0, comment="Automatically graded questions answered")
     total_correct = Column(Integer, default=0, comment="Total correct answers")
     streak_days = Column(Integer, default=0, comment="Current study streak in days")
     last_streak_at = Column(Date, nullable=True, comment="Most recent streak date")

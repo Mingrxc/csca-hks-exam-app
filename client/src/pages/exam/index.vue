@@ -46,7 +46,7 @@
         <c-app-state v-else-if="error" compact state="error" title="学习数据加载失败" :description="error" @retry="loadStudyData" />
         <view v-else-if="loaded" class="metric-row">
           <view class="metric"><text class="app-number">{{ dashboard.todayStats.questionCount }}</text><text class="metric-label">完成题数</text></view>
-          <view class="metric metric--sage"><text class="app-number">{{ dashboard.todayStats.correctRate }}%</text><text class="metric-label">正确率</text></view>
+          <view class="metric metric--sage"><text class="app-number">{{ dashboard.todayStats.objectiveCount === 0 ? '—' : dashboard.todayStats.correctRate + '%' }}</text><text class="metric-label">正确率</text></view>
           <view class="metric"><text class="app-number">{{ dashboard.pendingWrongCount }}</text><text class="metric-label">待复习</text></view>
         </view>
         <c-app-state v-else compact state="empty" title="学习数据尚未加载" />

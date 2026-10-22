@@ -1,63 +1,35 @@
 # 数据库
 
-## 表结构（7张表）
+更新：2026-10-22。MySQL8.4，当前迁移0007_question_bank_v2，复用现有Conda deng环境。
 
-| 表名 | 说明 |
-|------|------|
-| `users` | 用户表（微信授权、学习数据、打卡） |
-| `questions` | 题目表（题干、选项、答案、解析、难度/知识点标签） |
-| `papers` | 试卷表（组卷策略、题目列表、限时） |
-| `answer_records` | 答题记录表（每题作答、对错、用时、错因） |
-| `wrong_book` | 错题本表（累计错误次数、掌握标记、复习时间） |
-| `knowledge_stats` | 知识点统计表（各知识点的正确率） |
-| `streak_records` | 打卡记录表（每日刷题数） |
+10张业务表：users、user_exam_targets、streak_records、questions、papers、answer_records、wrong_book、knowledge_stats、favorites、content_items。Alembic另维护版本表。
 
-## 索引设计
+新版题目按唯一bank_id更新，独立保存版本、等级、模块、材料、作答与评分方式。source_data完整保留原题。题目答案与作答记录使用TEXT，开放题通过可空is_correct及self_score单独管理。
 
-- 高频查询字段均已建索引（exam_type、knowledge_point、difficulty、user_id 等）
-- 错题本使用 `UNIQUE(user_id, question_id)` 保证不重复
-- 答题记录使用 `UNIQUE(user_id, paper_id, question_id)` 保证重复提交不会产生重复行
+## 初始化与重建
 
-## 迁移
-
-使用 Alembic 管理数据库版本。连接参数从 `server/.env` 读取。
-
-### 全新数据库
-
-先创建空数据库 `csca_hks_exam`，然后执行：
+用户确认当前业务数据可清空。项目根目录执行：
 
 ```powershell
-cd server
-.venv/Scripts/python -m alembic upgrade head
+conda activate deng
+python scripts/reset_database.py
+python scripts/reset_database.py --apply --expected-database csca_hks_exam
 ```
 
-### 已有数据库首次接入 Alembic
+默认仅输出计划。--apply先成功生成database/backups/before-bank-v2-*.sql及SHA-256，再重建业务表、执行完整迁移并导入1221题。口语和口译99题不入库，原稿保留。MySQL服务、账号和环境配置继续复用。备份目录已忽略，不提交Git。
 
-当前线上/本地库已经由旧版 `database/schema.sql` 创建时，先备份数据库，再执行：
+全新环境先创建空数据库，再从server目录执行python -m alembic upgrade head，最后执行导入器--apply。真实连接信息来自环境变量及server/.env、server/.env.local，不写入文档。
+
+## 验证
 
 ```powershell
+python scripts/check_database_integrity.py
 cd server
-.venv/Scripts/python -m alembic stamp 0001_initial_schema
-.venv/Scripts/python -m alembic upgrade head
+python -m alembic current
+python -m alembic check
+python -m pytest -q
 ```
 
-`0002_answer_record_uniqueness` 会保留每组答题自然键中 ID 最大的记录、添加唯一约束，并统一旧索引名称。
+schema.sql为当前ORM生成的结构参考。使用Alembic初始化，不手工猜测stamp版本。python scripts/export_schema.py可重新生成参考文件，无数据库读写。
 
-### 继续使用 schema.sql
-
-当前 `database/schema.sql` 已对应最新结构。导入后要标记版本，避免 Alembic 重复建表：
-
-```powershell
-cd server
-.venv/Scripts/python -m alembic stamp head
-```
-
-后续生成迁移：
-
-```powershell
-cd server
-.venv/Scripts/python -m alembic revision --autogenerate -m "描述"
-.venv/Scripts/python -m alembic upgrade head
-```
-
-当前暂不添加数据库外键：历史库需要先在真实 MySQL 上完成孤儿记录审计。用户/试卷所有权和题目归属目前由服务层校验，唯一约束负责阻止重复业务记录。
+字段与导入边界见[新版题库契约](../docs/question-bank-import-contract.md)。本地数据库与正式服务器分别核验，本地重建不表示已经更新线上。

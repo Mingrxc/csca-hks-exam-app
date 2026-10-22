@@ -32,11 +32,11 @@
           <view class="app-list-row">
             <view class="app-list-main">
               <text class="app-list-title">{{ getPaperTitle(paper.title) }}</text>
-              <text class="app-list-desc">{{ paper.correctRate }}% · {{ paper.timeUsed }}</text>
+              <text class="app-list-desc">{{ paper.objectiveCount === 0 ? '开放题自评' : paper.correctRate + '%' }} · {{ paper.timeUsed }}</text>
             </view>
             <view class="paper-side">
-              <t-tag :theme="paper.passed ? 'success' : 'danger'" variant="light" shape="round" size="small">
-                {{ paper.passed ? '表现不错' : '继续巩固' }}
+              <t-tag :theme="paper.objectiveCount === 0 ? 'default' : paper.passed ? 'success' : 'danger'" variant="light" shape="round" size="small">
+                {{ paper.objectiveCount === 0 ? '自评练习' : paper.passed ? '表现不错' : '继续巩固' }}
               </t-tag>
               <text class="app-list-meta">{{ paper.date }}</text>
             </view>

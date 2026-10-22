@@ -10,6 +10,7 @@ import type {
 import type { DashboardData, ExamTargetDates, UserProfile } from '@/types/user'
 import type { RelatedQuestion, WrongBookDetail, WrongBookListItem } from '@/types/wrongbook'
 import { DIFFICULTY_MAP, QUESTION_TYPE_MAP } from '@/constants/exam'
+import { resolveMediaUrl } from './client'
 
 export interface ApiQuestion {
   id: number
@@ -23,6 +24,40 @@ export interface ApiQuestion {
   answer?: string
   analysis?: string
   is_favorite?: boolean
+  bank_id?: string
+  exam_version?: string
+  level?: string
+  knowledge_module?: string
+  material_id?: string
+  response_mode?: string
+  scoring_mode?: string
+  native_task?: string
+  source_type?: string
+  source_language?: string
+  target_language?: string
+  stimulus_note?: string
+  term_notes?: Record<string, string>
+  stem_image?: string
+  stem_audio?: string
+  transcript?: string
+  max_score?: number
+  minimum_characters?: number
+  response_seconds?: number
+  grading_key_points?: string[]
+  grading_rubric?: Question['gradingRubric']
+  accepted_answers?: string[]
+  evaluation_status?: string
+  self_score?: number | null
+}
+
+export interface ApiCatalogItem {
+  exam_type: ExamType
+  exam_version?: string
+  level?: string
+  subject: string
+  knowledge_module?: string
+  knowledge_point: string
+  count: number
 }
 
 export interface ApiPaper {
@@ -45,6 +80,7 @@ export interface ApiSpecialOption {
 }
 
 export interface ApiHistoryPaper {
+  objective_count?: number
   id: number
   title: string
   exam_type: string
@@ -57,6 +93,7 @@ export interface ApiHistoryPaper {
 }
 
 export interface ApiUser {
+  total_objective?: number
   id: number
   nickname: string
   avatar_url?: string
@@ -76,6 +113,7 @@ export interface ApiDashboard {
   target_date?: string
   target_dates?: Partial<Record<ExamType, string>>
   today_stats: {
+    objective_count?: number
     question_count: number
     correct_rate: number
     wrong_count: number
@@ -88,11 +126,14 @@ export interface ApiDashboard {
 export interface ApiSubmitAnswerResult {
   paper_id: number
   question_id: number
-  is_correct?: boolean
+  is_correct?: boolean | null
   correct_answer?: string
   user_answer: string
   recorded_new: boolean
   time_spent: number
+  evaluation_status?: string
+  self_score?: number | null
+  solution?: ApiQuestion
 }
 
 export interface ApiExamResult {
@@ -102,6 +143,13 @@ export interface ApiExamResult {
   total_count: number
   correct_rate: number
   time_used: number
+  objective_count: number
+  subjective_count: number
+  pending_self_review: number
+  self_score: number
+  self_max_score: number
+  subjective_answered_count: number
+  unanswered_count: number
   knowledge_analysis: Record<string, { total: number; correct: number; correct_rate: number }>
   wrong_questions: Array<{
     id: number
@@ -118,7 +166,10 @@ export interface ApiExamResult {
     user_answer: string
     correct_answer: string
     analysis: string
-    is_correct: boolean
+    is_correct: boolean | null
+    question?: ApiQuestion
+    evaluation_status?: string
+    self_score?: number | null
   }>
 }
 
@@ -190,15 +241,28 @@ export function toQuestion(item: ApiQuestion): Question {
     difficulty: item.difficulty,
     knowledgePoint: item.knowledge_point,
     stem: item.stem_text,
-    options: item.options,
+    options: item.options.map(option => ({ ...option, image: resolveMediaUrl(option.image) })),
     answer: item.answer,
     analysis: item.analysis,
     isFavorite: item.is_favorite,
+    bankId: item.bank_id, examVersion: item.exam_version, level: item.level,
+    knowledgeModule: item.knowledge_module, materialId: item.material_id,
+    responseMode: item.response_mode, scoringMode: item.scoring_mode,
+    nativeTask: item.native_task, sourceType: item.source_type,
+    sourceLanguage: item.source_language, targetLanguage: item.target_language,
+    stimulusNote: item.stimulus_note, termNotes: item.term_notes,
+    stemImage: resolveMediaUrl(item.stem_image), stemAudio: resolveMediaUrl(item.stem_audio),
+    transcript: item.transcript, maxScore: item.max_score,
+    minimumCharacters: item.minimum_characters, responseSeconds: item.response_seconds,
+    gradingKeyPoints: item.grading_key_points, gradingRubric: item.grading_rubric,
+    acceptedAnswers: item.accepted_answers, evaluationStatus: item.evaluation_status,
+    selfScore: item.self_score,
   }
 }
 
 export function toHistoryPaper(item: ApiHistoryPaper): HistoryPaper {
   return {
+    objectiveCount: item.objective_count,
     id: item.id,
     title: item.title,
     correctRate: item.correct_rate,
@@ -216,6 +280,7 @@ export function toDashboardData(item: ApiDashboard): DashboardData {
     targetDates: normalizeTargetDates(item.target_dates, item.target_exam, item.target_date),
     countdown: calculateCountdown(item.target_date),
     todayStats: {
+      objectiveCount: item.today_stats.objective_count,
       questionCount: item.today_stats.question_count,
       correctRate: item.today_stats.correct_rate,
       wrongCount: item.today_stats.wrong_count,
@@ -223,6 +288,7 @@ export function toDashboardData(item: ApiDashboard): DashboardData {
     pendingWrongCount: item.pending_wrong_count,
     favoriteCount: item.favorite_count,
     recentPapers: item.recent_papers.map((paper) => ({
+      objectiveCount: paper.objective_count,
       id: paper.id,
       title: paper.title,
       questionCount: paper.question_count,
@@ -234,6 +300,7 @@ export function toDashboardData(item: ApiDashboard): DashboardData {
 
 export function toUserProfile(item: ApiUser): UserProfile {
   return {
+    objectiveCount: item.total_objective,
     nickname: item.nickname,
     avatarUrl: item.avatar_url || '',
     targetExam: item.target_exam,
@@ -282,6 +349,9 @@ export function toExamResultSummary(item: ApiExamResult): ExamResultSummary {
     totalCount: item.total_count,
     correctRate: item.correct_rate,
     timeUsed: formatSeconds(item.time_used),
+    objectiveCount: item.objective_count, subjectiveCount: item.subjective_count,
+    pendingSelfReview: item.pending_self_review, selfScore: item.self_score, selfMaxScore: item.self_max_score,
+    subjectiveAnsweredCount: item.subjective_answered_count, unansweredCount: item.unanswered_count,
   }
 }
 
@@ -305,6 +375,8 @@ export function toResultReviewQuestions(item: ApiExamResult): ResultReviewQuesti
     correctAnswer: question.correct_answer,
     analysis: question.analysis,
     correct: question.is_correct,
+    question: question.question ? toQuestion(question.question) : undefined,
+    evaluationStatus: question.evaluation_status, selfScore: question.self_score,
   }))
 }
 

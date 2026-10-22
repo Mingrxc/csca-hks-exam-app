@@ -1,6 +1,6 @@
 """Exam answer SQLAlchemy models."""
 
-from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.sql import func
@@ -38,7 +38,9 @@ class AnswerRecord(Base):
         nullable=False,
         comment="Question ID",
     )
-    user_answer = Column(String(256), nullable=True, comment="Submitted answer")
+    user_answer = Column(Text, nullable=True, comment="Submitted answer")
+    evaluation_status = Column(String(32), default="objective", nullable=False)
+    self_score = Column(Float, nullable=True, comment="Self-assessed practice score")
     is_correct = Column(
         Integer().with_variant(TINYINT(display_width=1), "mysql"),
         nullable=True,

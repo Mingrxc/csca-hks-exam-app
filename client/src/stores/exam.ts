@@ -4,11 +4,11 @@ import type { ExamConfig, Question } from '@/types/exam'
 
 export type { ExamConfig, Question } from '@/types/exam'
 
-const PROGRESS_STORAGE_KEY = 'exam_active_progress_v1'
+const PROGRESS_STORAGE_KEY = 'exam_active_progress_v2'
 const PROGRESS_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
 interface ExamProgressSnapshot {
-  version: 1
+  version: 2
   savedAt: number
   config: ExamConfig
   paperId: number
@@ -25,7 +25,7 @@ interface ExamProgressSnapshot {
 function isProgressSnapshot(value: unknown): value is ExamProgressSnapshot {
   if (!value || typeof value !== 'object') return false
   const snapshot = value as Partial<ExamProgressSnapshot>
-  return snapshot.version === 1
+  return snapshot.version === 2
     && typeof snapshot.savedAt === 'number'
     && Date.now() - snapshot.savedAt <= PROGRESS_MAX_AGE_MS
     && typeof snapshot.paperId === 'number'
@@ -59,7 +59,7 @@ export const useExamStore = defineStore('exam', () => {
 
   const currentQuestion = computed(() => questions.value[currentIndex.value] || null)
   const totalCount = computed(() => questions.value.length)
-  const answeredCount = computed(() => Object.keys(answers.value).length)
+  const answeredCount = computed(() => Object.keys(submitted.value).length)
   const progressPercent = computed(() =>
     totalCount.value ? Math.round((answeredCount.value / totalCount.value) * 100) : 0
   )
@@ -75,11 +75,7 @@ export const useExamStore = defineStore('exam', () => {
   const hasActiveProgress = computed(() => !!paperId.value && questions.value.length > 0 && !endTime.value)
 
   const correctCount = computed(() => {
-    let count = 0
-    questions.value.forEach((q, i) => {
-      if (answers.value[i] === q.answer) count++
-    })
-    return count
+    return Object.values(answerCorrectness.value).filter(value => value === true).length
   })
 
   function setConfig(c: Partial<ExamConfig>) {
@@ -116,7 +112,7 @@ export const useExamStore = defineStore('exam', () => {
     persistProgress()
   }
 
-  function markSubmitted(index: number, correct?: boolean) {
+  function markSubmitted(index: number, correct?: boolean | null) {
     submitted.value[index] = true
     if (typeof correct === 'boolean') answerCorrectness.value[index] = correct
     persistProgress()
@@ -154,7 +150,7 @@ export const useExamStore = defineStore('exam', () => {
   function persistProgress() {
     if (!paperId.value || !questions.value.length || !startTime.value || endTime.value) return
     const snapshot: ExamProgressSnapshot = {
-      version: 1,
+      version: 2,
       savedAt: Date.now(),
       config: { ...config.value, knowledgePoints: [...config.value.knowledgePoints] },
       paperId: paperId.value,

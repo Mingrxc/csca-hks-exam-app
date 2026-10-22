@@ -57,7 +57,7 @@
         <c-app-state v-else-if="dashboardState.error.value" compact state="error" title="学习数据暂时不可用" :description="dashboardState.error.value" @retry="loadStudyData" />
         <view v-else class="metric-row">
           <view class="metric"><text class="metric-value app-number">{{ dashboard ? dashboard.todayStats.questionCount : '—' }}</text><text class="metric-label">完成题数</text></view>
-          <view class="metric metric--sage"><text class="metric-value app-number">{{ dashboard ? dashboard.todayStats.correctRate + '%' : '—' }}</text><text class="metric-label">正确率</text></view>
+          <view class="metric metric--sage"><text class="metric-value app-number">{{ dashboard && dashboard.todayStats.objectiveCount !== 0 ? dashboard.todayStats.correctRate + '%' : '—' }}</text><text class="metric-label">正确率</text></view>
           <view class="metric"><text class="metric-value app-number">{{ dashboard ? dashboard.pendingWrongCount : '—' }}</text><text class="metric-label">待复习</text></view>
         </view>
       </view>
@@ -81,7 +81,7 @@
           <button v-for="paper in recentPapers" :key="paper.id" class="recent-row" @click="goPaper(paper.id)">
             <view class="recent-icon"><t-icon name="file" size="32rpx" /></view>
             <view class="recent-copy"><text class="recent-title">{{ getPaperTitle(paper.title) }}</text><text class="recent-meta">{{ paper.questionCount }} 题 · {{ paper.date }}</text></view>
-            <text class="recent-score app-number">{{ Math.round(paper.score) }}%</text><t-icon name="chevron-right" size="24rpx" color="#857970" />
+            <text class="recent-score app-number">{{ paper.objectiveCount === 0 ? '自评' : Math.round(paper.score) + '%' }}</text><t-icon name="chevron-right" size="24rpx" color="#857970" />
           </button>
         </view>
         <view v-else class="recent-empty"><text>{{ dashboardState.error.value ? '连接恢复后，可查看最近练习' : '完成第一组练习，记录每一次进步' }}</text></view>

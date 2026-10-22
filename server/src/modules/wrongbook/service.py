@@ -286,7 +286,7 @@ def generate_redo_paper(db: Session, user_id: int, exam_type: str, limit: int = 
     db.add(paper)
     db.commit()
     db.refresh(paper)
-    return serialize_paper(paper, questions, include_solution=True)
+    return serialize_paper(paper, questions, include_solution=False)
 
 
 def get_related(db: Session, question_id: int, limit: int = 3) -> list[dict]:
@@ -301,6 +301,8 @@ def get_related(db: Session, question_id: int, limit: int = 3) -> list[dict]:
             Question.is_active == 1,
             Question.exam_type == question.exam_type,
             Question.subject == question.subject,
+            Question.exam_version == question.exam_version,
+            Question.level == question.level,
             Question.knowledge_point == question.knowledge_point,
         )
         .limit(limit)

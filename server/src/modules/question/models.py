@@ -16,11 +16,21 @@ class Question(Base):
         Index("idx_questions_knowledge", "knowledge_point"),
         Index("idx_questions_difficulty", "difficulty"),
         Index("idx_questions_type", "question_type"),
+        Index("idx_questions_version_level", "exam_version", "level"),
         Index("idx_questions_wrong_rate", "wrong_rate"),
         {"comment": "Question bank"},
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment="Question ID")
+    bank_id = Column(String(96), unique=True, nullable=True, comment="Stable source question ID")
+    exam_version = Column(String(24), nullable=True)
+    level = Column(String(8), nullable=True)
+    knowledge_module = Column(String(96), nullable=True)
+    material_id = Column(String(96), nullable=True, index=True)
+    response_mode = Column(String(32), default="choice", nullable=False)
+    scoring_mode = Column(String(40), default="objective", nullable=False)
+    max_score = Column(Float, default=1, nullable=False)
+    source_data = Column(JSON, nullable=True, comment="Lossless private source metadata")
     exam_type = Column(SAEnum("CSCA", "HKS"), nullable=False, comment="Exam type")
     subject = Column(String(32), nullable=False, comment="Subject")
     knowledge_point = Column(String(64), nullable=False, comment="Knowledge point tag")
@@ -32,7 +42,7 @@ class Question(Base):
     stem_image = Column(String(512), nullable=True, comment="Question stem image URL")
     stem_audio = Column(String(512), nullable=True, comment="Question stem audio URL")
     options = Column(JSON, nullable=False, comment="Options in [{key, text}] format")
-    answer = Column(String(256), nullable=False, comment="Correct answer")
+    answer = Column(Text, nullable=False, comment="Correct or reference answer")
     analysis = Column(Text, nullable=True, comment="Answer explanation")
     wrong_options_analysis = Column(JSON, nullable=True, comment="Distractor analysis")
     usage_count = Column(Integer, default=0, comment="Times included in papers")
@@ -83,6 +93,7 @@ class Paper(Base):
     difficulty = Column(
         SAEnum("all", "easy", "medium", "hard"), default="all", comment="Difficulty filter"
     )
+    selection = Column(JSON, nullable=True, comment="Version, level and category selection")
     is_public = Column(
         Integer().with_variant(TINYINT(display_width=1), "mysql"),
         default=0,

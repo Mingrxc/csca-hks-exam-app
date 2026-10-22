@@ -37,7 +37,7 @@ Dependencies point downward. Shared code cannot import pages or feature-specific
 
 ## Active exam recovery
 
-`useExamStore` writes a versioned `exam_active_progress_v1` snapshot after every meaningful change and when the app enters the background. The snapshot includes:
+`useExamStore` writes a versioned `exam_active_progress_v2` snapshot after every meaningful change and when the app enters the background. The snapshot includes:
 
 - paper identity, configuration, and the redacted question payload;
 - current question and selected answers;
@@ -47,7 +47,7 @@ Dependencies point downward. Shared code cannot import pages or feature-specific
 
 Snapshots expire after seven days. Finishing or resetting a paper removes the snapshot. Starting a new paper requires confirmation when unfinished progress exists. Exam countdowns use an absolute deadline so suspended timers catch up after background resume.
 
-The snapshot only contains fields already delivered to the client. Exam-mode answers and analysis remain absent because the backend redacts them.
+The snapshot only contains fields already delivered to the client. Both modes start with redacted solutions. Practice merges the solution returned by a successful submission; exam solutions appear only in results.
 
 ## Shared UI states
 
@@ -87,3 +87,7 @@ Page styles may define layout, but should not introduce a second brand palette o
 4. Use Pinia only if state must cross routes or survive app background/resume.
 5. Compose the page from shared components and design tokens.
 6. Build `mp-weixin` and verify loading, empty, error, retry, background, and resume behavior.
+
+## New bank UI (2026-10-22)
+
+Catalog data drives version, level, subject, module and knowledge-point controls. Oral and oral-translation tasks are deferred. QuestionItem supports audio lifecycle, image stems/options, written drafts, explicit submission and self-review. API media paths resolve through the configured API origin. Result pages reuse QuestionItem for complete material and solution review. Objective accuracy and self-assessed scores are displayed independently. Version2 snapshots avoid restoring stale IDs after the database rebuild.

@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from src.modules.exam.models import AnswerRecord
+from src.common.time import utc_now_naive
 from src.modules.exam.schemas import SubmitAnswerRequest
 from src.modules.exam.service import get_result, submit_answer
 from src.modules.question.models import Paper, Question
@@ -97,7 +98,7 @@ def test_dashboard_reports_today_pending_wrong_and_recent_papers(db_session):
             user_answer="A",
             is_correct=1,
             time_spent=10,
-            created_at=datetime.now(),
+            created_at=utc_now_naive(),
         ),
         AnswerRecord(
             user_id=user.id,
@@ -106,7 +107,7 @@ def test_dashboard_reports_today_pending_wrong_and_recent_papers(db_session):
             user_answer="A",
             is_correct=0,
             time_spent=15,
-            created_at=datetime.now(),
+            created_at=utc_now_naive(),
         ),
         WrongBook(user_id=user.id, question_id=second.id, is_mastered=0),
     ])
@@ -117,6 +118,7 @@ def test_dashboard_reports_today_pending_wrong_and_recent_papers(db_session):
     assert dashboard["user_name"] == "真实用户"
     assert dashboard["target_exam"] == "HKS"
     assert dashboard["today_stats"] == {
+        "objective_count": 2,
         "question_count": 2,
         "correct_rate": 50,
         "wrong_count": 1,

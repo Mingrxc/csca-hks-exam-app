@@ -1,9 +1,10 @@
 import { userApi } from '@/features/user/api'
 import { toDashboardData } from '@/api/contracts'
 import { useAsyncState } from '@/shared/composables/useAsyncState'
+import type { TodayStats } from '@/types/user'
 
 interface ExamDashboardSummary {
-  todayStats: { questionCount: number; correctRate: number; wrongCount: number }
+  todayStats: TodayStats
   pendingWrongCount: number
   favoriteCount: number
 }

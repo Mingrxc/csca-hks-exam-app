@@ -2,6 +2,9 @@
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
+from fastapi.responses import FileResponse
+from src.modules.question.bank import media_path
+from src.modules.question.service import get_catalog
 
 from src.common.deps import get_current_user_id
 from src.common.response import ApiResponse, success
@@ -20,6 +23,16 @@ from src.modules.question.service import list_papers as list_papers_service
 from src.modules.question.service import list_special_options as list_special_options_service
 
 router = APIRouter()
+
+
+@router.get("/catalog")
+def catalog(db: Session = Depends(get_db)) -> ApiResponse[list[dict]]:
+    return success(get_catalog(db))
+
+
+@router.get("/media/{relative:path}")
+def question_media(relative: str):
+    return FileResponse(media_path(relative), headers={"Cache-Control": "public, max-age=86400"})
 
 
 @router.post("/generate-paper")

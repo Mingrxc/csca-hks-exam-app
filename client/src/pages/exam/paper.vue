@@ -1,389 +1,110 @@
 <template>
   <view class="page app-shell">
-    <view class="app-section">
-      <view class="hero app-card app-visual-card app-card-pad">
-        <view class="hero-head">
-          <view class="hero-copy">
-            <text class="hero-brand">组卷中心</text>
-            <text class="hero-title">{{ currentStrategy.title }}</text>
-            <text class="hero-subtitle">{{ currentStrategy.desc }}</text>
-          </view>
-          <view class="hero-visual">
-            <view class="visual-main">
-              <text class="visual-value">{{ getExamLabel(form.examType) }}</text>
-              <text class="visual-label">考试类型</text>
-            </view>
-            <view class="visual-stack">
-              <view class="visual-mini">
-                <text class="visual-mini-value">{{ form.questionCount ?? '未选' }}</text>
-                <text class="visual-mini-label">题数</text>
-              </view>
-              <view class="visual-mini">
-                <text class="visual-mini-value">
-                  {{ form.mode === 'exam' ? (form.timeLimit ?? '未选') : form.mode === 'practice' ? '练习' : '未选' }}
-                </text>
-                <text class="visual-mini-label">
-                  {{ form.mode === 'exam' ? '限时' : '模式' }}
-                </text>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
+    <view class="app-section"><view class="hero app-card app-card-pad">
+      <text class="hero-brand">组卷中心</text><text class="hero-title">{{ currentStrategy.title }}</text>
+      <text class="hero-subtitle">{{ currentStrategy.desc }}</text>
+    </view></view>
+    <view class="app-section" v-if="catalogLoading || catalogError">
+      <c-app-state v-if="catalogLoading" state="loading" title="正在读取题库分类" />
+      <c-app-state v-else state="error" title="分类暂时无法加载" :description="catalogError" @retry="loadCatalog" />
     </view>
-
-    <view class="app-section config-list">
-      <view class="config-card app-card">
-        <view class="config-head">
-          <text class="config-label">考试类型</text>
-        </view>
+    <view v-else class="app-section config-list">
+      <view class="config-card app-card"><text class="config-label">考试类型</text><view class="config-options">
+        <view v-for="exam in ['CSCA', 'HKS']" :key="exam" class="option-tag" :class="{ active: form.examType === exam }" @tap="setExamType(exam)">{{ getExamLabel(exam) }}</view>
+      </view></view>
+      <template v-if="form.examType === 'HKS'">
+        <view class="config-card app-card"><text class="config-label">考试版本</text><view class="config-options"><view v-for="version in versions" :key="version" class="option-tag" :class="{ active: form.examVersion === version }" @tap="form.examVersion = version">{{ version }}</view></view></view>
+        <view class="config-card app-card"><text class="config-label">考试等级</text><view class="config-options"><view v-for="level in levels" :key="level" class="option-tag" :class="{ active: form.level === level }" @tap="selectLevel(level)">{{ level === '7-9' ? '七至九级联合' : level + '级' }}</view></view></view>
+      </template>
+      <view v-if="form.examType === 'CSCA' || (form.level && !isRealStrategy)" class="config-card app-card">
+        <text class="config-label">{{ form.examType === 'CSCA' ? '科目' : '考试模块' }}</text>
         <view class="config-options">
-          <view
-            class="option-tag"
-            :class="{ active: form.examType === 'CSCA' }"
-            @click="setExamType('CSCA')"
-          >
-            CSCA
-          </view>
-          <view
-            class="option-tag"
-            :class="{ active: form.examType === 'HKS' }"
-            @click="setExamType('HKS')"
-          >HSK</view>
+          <view v-if="form.examType === 'HKS' && strategyType === 'random'" class="option-tag" :class="{active: !form.subject}" @tap="selectSubject('')">全部模块</view>
+          <view v-for="subject in subjects" :key="subject" class="option-tag" :class="{active: form.subject === subject}" @tap="selectSubject(subject)">{{ subject }}</view>
         </view>
       </view>
-
-      <view class="config-card app-card" v-if="!isRealStrategy">
-        <view class="config-head">
-          <text class="config-label">题目数量</text>
-        </view>
-        <view class="config-options">
-          <view
-            class="option-tag"
-            :class="{ active: form.questionCount === item }"
-            v-for="item in questionCountOptions"
-            :key="item"
-            @click="form.questionCount = item"
-          >
-            {{ item }} 题
-          </view>
-        </view>
-      </view>
-
-      <view class="config-card app-card" v-if="showsDifficulty">
-        <view class="config-head">
-          <text class="config-label">难度</text>
-        </view>
-        <view class="config-options">
-          <view
-            class="option-tag"
-            :class="{ active: form.difficulty === item.value }"
-            v-for="item in difficulties"
-            :key="item.value"
-            @click="form.difficulty = item.value"
-          >
-            {{ item.label }}
-          </view>
-        </view>
-      </view>
-
-      <view class="config-card app-card" v-if="needsSpecialSelection">
-        <view class="config-head">
-          <text class="config-label">{{ specialLabel }}</text>
-        </view>
-        <view class="config-options">
-          <view
-            class="option-tag"
-            :class="{ active: selectedSpecials.includes(item) }"
-            v-for="item in specialOptions"
-            :key="item"
-            @click="toggleSpecial(item)"
-          >
-            {{ item }}
-          </view>
-        </view>
-      </view>
-
-      <view class="config-card app-card" v-if="showsMode">
-        <view class="config-head">
-          <text class="config-label">答题模式</text>
-        </view>
-        <view class="config-options">
-          <view class="option-tag" :class="{ active: form.mode === 'exam' }" @click="form.mode = 'exam'">
-            考试模式
-          </view>
-          <view class="option-tag" :class="{ active: form.mode === 'practice' }" @click="form.mode = 'practice'">
-            练习模式
-          </view>
-        </view>
-      </view>
-
-      <view class="config-card app-card" v-if="isRealStrategy || form.mode === 'exam'">
-        <view class="config-head">
-          <text class="config-label">限时（分钟）</text>
-        </view>
-        <view class="config-options">
-          <view
-            class="option-tag"
-            :class="{ active: form.timeLimit === item }"
-            v-for="item in timeLimitOptions"
-            :key="item"
-            @click="form.timeLimit = item"
-          >
-            {{ item }} 分钟
-          </view>
-        </view>
-      </view>
+      <view v-if="!isRealStrategy && form.subject && modules.length" class="config-card app-card"><text class="config-label">知识模块</text><picker :range="['全部模块', ...modules]" :value="form.knowledgeModule ? modules.indexOf(form.knowledgeModule)+1 : 0" @change="selectModule(Number($event.detail.value))"><view class="option-tag">{{ form.knowledgeModule || '全部模块' }} ›</view></picker></view>
+      <view v-if="!isRealStrategy && form.subject && points.length" class="config-card app-card"><text class="config-label">知识点</text><picker :range="['全部知识点', ...points]" :value="form.knowledgePoint ? points.indexOf(form.knowledgePoint)+1 : 0" @change="form.knowledgePoint = Number($event.detail.value) ? points[Number($event.detail.value)-1] : ''"><view class="option-tag">{{ form.knowledgePoint || '全部知识点' }} ›</view></picker></view>
+      <view v-if="!isRealStrategy" class="config-card app-card"><text class="config-label">题目数量</text><view class="config-options"><view v-for="count in QUESTION_COUNT_OPTIONS" :key="count" class="option-tag" :class="{active: form.questionCount === count}" @tap="form.questionCount = count">{{ count }}题</view></view><text class="hero-subtitle">共享材料按完整题组抽取，实际题量以组卷结果为准。</text></view>
+      <view v-if="!isRealStrategy && strategyType !== 'progressive'" class="config-card app-card"><text class="config-label">难度</text><view class="config-options"><view v-for="item in DIFFICULTY_OPTIONS" :key="item.value" class="option-tag" :class="{active: form.difficulty === item.value}" @tap="form.difficulty = item.value">{{ item.label }}</view></view></view>
+      <view v-if="!isRealStrategy" class="config-card app-card"><text class="config-label">答题模式</text><view class="config-options"><view class="option-tag" :class="{active: form.mode === 'practice'}" @tap="form.mode = 'practice'">练习模式</view><view class="option-tag" :class="{active: form.mode === 'exam'}" @tap="form.mode = 'exam'">考试模式</view></view></view>
+      <view v-if="isRealStrategy || form.mode === 'exam'" class="config-card app-card"><text class="config-label">限时（分钟）</text><view class="config-options"><view v-for="time in TIME_LIMIT_OPTIONS" :key="time" class="option-tag" :class="{active: form.timeLimit === time}" @tap="form.timeLimit = time">{{ time }}</view></view><text class="hero-subtitle" v-if="isRealStrategy">按所选等级的当前模块配置练习，不含口语与口译。</text></view>
+      <view v-if="!subjects.length && (form.examType === 'CSCA' || form.level)" class="config-card app-card">当前筛选暂无可用题目。</view>
     </view>
-
-    <view class="footer">
-      <view class="summary">
-        <text>{{ getExamLabel(form.examType) }} · {{ summaryText }}</text>
-      </view>
-      <t-button theme="primary" block size="large" shape="round" :loading="isGenerating" @click="startExam">
-        开始刷题
-      </t-button>
-    </view>
+    <view class="footer"><view class="summary"><text>{{ getExamLabel(form.examType) }} {{ form.level ? form.level + '级' : '' }} · {{ form.subject || '综合练习' }}</text></view><t-button theme="primary" block size="large" shape="round" :loading="isGenerating" :disabled="catalogLoading || !!catalogError" @click="startExam">开始练习</t-button></view>
   </view>
 </template>
-
 <script setup lang="ts">
-import { getExamLabel } from '@/constants/exam'
 import { computed, reactive, ref } from 'vue'
-import { onShareAppMessage, onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
+import { getExamLabel, PAPER_STRATEGY_MAP, DIFFICULTY_OPTIONS, QUESTION_COUNT_OPTIONS, TIME_LIMIT_OPTIONS } from '@/constants/exam'
 import { questionApi } from '@/features/exam/api'
 import { toQuestion } from '@/api/contracts'
-import {
-  CSCA_SUBJECT_OPTIONS,
-  DIFFICULTY_OPTIONS,
-  HSK_CATEGORY_OPTIONS,
-  PAPER_STRATEGY_MAP,
-  REAL_EXAM_DEFAULT_QUESTION_COUNTS,
-  QUESTION_COUNT_OPTIONS,
-  REAL_EXAM_QUESTION_COUNTS,
-  TIME_LIMIT_OPTIONS,
-} from '@/constants/exam'
-import type { DifficultyFilter, ExamMode, ExamType, PaperStrategy } from '@/types/exam'
+import type { ApiCatalogItem } from '@/api/contracts'
+import type { ExamType, PaperStrategy, DifficultyFilter, ExamMode } from '@/types/exam'
 import { useExamStore } from '@/stores/exam'
 import { confirmAction } from '@/shared/ui/confirm'
-
 const examStore = useExamStore()
 const strategyType = ref<PaperStrategy>('random')
+const catalog = ref<ApiCatalogItem[]>([])
+const catalogLoading = ref(true)
+const catalogError = ref('')
 const isGenerating = ref(false)
-const initialSpecial = ref('')
-const specialOptionsByExam = reactive<Record<ExamType, string[]>>({
-  CSCA: [...CSCA_SUBJECT_OPTIONS],
-  HKS: [...HSK_CATEGORY_OPTIONS],
-})
-
-const currentStrategy = computed(
-  () => PAPER_STRATEGY_MAP[strategyType.value] || PAPER_STRATEGY_MAP.random,
-)
-const difficulties = DIFFICULTY_OPTIONS
-const questionCountOptions = QUESTION_COUNT_OPTIONS
-const timeLimitOptions = TIME_LIMIT_OPTIONS
-
-const form = reactive({
-  examType: 'CSCA' as ExamType,
-  questionCount: 20 as number | null,
-  difficulty: 'all' as DifficultyFilter | null,
-  specialValues: [] as string[],
-  mode: 'practice' as ExamMode | null,
-  timeLimit: 60 as number | null,
-})
-
-const isProgressiveStrategy = computed(() => strategyType.value === 'progressive')
+const form = reactive({ examType: 'CSCA' as ExamType, examVersion: 'HSK3.0', level: '', subject: '', knowledgeModule: '', knowledgePoint: '', questionCount: 20, difficulty: 'all' as DifficultyFilter, mode: 'practice' as ExamMode, timeLimit: 60 })
+const currentStrategy = computed(() => PAPER_STRATEGY_MAP[strategyType.value] || PAPER_STRATEGY_MAP.random)
 const isRealStrategy = computed(() => strategyType.value === 'real')
-const needsSpecialSelection = computed(() =>
-  strategyType.value === 'knowledge' ||
-  isProgressiveStrategy.value ||
-  (isRealStrategy.value && form.examType === 'CSCA'),
-)
-const showsDifficulty = computed(() => strategyType.value === 'random' || strategyType.value === 'knowledge')
-const showsMode = computed(() => !isRealStrategy.value)
-const singleSpecialSelection = computed(
-  () => form.examType === 'CSCA' || isProgressiveStrategy.value || isRealStrategy.value,
-)
-
-const specialLabel = computed(() => {
-  if (isProgressiveStrategy.value || isRealStrategy.value) return '考试科目'
-  return form.examType === 'CSCA' ? '科目' : '分类'
+const unique = (values: (string | undefined)[]) => [...new Set(values.filter(Boolean))] as string[]
+const examRows = computed(() => catalog.value.filter(row => row.exam_type === form.examType))
+const versions = computed(() => unique(examRows.value.map(row => row.exam_version)))
+const levels = computed(() => unique(examRows.value.filter(row => row.exam_version === form.examVersion).map(row => row.level)).sort((a,b) => parseInt(a)-parseInt(b)))
+const levelRows = computed(() => examRows.value.filter(row => form.examType === 'CSCA' || (row.exam_version === form.examVersion && row.level === form.level)))
+const subjects = computed(() => unique(levelRows.value.map(row => row.subject)))
+const subjectRows = computed(() => levelRows.value.filter(row => row.subject === form.subject))
+const modules = computed(() => unique(subjectRows.value.map(row => row.knowledge_module)))
+const points = computed(() => unique(subjectRows.value.filter(row => !form.knowledgeModule || row.knowledge_module === form.knowledgeModule).map(row => row.knowledge_point)))
+function selectSubject(subject: string) { form.subject = subject; form.knowledgeModule = ''; form.knowledgePoint = '' }
+function selectLevel(level: string) { form.level = level; selectSubject('') }
+function selectModule(index: number) { form.knowledgeModule = index ? modules.value[index-1] : ''; form.knowledgePoint = '' }
+function setExamType(value: string) { form.examType = value as ExamType; form.level = ''; selectSubject('') }
+async function loadCatalog() {
+  catalogLoading.value = true; catalogError.value = ''
+  try { catalog.value = await questionApi.getCatalog() } catch { catalogError.value = '请检查网络后重试。' } finally { catalogLoading.value = false }
+}
+onLoad(async query => {
+  if (query?.strategy && query.strategy in PAPER_STRATEGY_MAP) strategyType.value = query.strategy as PaperStrategy
+  if (query?.examType === 'HKS' || query?.examType === 'CSCA') form.examType = query.examType
+  if (examStore.config.examVersion) form.examVersion = examStore.config.examVersion
+  if (examStore.config.level) form.level = examStore.config.level
+  await loadCatalog()
+  const initial = String(query?.special || query?.subject || '')
+  if (subjects.value.includes(initial)) selectSubject(initial)
 })
-const specialOptions = computed(() => specialOptionsByExam[form.examType] || [])
-const selectedSpecials = computed(() => form.specialValues)
-const summaryText = computed(() => {
-  const special = needsSpecialSelection.value
-    ? selectedSpecials.value.length
-      ? `${selectedSpecials.value.join(' / ')}`
-      : '科目未选择'
-    : isRealStrategy.value && form.examType === 'HKS'
-      ? '全科覆盖'
-    : '分类不限'
-  const questionText = form.questionCount === null ? '题数未选择' : `${form.questionCount}题`
-  const modeText =
-    isRealStrategy.value
-      ? '模拟考试'
-      : form.mode === 'exam'
-      ? form.timeLimit === null
-        ? '考试未设置限时'
-        : `考试 ${form.timeLimit} 分钟`
-      : form.mode === 'practice'
-        ? '练习模式'
-        : '答题模式未选择'
-  const difficultyText =
-    !showsDifficulty.value
-      ? isProgressiveStrategy.value
-        ? '自动递进'
-        : '综合练习'
-      : form.difficulty === null
-      ? '难度未选择'
-      : form.difficulty === 'all'
-      ? '全部难度'
-      : (difficulties.find((item) => item.value === form.difficulty)?.label || form.difficulty)
-  return `${questionText} · ${difficultyText} · ${special} · ${modeText}`
-})
-
-const updateRealQuestionCount = (specialValue?: string) => {
-  if (!isRealStrategy.value) return
-  form.questionCount = specialValue
-    ? REAL_EXAM_QUESTION_COUNTS[form.examType][specialValue] || null
-    : null
-}
-
-const toggleSpecial = (value: string) => {
-  if (singleSpecialSelection.value) {
-    form.specialValues = selectedSpecials.value[0] === value ? [] : [value]
-    updateRealQuestionCount(form.specialValues[0])
-    return
-  }
-
-  const index = form.specialValues.indexOf(value)
-  if (index >= 0) {
-    form.specialValues.splice(index, 1)
-  } else {
-    form.specialValues.push(value)
-  }
-}
-
-const resetFormSelections = () => {
-  form.questionCount = null
-  form.difficulty = null
-  form.specialValues = []
-  form.mode = null
-  form.timeLimit = null
-}
-
-const applyRealExamPreset = () => {
-  form.questionCount =
-    form.examType === 'HKS' ? REAL_EXAM_DEFAULT_QUESTION_COUNTS.HKS : null
-  form.difficulty = 'all'
-  form.mode = 'exam'
-  form.timeLimit = null
-}
-
-const setExamType = (value: ExamType) => {
-  if (form.examType === value) return
-  form.examType = value
-  initialSpecial.value = ''
-  resetFormSelections()
-  if (isRealStrategy.value) applyRealExamPreset()
-}
-
-onLoad((query) => {
-  const strategy = query?.strategy
-  if (typeof strategy === 'string' && strategy in PAPER_STRATEGY_MAP) {
-    strategyType.value = strategy as PaperStrategy
-  }
-
-  const examType = query?.examType
-  if (examType === 'CSCA' || examType === 'HKS') {
-    form.examType = examType
-  }
-
-  const special = query?.special || query?.knowledge || query?.subject
-  initialSpecial.value = typeof special === 'string' ? special : ''
-  if (isRealStrategy.value) applyRealExamPreset()
-  const initialSelection = specialOptions.value.includes(initialSpecial.value)
-    ? initialSpecial.value
-    : form.examType === 'HKS'
-      ? specialOptions.value.find((item) => initialSpecial.value.startsWith(item)) || ''
-      : ''
-  if (initialSelection && (!isRealStrategy.value || form.examType === 'CSCA')) {
-    form.specialValues = [initialSelection]
-    updateRealQuestionCount(initialSelection)
-  }
-})
-
-const startExam = async () => {
-  if (needsSpecialSelection.value && form.specialValues.length === 0) {
-    uni.showToast({ title: `请选择${specialLabel.value}`, icon: 'none' })
-    return
-  }
-  if (form.questionCount === null) {
-    uni.showToast({ title: '请完成组卷选择', icon: 'none' })
-    return
-  }
-  if (showsDifficulty.value && form.difficulty === null) {
-    uni.showToast({ title: '请选择难度', icon: 'none' })
-    return
-  }
-  if (showsMode.value && form.mode === null) {
-    uni.showToast({ title: '请选择答题模式', icon: 'none' })
-    return
-  }
-  if ((isRealStrategy.value || form.mode === 'exam') && form.timeLimit === null) {
-    uni.showToast({ title: '请选择限时时间', icon: 'none' })
-    return
-  }
-  if (isGenerating.value) return
-
-  if (examStore.hasActiveProgress) {
-    const confirmed = await confirmAction({
-      title: '开始新试卷',
-      content: '开始新试卷会覆盖本机保存的未完成答题进度。',
-      confirmText: '继续组卷',
-    })
-    if (!confirmed) return
-  }
-
+async function startExam() {
+  if (isGenerating.value || catalogLoading.value || catalogError.value) return
+  if (form.examType === 'HKS' && !form.level) { uni.showToast({title: '请选择考试等级', icon: 'none'}); return }
+  if ((form.examType === 'CSCA' || ['knowledge','progressive'].includes(strategyType.value)) && !form.subject) { uni.showToast({title: '请选择科目或模块', icon:'none'}); return }
+  if (examStore.hasActiveProgress && !await confirmAction({title:'开始新练习', content:'将替换本机保存的未完成练习，是否继续？'})) return
   isGenerating.value = true
   try {
-    const difficulty = showsDifficulty.value ? (form.difficulty as DifficultyFilter) : 'all'
-    const mode = isRealStrategy.value ? 'exam' : (form.mode as ExamMode)
-    const timeLimit = mode === 'exam' ? (form.timeLimit as number) : 0
-    const paper = await questionApi.generatePaper({
-      examType: form.examType,
-      questionCount: form.questionCount,
-      difficulty,
-      strategy: strategyType.value,
-      knowledgePoints: form.specialValues,
-      mode,
-      timeLimit,
-    })
-    examStore.setConfig({
-      examType: form.examType,
-      questionCount: form.questionCount,
-      difficulty,
-      strategy: strategyType.value,
-      knowledgePoints: form.specialValues,
-      mode,
-      timeLimit: paper.time_limit,
-    })
-    examStore.setPaper(paper.id, paper.questions.map(toQuestion))
-    examStore.start()
-    uni.navigateTo({ url: '/pages/exam/answer' })
-  } catch {
-    // The shared request layer already displays the error message.
-  } finally {
-    isGenerating.value = false
-  }
+    const config = { examType: form.examType, examVersion: form.examType === 'HKS' ? form.examVersion : undefined,
+      level: form.examType === 'HKS' ? form.level : undefined,
+      subjects: isRealStrategy.value && form.examType === 'HKS' ? [] : form.subject ? [form.subject] : [],
+      knowledgeModules: !isRealStrategy.value && form.knowledgeModule ? [form.knowledgeModule] : [],
+      knowledgePoints: !isRealStrategy.value && form.knowledgePoint ? [form.knowledgePoint] : [],
+      questionCount: form.questionCount, difficulty: isRealStrategy.value || strategyType.value === 'progressive' ? 'all' : form.difficulty,
+      mode: isRealStrategy.value ? 'exam' : form.mode, timeLimit: isRealStrategy.value || form.mode === 'exam' ? form.timeLimit : 0,
+      strategy: strategyType.value }
+    const paper = await questionApi.generatePaper(config)
+    examStore.setConfig({ ...config, mode: config.mode as ExamMode, difficulty: config.difficulty as DifficultyFilter, questionCount: paper.questions.length })
+    examStore.setPaper(paper.id, paper.questions.map(toQuestion)); examStore.start()
+    uni.navigateTo({url:'/pages/exam/answer'})
+  } catch {} finally { isGenerating.value = false }
 }
 // #ifdef MP-WEIXIN
 onShareAppMessage(createAppShareMessage)
 // #endif
 </script>
-
 <style lang="scss" scoped>
 .hero {
   border-radius: var(--app-radius-lg);

@@ -9,8 +9,15 @@ from src.config.database import get_db
 from src.modules.exam.schemas import ExamResultResponse, SubmitAnswerRequest, SubmitAnswerResponse
 from src.modules.exam.service import get_result as get_result_service
 from src.modules.exam.service import submit_answer as submit_answer_service
+from src.modules.exam.schemas import SelfReviewRequest
+from src.modules.exam.service import self_review as self_review_service
 
 router = APIRouter()
+
+
+@router.post("/self-review")
+def self_review(payload: SelfReviewRequest, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)) -> ApiResponse[dict]:
+    return success(self_review_service(db, user_id, payload))
 
 
 @router.post("/submit")

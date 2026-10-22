@@ -172,7 +172,7 @@ def test_generate_redo_paper_uses_unmastered_wrong_questions_for_exam_type(db_se
     assert paper["mode"] == "practice"
     assert paper["strategy"] == "knowledge"
     assert paper["question_ids"] == [csca_question.id]
-    assert paper["questions"][0]["answer"] == "B"
+    assert "answer" not in paper["questions"][0]
 
     hks_paper = generate_redo_paper(db_session, user.id, "HKS", limit=10)
     assert hks_paper["exam_type"] == "HKS"

@@ -57,7 +57,16 @@ Version `v1` preserves its existing array response shapes to avoid breaking the 
 
 ## Import identity
 
-The importer natural key is the tuple of exam type, subject, knowledge point, question type, normalized stem, and answer. Source duplicates are removed before database writes, and reruns update the matching row. A database unique index is intentionally not added because the stem is `TEXT` and source corrections may legitimately change the answer; importer verification remains the controlled write path.
+Stable source question_id maps to unique questions.bank_id. Corrections update the same row even when the stem or answer changes. Unnumbered legacy records retain the earlier natural-key parser. Full source metadata stays private in source_data; serializers explicitly allow public and post-submission fields. See question-bank-import-contract.md.
+
+## Versioned bank and assessment
+
+- HSK generation requires a version and level; CSCA uses subjects and knowledge modules.
+- Shared materials keep related questions contiguous and complete. Timed practice uses per-level non-oral module profiles and refuses insufficient inventory.
+- Practice and exam generation both redact solutions. Practice submission returns its solution; finished exam results return solutions.
+- Only multi-select grading ignores order. Character responses retain order and declared acceptable variants.
+- Open expression stores is_correct=NULL, a self-review status and score. Completion includes these submissions; automatic accuracy and wrong-book aggregation exclude them.
+- Media routes expose only permitted binary assets. Source JSON and audio maintenance records remain private.
 
 ## Concurrency
 

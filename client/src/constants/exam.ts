@@ -54,8 +54,8 @@ export const PAPER_STRATEGIES: PaperStrategyItem[] = [
   {
     key: 'real',
     icon: '模拟',
-    title: '模拟考试',
-    desc: '在限定时间内完成练习，熟悉答题节奏',
+    title: '限时综合练习',
+    desc: '按科目或等级完成限时练习，熟悉答题节奏',
     shortDesc: '限时练习，熟悉答题节奏',
   },
 ]
@@ -78,29 +78,7 @@ export const DIFFICULTY_OPTIONS: Array<{ label: string; value: DifficultyFilter 
 export const QUESTION_COUNT_OPTIONS = [10, 20, 30, 50]
 export const TIME_LIMIT_OPTIONS = [30, 45, 60, 90, 105, 120]
 
-// CSCA 使用公开考试结构；HKS 未选择等级时按常用模块题量作为默认值。
-export const REAL_EXAM_QUESTION_COUNTS: Record<ExamType, Record<string, number>> = {
-  CSCA: {
-    数学: 48,
-    物理: 48,
-    化学: 48,
-    理科中文: 80,
-    文科中文: 80,
-  },
-  HKS: {
-    听力: 45,
-    阅读: 40,
-    书写: 15,
-    口语: 14,
-    翻译: 10,
-  },
-}
-
-export const REAL_EXAM_DEFAULT_QUESTION_COUNTS: Record<ExamType, number> = {
-  CSCA: 48,
-  HKS: 100,
-}
-
+// Available categories and timed profiles are provided by the backend bank.
 export const CSCA_SUBJECT_OPTIONS = [
   '数学',
   '物理',
@@ -112,7 +90,6 @@ export const CSCA_SUBJECT_OPTIONS = [
 export const HSK_KNOWLEDGE_OPTIONS = [
   '听力理解',
   '阅读理解',
-  '口语表达',
   '书写表达',
   '翻译表达',
   '词汇语法',
@@ -122,14 +99,13 @@ export const HSK_CATEGORY_OPTIONS = [
   '听力',
   '阅读',
   '书写',
-  '口语',
+  '写作',
   '翻译',
 ]
 
 export const WRONG_BOOK_KNOWLEDGE_POINTS = [
   '听力理解',
   '阅读理解',
-  '口语表达',
   '书写表达',
   '翻译表达',
   '词汇语法',

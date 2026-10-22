@@ -20,6 +20,7 @@ class UserResponse(BaseModel):
     target_dates: dict[Literal["CSCA", "HKS"], date] = Field(default_factory=dict)
     total_questions: int
     total_correct: int
+    total_objective: int = 0
     correct_rate: int
     streak_days: int
     favorite_count: int
@@ -48,6 +49,7 @@ class TodayStatsResponse(BaseModel):
     question_count: int
     correct_rate: int
     wrong_count: int
+    objective_count: int = 0
 
 
 class DashboardPaperResponse(BaseModel):
@@ -55,6 +57,7 @@ class DashboardPaperResponse(BaseModel):
     title: str
     exam_type: str
     question_count: int
+    objective_count: int = 0
     score: float
     correct_rate: float
     time_used: int

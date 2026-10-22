@@ -6,6 +6,12 @@ if (!configuredBaseUrl && import.meta.env.PROD) {
   throw new Error('VITE_API_BASE_URL is required for production builds')
 }
 const BASE_URL = (configuredBaseUrl || DEFAULT_BASE_URL).replace(/\/$/, '')
+export function resolveMediaUrl(value?: string | null): string | undefined {
+  if (!value) return undefined
+  if (/^https?:\/\//i.test(value)) return value
+  if (!value.startsWith('/')) return undefined
+  return `${BASE_URL.match(/^https?:\/\/[^/]+/)?.[0] || ''}${value}`
+}
 if (!/^https?:\/\//i.test(BASE_URL)) {
   throw new Error('VITE_API_BASE_URL must start with http:// or https://')
 }

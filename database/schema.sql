@@ -1,156 +1,244 @@
--- =====================================================
--- 留学考霸 — CSCA & HKS 备考刷题小程序
--- 数据库建表脚本 (MySQL 8.0+)
--- =====================================================
+-- Generated from SQLAlchemy models. Initialize using Alembic upgrade head.
 
-CREATE DATABASE IF NOT EXISTS csca_hks_exam
-  DEFAULT CHARACTER SET utf8mb4
-  DEFAULT COLLATE utf8mb4_unicode_ci;
+-- This reference contains no credentials or business data.
+
+CREATE DATABASE IF NOT EXISTS csca_hks_exam CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 USE csca_hks_exam;
 
--- ==================== 用户表 ====================
-CREATE TABLE users (
-    id              INT             PRIMARY KEY AUTO_INCREMENT  COMMENT '用户 ID',
-    openid          VARCHAR(64)     NOT NULL UNIQUE             COMMENT '微信 OpenID',
-    unionid         VARCHAR(64)     DEFAULT NULL                COMMENT '微信 UnionID（多端互通）',
-    nickname        VARCHAR(64)     DEFAULT '考霸同学'           COMMENT '昵称',
-    avatar_url      VARCHAR(512)    DEFAULT NULL                COMMENT '头像 URL',
-    target_exam     ENUM('CSCA','HKS') DEFAULT 'CSCA'           COMMENT '目标考试类型',
-    target_date     DATE            DEFAULT NULL                COMMENT '考试日期',
-    total_questions INT             DEFAULT 0                   COMMENT '累计刷题数',
-    total_correct   INT             DEFAULT 0                   COMMENT '累计正确数',
-    streak_days     INT             DEFAULT 0                   COMMENT '连续打卡天数',
-    last_streak_at  DATE            DEFAULT NULL                COMMENT '最近打卡日期',
-    created_at      DATETIME        DEFAULT CURRENT_TIMESTAMP   COMMENT '注册时间',
-    updated_at      DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+CREATE TABLE content_items (
+	id INTEGER NOT NULL COMMENT 'Content ID' AUTO_INCREMENT,
+	category ENUM('consulting','club','ad','notice') NOT NULL COMMENT 'Content category',
+	title VARCHAR(128) NOT NULL COMMENT 'Title',
+	summary VARCHAR(255) NOT NULL COMMENT 'Summary',
+	body TEXT NOT NULL COMMENT 'Body content',
+	cover_image VARCHAR(512) COMMENT 'Cover image URL',
+	link_url VARCHAR(512) COMMENT 'Destination URL',
+	sort_order INTEGER COMMENT 'Display order',
+	is_active TINYINT(1) COMMENT 'Whether the content is active',
+	created_at DATETIME COMMENT 'Creation time' DEFAULT now(),
+	updated_at DATETIME COMMENT 'Update time' DEFAULT now(),
+	PRIMARY KEY (id)
+)COMMENT='Home news and promotional content';
 
-    INDEX idx_users_openid (openid),
-    INDEX idx_users_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+CREATE INDEX idx_content_active ON content_items (is_active);
 
+CREATE INDEX idx_content_category ON content_items (category);
 
--- ==================== 题目表 ====================
+CREATE INDEX idx_content_sort ON content_items (sort_order);
+
 CREATE TABLE questions (
-    id              INT             PRIMARY KEY AUTO_INCREMENT  COMMENT '题目 ID',
-    exam_type       ENUM('CSCA','HKS') NOT NULL                 COMMENT '考试类型',
-    subject         VARCHAR(32)     NOT NULL                    COMMENT '科目',
-    knowledge_point VARCHAR(64)     NOT NULL                    COMMENT '知识点标签',
-    difficulty      ENUM('easy','medium','hard') NOT NULL       COMMENT '难度',
-    question_type   ENUM('single','multi','judge','fill') NOT NULL COMMENT '题型',
-    stem_text       TEXT            NOT NULL                    COMMENT '题干文本',
-    stem_image      VARCHAR(512)    DEFAULT NULL                COMMENT '题干图片 URL',
-    stem_audio      VARCHAR(512)    DEFAULT NULL                COMMENT '题干音频 URL',
-    options         JSON            NOT NULL                    COMMENT '选项（[{key,text}] 结构）',
-    answer          VARCHAR(256)    NOT NULL                    COMMENT '正确答案',
-    analysis        TEXT            DEFAULT NULL                COMMENT '题目解析',
-    wrong_options_analysis JSON     DEFAULT NULL                COMMENT '易混选项辨析',
-    usage_count     INT             DEFAULT 0                   COMMENT '被组卷次数',
-    correct_count   INT             DEFAULT 0                   COMMENT '正确作答次数',
-    wrong_count     INT             DEFAULT 0                   COMMENT '错误作答次数',
-    wrong_rate      FLOAT           DEFAULT 0                   COMMENT '历史错误率',
-    is_active       TINYINT(1)      DEFAULT 1                   COMMENT '是否启用',
-    created_at      DATETIME        DEFAULT CURRENT_TIMESTAMP,
-    updated_at      DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	id INTEGER NOT NULL COMMENT 'Question ID' AUTO_INCREMENT,
+	bank_id VARCHAR(96) COMMENT 'Stable source question ID',
+	exam_version VARCHAR(24),
+	level VARCHAR(8),
+	knowledge_module VARCHAR(96),
+	material_id VARCHAR(96),
+	response_mode VARCHAR(32) NOT NULL,
+	scoring_mode VARCHAR(40) NOT NULL,
+	max_score FLOAT NOT NULL,
+	source_data JSON COMMENT 'Lossless private source metadata',
+	exam_type ENUM('CSCA','HKS') NOT NULL COMMENT 'Exam type',
+	subject VARCHAR(32) NOT NULL COMMENT 'Subject',
+	knowledge_point VARCHAR(64) NOT NULL COMMENT 'Knowledge point tag',
+	difficulty ENUM('easy','medium','hard') NOT NULL COMMENT 'Difficulty',
+	question_type ENUM('single','multi','judge','fill') NOT NULL COMMENT 'Question type',
+	stem_text TEXT NOT NULL COMMENT 'Question stem text',
+	stem_image VARCHAR(512) COMMENT 'Question stem image URL',
+	stem_audio VARCHAR(512) COMMENT 'Question stem audio URL',
+	options JSON NOT NULL COMMENT 'Options in [{key, text}] format',
+	answer TEXT NOT NULL COMMENT 'Correct or reference answer',
+	analysis TEXT COMMENT 'Answer explanation',
+	wrong_options_analysis JSON COMMENT 'Distractor analysis',
+	usage_count INTEGER COMMENT 'Times included in papers',
+	correct_count INTEGER COMMENT 'Correct answer count',
+	wrong_count INTEGER COMMENT 'Incorrect answer count',
+	wrong_rate FLOAT COMMENT 'Historical incorrect rate',
+	is_active TINYINT(1) COMMENT 'Whether the question is active',
+	created_at DATETIME DEFAULT now(),
+	updated_at DATETIME DEFAULT now(),
+	PRIMARY KEY (id),
+	UNIQUE (bank_id)
+)COMMENT='Question bank';
 
-    INDEX idx_questions_exam_type (exam_type),
-    INDEX idx_questions_subject (subject),
-    INDEX idx_questions_knowledge (knowledge_point),
-    INDEX idx_questions_difficulty (difficulty),
-    INDEX idx_questions_type (question_type),
-    INDEX idx_questions_wrong_rate (wrong_rate)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='题目表';
+CREATE INDEX idx_questions_difficulty ON questions (difficulty);
 
+CREATE INDEX idx_questions_exam_type ON questions (exam_type);
 
--- ==================== 试卷表 ====================
-CREATE TABLE papers (
-    id              INT             PRIMARY KEY AUTO_INCREMENT  COMMENT '试卷 ID',
-    user_id         INT             NOT NULL                    COMMENT '创建者',
-    title           VARCHAR(128)    NOT NULL                    COMMENT '试卷标题',
-    exam_type       ENUM('CSCA','HKS') NOT NULL                 COMMENT '考试类型',
-    strategy        ENUM('random','knowledge','progressive','real') NOT NULL COMMENT '组卷策略',
-    question_ids    JSON            NOT NULL                    COMMENT '题目 ID 列表及顺序',
-    total_score     INT             DEFAULT 0                   COMMENT '总分',
-    time_limit      INT             DEFAULT 0                   COMMENT '限时（分钟），0=不限时',
-    mode            ENUM('exam','practice') DEFAULT 'practice'  COMMENT '答题模式',
-    difficulty      ENUM('all','easy','medium','hard') DEFAULT 'all' COMMENT '难度筛选',
-    is_public       TINYINT(1)      DEFAULT 0                   COMMENT '是否公开分享',
-    finished_at     DATETIME        DEFAULT NULL                COMMENT '完成时间',
-    created_at      DATETIME        DEFAULT CURRENT_TIMESTAMP,
+CREATE INDEX idx_questions_knowledge ON questions (knowledge_point);
 
-    INDEX idx_papers_user (user_id),
-    INDEX idx_papers_exam_type (exam_type),
-    INDEX idx_papers_strategy (strategy)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='试卷表';
+CREATE INDEX idx_questions_subject ON questions (subject);
 
+CREATE INDEX idx_questions_type ON questions (question_type);
 
--- ==================== 答题记录表 ====================
-CREATE TABLE answer_records (
-    id              INT             PRIMARY KEY AUTO_INCREMENT  COMMENT '记录 ID',
-    user_id         INT             NOT NULL                    COMMENT '用户 ID',
-    paper_id        INT             NOT NULL                    COMMENT '试卷 ID',
-    question_id     INT             NOT NULL                    COMMENT '题目 ID',
-    user_answer     VARCHAR(256)    DEFAULT NULL                COMMENT '用户答案',
-    is_correct      TINYINT(1)      DEFAULT NULL                COMMENT '是否正确',
-    time_spent      INT             DEFAULT 0                   COMMENT '该题用时（秒）',
-    wrong_reason    ENUM('知识点不会','粗心大意','审题错误','时间不够','选项混淆','其他') DEFAULT NULL COMMENT '错因标签',
-    created_at      DATETIME        DEFAULT CURRENT_TIMESTAMP   COMMENT '答题时间',
+CREATE INDEX idx_questions_version_level ON questions (exam_version, level);
 
-    INDEX idx_user_paper (user_id, paper_id),
-    UNIQUE KEY uk_user_paper_question (user_id, paper_id, question_id),
-    INDEX idx_question (question_id),
-    INDEX idx_correct (is_correct),
-    INDEX idx_wrong_reason (wrong_reason)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='答题记录表';
+CREATE INDEX idx_questions_wrong_rate ON questions (wrong_rate);
 
+CREATE INDEX ix_questions_material_id ON questions (material_id);
 
--- ==================== 错题本表 ====================
-CREATE TABLE wrong_book (
-    id              INT             PRIMARY KEY AUTO_INCREMENT  COMMENT '记录 ID',
-    user_id         INT             NOT NULL                    COMMENT '用户 ID',
-    question_id     INT             NOT NULL                    COMMENT '题目 ID',
-    wrong_count     INT             DEFAULT 1                   COMMENT '累计错误次数',
-    correct_count   INT             DEFAULT 0                   COMMENT '连续正确次数',
-    is_mastered     TINYINT(1)      DEFAULT 0                   COMMENT '是否已掌握（连续正确 N 次自动标）',
-    first_wrong_at  DATETIME        DEFAULT CURRENT_TIMESTAMP   COMMENT '首次错误时间',
-    last_wrong_at   DATETIME        DEFAULT CURRENT_TIMESTAMP   COMMENT '最近错误时间',
-    last_review_at  DATETIME        DEFAULT NULL                COMMENT '最近复习时间',
-    created_at      DATETIME        DEFAULT CURRENT_TIMESTAMP,
-    updated_at      DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+CREATE TABLE users (
+	id INTEGER NOT NULL COMMENT 'User ID' AUTO_INCREMENT,
+	openid VARCHAR(64) NOT NULL COMMENT 'WeChat OpenID',
+	unionid VARCHAR(64) COMMENT 'WeChat UnionID for cross-app identity',
+	nickname VARCHAR(64) COMMENT 'Display name',
+	avatar_url VARCHAR(512) COMMENT 'Avatar URL',
+	target_exam ENUM('CSCA','HKS') COMMENT 'Primary target exam',
+	target_date DATE COMMENT 'Primary target exam date',
+	total_questions INTEGER COMMENT 'Total questions answered',
+	total_objective INTEGER COMMENT 'Automatically graded questions answered',
+	total_correct INTEGER COMMENT 'Total correct answers',
+	streak_days INTEGER COMMENT 'Current study streak in days',
+	last_streak_at DATE COMMENT 'Most recent streak date',
+	created_at DATETIME COMMENT 'Registration time' DEFAULT now(),
+	updated_at DATETIME DEFAULT now(),
+	PRIMARY KEY (id),
+	UNIQUE (openid)
+)COMMENT='Application users';
 
-    UNIQUE KEY uk_user_question (user_id, question_id),
-    INDEX idx_wrongbook_user (user_id),
-    INDEX idx_wrongbook_question (question_id),
-    INDEX idx_wrongbook_mastered (is_mastered),
-    INDEX idx_wrongbook_last_wrong (last_wrong_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='错题本表';
+CREATE INDEX idx_users_created ON users (created_at);
 
+CREATE INDEX idx_users_openid ON users (openid);
 
--- ==================== 知识点统计表 ====================
+CREATE TABLE favorites (
+	id INTEGER NOT NULL COMMENT 'Favorite ID' AUTO_INCREMENT,
+	user_id INTEGER NOT NULL COMMENT 'User ID',
+	question_id INTEGER NOT NULL COMMENT 'Question ID',
+	note VARCHAR(256) COMMENT 'Favorite note',
+	created_at DATETIME COMMENT 'Creation time' DEFAULT now(),
+	PRIMARY KEY (id),
+	CONSTRAINT uk_user_favorite_question UNIQUE (user_id, question_id),
+	CONSTRAINT fk_favorites_user FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE,
+	CONSTRAINT fk_favorites_question FOREIGN KEY(question_id) REFERENCES questions (id) ON DELETE RESTRICT
+)COMMENT='User favorite questions';
+
+CREATE INDEX idx_favorites_created ON favorites (created_at);
+
+CREATE INDEX idx_favorites_question ON favorites (question_id);
+
+CREATE INDEX idx_favorites_user ON favorites (user_id);
+
 CREATE TABLE knowledge_stats (
-    id              INT             PRIMARY KEY AUTO_INCREMENT  COMMENT '统计 ID',
-    user_id         INT             NOT NULL                    COMMENT '用户 ID',
-    exam_type       ENUM('CSCA','HKS') NOT NULL                 COMMENT '考试类型',
-    knowledge_point VARCHAR(64)     NOT NULL                    COMMENT '知识点',
-    total_answered  INT             DEFAULT 0                   COMMENT '总答题数',
-    total_correct   INT             DEFAULT 0                   COMMENT '总正确数',
-    correct_rate    FLOAT           DEFAULT 0                   COMMENT '正确率',
-    updated_at      DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	id INTEGER NOT NULL COMMENT 'Statistics ID' AUTO_INCREMENT,
+	user_id INTEGER NOT NULL COMMENT 'User ID',
+	exam_type ENUM('CSCA','HKS') NOT NULL COMMENT 'Exam type',
+	knowledge_point VARCHAR(64) NOT NULL COMMENT 'Knowledge point',
+	total_answered INTEGER COMMENT 'Total answers',
+	total_correct INTEGER COMMENT 'Total correct answers',
+	correct_rate FLOAT COMMENT 'Correct answer rate',
+	updated_at DATETIME DEFAULT now(),
+	PRIMARY KEY (id),
+	CONSTRAINT uk_user_exam_point UNIQUE (user_id, exam_type, knowledge_point),
+	CONSTRAINT fk_knowledge_stats_user FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)COMMENT='Knowledge-point performance statistics';
 
-    UNIQUE KEY uk_user_exam_point (user_id, exam_type, knowledge_point),
-    INDEX idx_knowledge_user_exam (user_id, exam_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='知识点统计表';
+CREATE INDEX idx_knowledge_user_exam ON knowledge_stats (user_id, exam_type);
 
+CREATE TABLE papers (
+	id INTEGER NOT NULL COMMENT 'Paper ID' AUTO_INCREMENT,
+	user_id INTEGER NOT NULL COMMENT 'Creator user ID',
+	title VARCHAR(128) NOT NULL COMMENT 'Paper title',
+	exam_type ENUM('CSCA','HKS') NOT NULL COMMENT 'Exam type',
+	strategy ENUM('random','knowledge','progressive','real') NOT NULL COMMENT 'Paper generation strategy',
+	question_ids JSON NOT NULL COMMENT 'Ordered list of question IDs',
+	total_score INTEGER COMMENT 'Total score',
+	time_limit INTEGER COMMENT 'Time limit in minutes; zero means unlimited',
+	mode ENUM('exam','practice') COMMENT 'Answer mode',
+	difficulty ENUM('all','easy','medium','hard') COMMENT 'Difficulty filter',
+	selection JSON COMMENT 'Version, level and category selection',
+	is_public TINYINT(1) COMMENT 'Whether the paper is publicly shared',
+	finished_at DATETIME COMMENT 'Completion time',
+	created_at DATETIME DEFAULT now(),
+	PRIMARY KEY (id),
+	CONSTRAINT fk_papers_user FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)COMMENT='Generated exam papers';
 
--- ==================== 打卡记录表 ====================
+CREATE INDEX idx_papers_exam_type ON papers (exam_type);
+
+CREATE INDEX idx_papers_strategy ON papers (strategy);
+
+CREATE INDEX idx_papers_user ON papers (user_id);
+
 CREATE TABLE streak_records (
-    id              INT             PRIMARY KEY AUTO_INCREMENT  COMMENT '记录 ID',
-    user_id         INT             NOT NULL                    COMMENT '用户 ID',
-    streak_date     DATE            NOT NULL                    COMMENT '打卡日期',
-    question_count  INT             DEFAULT 0                   COMMENT '当日刷题数',
-    created_at      DATETIME        DEFAULT CURRENT_TIMESTAMP,
+	id INTEGER NOT NULL COMMENT 'Record ID' AUTO_INCREMENT,
+	user_id INTEGER NOT NULL COMMENT 'User ID',
+	streak_date DATE NOT NULL COMMENT 'Study date',
+	question_count INTEGER COMMENT 'Questions answered that day',
+	created_at DATETIME DEFAULT now(),
+	PRIMARY KEY (id),
+	CONSTRAINT uk_user_date UNIQUE (user_id, streak_date),
+	CONSTRAINT fk_streak_records_user FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)COMMENT='Daily study streak records';
 
-    UNIQUE KEY uk_user_date (user_id, streak_date),
-    INDEX idx_streak_user (user_id),
-    INDEX idx_streak_date (streak_date)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='打卡记录表';
+CREATE INDEX idx_streak_date ON streak_records (streak_date);
+
+CREATE INDEX idx_streak_user ON streak_records (user_id);
+
+CREATE TABLE user_exam_targets (
+	id INTEGER NOT NULL COMMENT 'Record ID' AUTO_INCREMENT,
+	user_id INTEGER NOT NULL COMMENT 'User ID',
+	exam_type ENUM('CSCA','HKS') NOT NULL COMMENT 'Exam type',
+	target_date DATE NOT NULL COMMENT 'Target date for this exam',
+	created_at DATETIME COMMENT 'Creation time' DEFAULT now(),
+	updated_at DATETIME DEFAULT now(),
+	PRIMARY KEY (id),
+	CONSTRAINT uk_user_exam_target UNIQUE (user_id, exam_type),
+	CONSTRAINT fk_user_exam_targets_user FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)COMMENT='Per-exam target dates for users';
+
+CREATE INDEX idx_user_exam_target_exam ON user_exam_targets (exam_type);
+
+CREATE INDEX idx_user_exam_target_user ON user_exam_targets (user_id);
+
+CREATE TABLE wrong_book (
+	id INTEGER NOT NULL COMMENT 'Record ID' AUTO_INCREMENT,
+	user_id INTEGER NOT NULL COMMENT 'User ID',
+	question_id INTEGER NOT NULL COMMENT 'Question ID',
+	wrong_count INTEGER COMMENT 'Cumulative incorrect-answer count',
+	correct_count INTEGER COMMENT 'Consecutive correct-answer count',
+	is_mastered TINYINT(1) COMMENT 'Whether mastered after the required correct-answer streak',
+	first_wrong_at DATETIME COMMENT 'First incorrect-answer time' DEFAULT now(),
+	last_wrong_at DATETIME COMMENT 'Most recent incorrect-answer time' DEFAULT now(),
+	last_review_at DATETIME COMMENT 'Most recent review time',
+	created_at DATETIME DEFAULT now(),
+	updated_at DATETIME DEFAULT now(),
+	PRIMARY KEY (id),
+	CONSTRAINT uk_user_question UNIQUE (user_id, question_id),
+	CONSTRAINT fk_wrong_book_user FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE,
+	CONSTRAINT fk_wrong_book_question FOREIGN KEY(question_id) REFERENCES questions (id) ON DELETE RESTRICT
+)COMMENT='User wrong-book entries';
+
+CREATE INDEX idx_wrongbook_last_wrong ON wrong_book (last_wrong_at);
+
+CREATE INDEX idx_wrongbook_mastered ON wrong_book (is_mastered);
+
+CREATE INDEX idx_wrongbook_question ON wrong_book (question_id);
+
+CREATE INDEX idx_wrongbook_user ON wrong_book (user_id);
+
+CREATE TABLE answer_records (
+	id INTEGER NOT NULL COMMENT 'Record ID' AUTO_INCREMENT,
+	user_id INTEGER NOT NULL COMMENT 'User ID',
+	paper_id INTEGER NOT NULL COMMENT 'Paper ID',
+	question_id INTEGER NOT NULL COMMENT 'Question ID',
+	user_answer TEXT COMMENT 'Submitted answer',
+	evaluation_status VARCHAR(32) NOT NULL,
+	self_score FLOAT COMMENT 'Self-assessed practice score',
+	is_correct TINYINT(1) COMMENT 'Whether the submitted answer is correct',
+	time_spent INTEGER COMMENT 'Time spent on this question in seconds',
+	wrong_reason ENUM('知识点不会','粗心大意','审题错误','时间不够','选项混淆','其他') COMMENT 'Incorrect-answer reason tag',
+	created_at DATETIME COMMENT 'Submission time' DEFAULT now(),
+	PRIMARY KEY (id),
+	CONSTRAINT uk_user_paper_question UNIQUE (user_id, paper_id, question_id),
+	CONSTRAINT fk_answer_records_user FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE,
+	CONSTRAINT fk_answer_records_paper FOREIGN KEY(paper_id) REFERENCES papers (id) ON DELETE CASCADE,
+	CONSTRAINT fk_answer_records_question FOREIGN KEY(question_id) REFERENCES questions (id) ON DELETE RESTRICT
+)COMMENT='Answer submission records';
+
+CREATE INDEX idx_correct ON answer_records (is_correct);
+
+CREATE INDEX idx_question ON answer_records (question_id);
+
+CREATE INDEX idx_user_paper ON answer_records (user_id, paper_id);
+
+CREATE INDEX idx_wrong_reason ON answer_records (wrong_reason);

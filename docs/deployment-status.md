@@ -70,8 +70,8 @@ max_connections=40
 
 ## 后端部署包与运行环境
 
-- 本地打包工具：`D:\Projects\Deng\deployment-artifacts\build_backend_bundle.py`。
-- 部署包：`D:\Projects\Deng\deployment-artifacts\laowai-backend-20261019.tar.gz`，248663 字节。
+- 本地打包工具现位于：`D:\Projects\Deng\csca-hks-exam-app\scripts\build_backend_bundle.py`（2026-10-21 整理时迁入主项目）。
+- 首次部署包（历史记录）：`laowai-backend-20261019.tar.gz`，248663 字节。本机旧包、校验文件及临时验证目录已于 2026-10-21 清理；此操作不涉及服务器上的文件。
 - SHA-256：`5d07421317cdb8976020c2e5aa85d830499e57741fc2d71326b37571d89f69a7`。
 - 部署包是显式允许列表构建，包含后端源码、测试、6 个 Alembic 迁移、两个题库工具、28 个原始题库 JSON，以及不含真实凭据的环境模板。
 - 包中不含真实 `.env` / `.env.local`、数据库导出、用户答题记录、前端依赖、媒体二进制文件或 Git 元数据。

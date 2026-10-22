@@ -85,9 +85,20 @@ class ImportQuestion:
     stem_image: str | None = None
     stem_audio: str | None = None
     wrong_options_analysis: Any | None = None
+    bank_id: str | None = None
+    exam_version: str | None = None
+    level: str | None = None
+    knowledge_module: str | None = None
+    material_id: str | None = None
+    response_mode: str = "choice"
+    scoring_mode: str = "objective"
+    max_score: float = 1
+    source_data: Any | None = None
 
     @property
-    def natural_key(self) -> tuple[str, str, str, str, str, str]:
+    def natural_key(self) -> tuple[str, ...]:
+        if self.bank_id:
+            return ("bank_id", self.bank_id)
         return (
             self.exam_type,
             self.subject,
@@ -127,6 +138,9 @@ def main() -> int:
 
     questions, report = load_questions(args.source)
     print_report(args.source, questions, report)
+    if report.invalid:
+        print("Invalid source records; no database writes were performed.", file=sys.stderr)
+        return 1
 
     if not args.apply:
         print("Dry run only. Re-run with --apply to write to the database.")
@@ -149,6 +163,8 @@ def load_questions(source: Path) -> tuple[list[ImportQuestion], ImportReport]:
     by_key: dict[tuple[str, str, str, str, str, str], ImportQuestion] = {}
 
     for path in sorted(source.rglob("*.json")):
+        if "_assets" in path.relative_to(source).parts or "_management" in path.relative_to(source).parts:
+            continue
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
@@ -158,6 +174,8 @@ def load_questions(source: Path) -> tuple[list[ImportQuestion], ImportReport]:
         for record in normalize_file(source, path, data, report):
             key = record.natural_key
             if key in by_key:
+                if record.bank_id and by_key[key] != record:
+                    report.invalid["conflicting_question_id"] += 1
                 report.duplicate_in_source += 1
                 continue
             by_key[key] = record
@@ -199,6 +217,9 @@ def normalize_canonical_question(
     path: Path,
     report: ImportReport,
 ) -> ImportQuestion | None:
+    if item.get("subject") == "口语" or item.get("response_mode") in {"oral", "oral_translation"}:
+        report.skipped_resources["deferred_oral_questions"] += 1
+        return None
     try:
         exam_type = normalize_exam_type(item.get("exam_type") or infer_exam_type(source, path))
         question_type = normalize_question_type(item.get("question_type"))
@@ -208,6 +229,16 @@ def normalize_canonical_question(
         stem_text = required_text(item.get("stem_text"), "stem_text")
         answer = required_text(item.get("answer"), "answer")
         options = normalize_options(item.get("options"), allow_empty=question_type == "fill")
+        if item.get("question_id"):
+            if not optional_text(item.get("analysis")) or item.get("review_status") != "content_checked":
+                raise ValueError("unreviewed_or_missing_analysis")
+            if exam_type == "HKS" and (item.get("exam_version") != "HSK3.0" or str(item.get("level")) not in {"1", "2", "3", "4", "5", "6", "7-9"}):
+                raise ValueError("invalid_hsk_classification")
+            for media in [item.get("stem_image"), item.get("stem_audio"), *(o.get("image") for o in options)]:
+                if media and not str(media).startswith(("https://", "http://")):
+                    target = (source / media).resolve()
+                    if not target.is_relative_to(source.resolve()) or not target.is_file():
+                        raise ValueError("missing_or_unsafe_media")
     except ValueError as exc:
         report.invalid[str(exc)] += 1
         return None
@@ -225,6 +256,15 @@ def normalize_canonical_question(
         answer=answer,
         analysis=optional_text(item.get("analysis")),
         wrong_options_analysis=item.get("wrong_options_analysis"),
+        bank_id=optional_text(item.get("question_id")),
+        exam_version=optional_text(item.get("exam_version")),
+        level=optional_text(item.get("level")),
+        knowledge_module=optional_text(item.get("knowledge_module")),
+        material_id=optional_text(item.get("material_id") or item.get("audio_material_id")),
+        response_mode=item.get("response_mode") or ("written_response" if question_type == "fill" else "choice"),
+        scoring_mode=item.get("scoring_mode") or ("rubric" if question_type == "fill" else "objective"),
+        max_score=float(item.get("max_score", 1)),
+        source_data=dict(item),
     )
 
 
@@ -317,7 +357,10 @@ def normalize_options(value: Any, allow_empty: bool = False) -> list[dict[str, s
             if allow_empty:
                 continue
             raise ValueError("missing_option_text")
-        options.append({"key": option_key.upper(), "text": option_text})
+        normalized_option = {"key": option_key.upper(), "text": option_text}
+        if isinstance(option, dict) and option.get("image"):
+            normalized_option["image"] = str(option["image"])
+        options.append(normalized_option)
     if not options and not allow_empty:
         raise ValueError("invalid_options")
     return options
@@ -398,7 +441,7 @@ def upsert_questions(questions: list[ImportQuestion]) -> tuple[int, int]:
         updated = 0
         with SessionLocal() as db:
             for item in questions:
-                existing = (
+                existing = db.query(Question).filter(Question.bank_id == item.bank_id).first() if item.bank_id else (
                     db.query(Question)
                     .filter(
                         Question.exam_type == item.exam_type,
@@ -411,6 +454,15 @@ def upsert_questions(questions: list[ImportQuestion]) -> tuple[int, int]:
                     .first()
                 )
                 values = {
+                    "bank_id": item.bank_id,
+                    "exam_version": item.exam_version,
+                    "level": item.level,
+                    "knowledge_module": item.knowledge_module,
+                    "material_id": item.material_id,
+                    "response_mode": item.response_mode,
+                    "scoring_mode": item.scoring_mode,
+                    "max_score": item.max_score,
+                    "source_data": item.source_data,
                     "exam_type": item.exam_type,
                     "subject": item.subject,
                     "knowledge_point": item.knowledge_point,

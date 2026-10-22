@@ -2,6 +2,7 @@
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Literal, Optional
+from pathlib import Path
 
 
 class Settings(BaseSettings):
@@ -12,6 +13,8 @@ class Settings(BaseSettings):
 
     # API
     CORS_ORIGINS: str = "*"
+    QUESTION_BANK_ROOT: str = str(Path(__file__).resolve().parents[4] / "original_question_bank")
+    QUESTION_MEDIA_BASE_URL: str = ""
 
     # Database
     MYSQL_HOST: str = "localhost"
@@ -40,7 +43,7 @@ class Settings(BaseSettings):
     # AI
     QWEN_API_KEY: str = ""
     QWEN_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    QWEN_MODEL: str = "qwen-plus-2025-07-28"
+    QWEN_MODEL: str = "qwen3.8-27b"
     QWEN_TEMPERATURE: float = 0.3
     QWEN_MAX_TOKENS: int = 1024
     QWEN_TIMEOUT_SECONDS: int = 45

@@ -26,12 +26,16 @@
           :user-answer="answers[currentIndex] || ''"
           :show-result="!!showResult[currentIndex]"
           :is-favorite="currentQuestion?.isFavorite"
+          :submitting="isSubmitting"
           @select="selectOption"
+          @draft="setDraft"
+          @submit="selectOption"
+          @self-review="submitSelfReview"
           @favorite="toggleFavorite"
         />
         <view v-else class="empty-question">试卷题目加载失败，请返回重新组卷。</view>
 
-        <view class="wrong-reason" v-if="showResult[currentIndex] && !currentCorrect">
+        <view class="wrong-reason" v-if="showResult[currentIndex] && currentWrong">
           <text class="reason-label">这道题为什么错了？</text>
           <view class="reason-tags">
             <view
@@ -85,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { onShareAppMessage } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
 import { confirmAction } from '@/shared/ui/confirm'
@@ -93,9 +97,9 @@ import { useAnswerSession } from '@/features/exam/useAnswerSession'
 
 const {
   examStore, mode, currentIndex, answers, showResult, questions, remainingSeconds,
-  currentQuestion, progressPercent, answeredCount, currentCorrect, currentSelectedReason,
+  currentQuestion, progressPercent, answeredCount, currentCorrect, currentWrong, currentSelectedReason,
   answerSheetItems, wrongReasons, toggleFavorite, selectOption, selectWrongReason,
-  commitElapsedTime, moveTo,
+  commitElapsedTime, moveTo, setDraft, submitSelfReview, isSubmitting,
 } = useAnswerSession()
 const showSheet = ref(false)
 
@@ -108,6 +112,10 @@ const jumpToAndClose = (i: number) => {
 }
 
 const confirmExit = async () => {
+  if (isSubmitting.value) {
+    uni.showToast({ title: '正在保存答案，请稍候', icon: 'none' })
+    return
+  }
   examStore.persistProgress()
   const confirmed = await confirmAction({
     title: '暂时退出',
@@ -129,12 +137,17 @@ const completeExam = () => {
 }
 
 const submitExam = async (forced = false) => {
+  if (isSubmitting.value) {
+    if (forced) watch(isSubmitting, pending => { if (!pending) completeExam() }, { once: true })
+    else uni.showToast({ title: '正在保存答案，请稍候', icon: 'none' })
+    return
+  }
   if (forced) {
     completeExam()
     return
   }
 
-  const answered = Object.keys(answers.value).length
+  const answered = examStore.answeredCount
   const unanswered = questions.value.length - answered
   const confirmed = await confirmAction({
     title: '确认交卷',

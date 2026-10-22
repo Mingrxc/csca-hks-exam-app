@@ -23,6 +23,8 @@
           :user-answer="answers[currentIndex] || ''"
           :show-result="!!showResult[currentIndex]"
           @select="selectOption"
+          @draft="answers[currentIndex] = $event"
+          @submit="selectOption"
         />
         <view v-else class="empty-question">
           {{ isLoading ? '加载错题中...' : '暂无可重做错题' }}
@@ -129,12 +131,15 @@ const selectOption = async (key: string) => {
   isSubmitting.value = true
 
   try {
-    await examApi.submitAnswer({
+    const response = await examApi.submitAnswer({
       paperId: paperId.value,
       questionId: currentQuestion.value.id,
       userAnswer: key,
       timeSpent: commitElapsedTime(),
     })
+    if (response.solution) Object.assign(questions.value[index], toQuestion(response.solution))
+    examStore.markSubmitted(index, response.is_correct)
+    examStore.persistProgress()
     showResult.value[index] = true
   } catch {
     delete answers.value[index]

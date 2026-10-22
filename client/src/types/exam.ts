@@ -8,6 +8,7 @@ export type ExamMode = 'exam' | 'practice'
 export interface OptionItem {
   key: string
   text: string
+  image?: string
 }
 
 export interface Question {
@@ -23,6 +24,30 @@ export interface Question {
   analysis?: string
   wrongCount?: number
   isFavorite?: boolean
+  bankId?: string
+  examVersion?: string
+  level?: string
+  knowledgeModule?: string
+  materialId?: string
+  responseMode?: string
+  scoringMode?: string
+  nativeTask?: string
+  sourceType?: string
+  sourceLanguage?: string
+  targetLanguage?: string
+  stimulusNote?: string
+  termNotes?: Record<string, string>
+  stemImage?: string
+  stemAudio?: string
+  transcript?: string
+  maxScore?: number
+  minimumCharacters?: number
+  responseSeconds?: number
+  gradingKeyPoints?: string[]
+  gradingRubric?: Array<{ dimension: string; max_score: number; criteria: string }>
+  acceptedAnswers?: string[]
+  evaluationStatus?: string
+  selfScore?: number | null
 }
 
 export interface ExamConfig {
@@ -33,6 +58,10 @@ export interface ExamConfig {
   knowledgePoints: string[]
   mode: ExamMode
   timeLimit: number
+  examVersion?: string
+  level?: string
+  subjects?: string[]
+  knowledgeModules?: string[]
 }
 
 export interface PaperStrategyItem {
@@ -44,6 +73,7 @@ export interface PaperStrategyItem {
 }
 
 export interface HistoryPaper {
+  objectiveCount?: number
   id: number
   title: string
   correctRate: number
@@ -58,6 +88,13 @@ export interface ExamResultSummary {
   totalCount: number
   correctRate: number
   timeUsed: string
+  objectiveCount?: number
+  subjectiveCount?: number
+  pendingSelfReview?: number
+  selfScore?: number
+  selfMaxScore?: number
+  subjectiveAnsweredCount?: number
+  unansweredCount?: number
 }
 
 export interface ResultWrongQuestion {
@@ -76,5 +113,8 @@ export interface ResultReviewQuestion {
   userAnswer: string
   correctAnswer: string
   analysis: string
-  correct: boolean
+  correct: boolean | null
+  question?: Question
+  evaluationStatus?: string
+  selfScore?: number | null
 }
