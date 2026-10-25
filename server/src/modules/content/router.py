@@ -1,15 +1,14 @@
 """Home-content API routes."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from src.common.deps import get_current_openid, get_current_user_id
-from src.common.exceptions import AppException
+from src.common.deps import get_admin_openid
 from src.common.response import ApiResponse, success
 from src.config.database import get_db
-from src.config.settings import settings
 from src.modules.content.schemas import (
     ContentDeleteResponse,
+    AnnouncementPage,
     ContentItemCreate,
     ContentItemResponse,
     ContentItemUpdate,
@@ -19,13 +18,21 @@ from src.modules.content.service import get_content as get_content_service
 from src.modules.content.service import list_content_admin as list_content_admin_service
 from src.modules.content.service import list_home_contents as list_home_contents_service
 from src.modules.content.service import save_content as save_content_service
+from src.modules.content.service import list_announcements as list_announcements_service
+from src.modules.content.service import get_announcement as get_announcement_service
 
 router = APIRouter()
 
 
-def require_content_admin(openid: str) -> None:
-    if openid not in settings.content_admin_openids:
-        raise AppException(40341, "没有内容管理权限", status_code=403)
+@router.get("/announcements")
+def list_announcements(page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
+                       db: Session = Depends(get_db)) -> ApiResponse[AnnouncementPage]:
+    return success(list_announcements_service(db, page=page, page_size=page_size))
+
+
+@router.get("/announcements/{content_id}")
+def get_announcement(content_id: int, db: Session = Depends(get_db)) -> ApiResponse[ContentItemResponse]:
+    return success(get_announcement_service(db, content_id))
 
 
 @router.get("/home")
@@ -38,9 +45,8 @@ def list_home_contents(
 @router.get("/list")
 def list_content_admin(
     db: Session = Depends(get_db),
-    openid: str = Depends(get_current_openid),
+    _admin: str = Depends(get_admin_openid),
 ) -> ApiResponse[list[ContentItemResponse]]:
-    require_content_admin(openid)
     return success(list_content_admin_service(db))
 
 
@@ -56,9 +62,8 @@ def get_content(
 def create_content(
     payload: ContentItemCreate,
     db: Session = Depends(get_db),
-    openid: str = Depends(get_current_openid),
+    _admin: str = Depends(get_admin_openid),
 ) -> ApiResponse[ContentItemResponse]:
-    require_content_admin(openid)
     return success(save_content_service(db, payload))
 
 
@@ -67,9 +72,8 @@ def update_content(
     content_id: int,
     payload: ContentItemUpdate,
     db: Session = Depends(get_db),
-    openid: str = Depends(get_current_openid),
+    _admin: str = Depends(get_admin_openid),
 ) -> ApiResponse[ContentItemResponse]:
-    require_content_admin(openid)
     return success(save_content_service(db, payload, content_id))
 
 
@@ -77,7 +81,6 @@ def update_content(
 def remove_content(
     content_id: int,
     db: Session = Depends(get_db),
-    openid: str = Depends(get_current_openid),
+    _admin: str = Depends(get_admin_openid),
 ) -> ApiResponse[ContentDeleteResponse]:
-    require_content_admin(openid)
     return success(delete_content_service(db, content_id))

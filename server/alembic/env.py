@@ -9,6 +9,7 @@ from src.config.database import Base, sync_url
 
 # Register all tables on Base.metadata before Alembic compares schemas.
 from src.modules.content.models import ContentItem  # noqa: F401
+from src.modules.feedback.models import Feedback  # noqa: F401
 from src.modules.favorite.models import Favorite  # noqa: F401
 from src.modules.exam.models import AnswerRecord  # noqa: F401
 from src.modules.question.models import Paper, Question  # noqa: F401

@@ -15,6 +15,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SERVER_ROOT = PROJECT_ROOT / "server"
 
 CHECKS = {
+    "orphan_feedback_user": """
+        SELECT COUNT(*) FROM feedback f
+        LEFT JOIN users u ON u.id = f.user_id
+        WHERE u.id IS NULL
+    """,
     "duplicate_answer_keys": """
         SELECT COUNT(*) FROM (
             SELECT 1 FROM answer_records
@@ -95,6 +100,7 @@ CHECKS = {
 }
 
 EXPECTED_FOREIGN_KEYS = {
+    "fk_feedback_user",
     "fk_papers_user",
     "fk_answer_records_user",
     "fk_answer_records_paper",
@@ -136,6 +142,7 @@ def main() -> int:
                 "favorites",
                 "user_exam_targets",
                 "content_items",
+                "feedback",
             }
             missing = sorted(required - tables)
             if missing:

@@ -27,6 +27,8 @@ class ContentItem(Base):
     body = Column(Text, nullable=False, comment="Body content")
     cover_image = Column(String(512), nullable=True, comment="Cover image URL")
     link_url = Column(String(512), nullable=True, comment="Destination URL")
+    release_version = Column(String(24), nullable=True, comment="App version for update announcements")
+    published_at = Column(DateTime, nullable=True, comment="Publication time in UTC")
     sort_order = Column(Integer, default=0, comment="Display order")
     is_active = Column(
         Integer().with_variant(TINYINT(display_width=1), "mysql"),

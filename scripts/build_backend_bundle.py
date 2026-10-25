@@ -45,11 +45,12 @@ def main() -> None:
             if path.is_file() and path.suffix in {".py", ".mako"}:
                 if "__pycache__" not in path.parts:
                     include(path)
-    for name in ("import_questions.py", "check_database_integrity.py", "reset_database.py", "export_schema.py"):
+    for name in ("import_questions.py", "check_database_integrity.py", "reset_database.py", "export_schema.py", "manage_feedback.py"):
         include(PROJECT / "scripts" / name)
     include(PROJECT / "database" / "schema.sql")
     include(PROJECT / "database" / "README.md")
     include(PROJECT / "docs" / "question-bank-import-contract.md")
+    include(PROJECT / "docs" / "release-1.5.1.md")
     sources = sorted((WORKSPACE / "original_question_bank").rglob("questions.json"))
     for path in sources:
         include(path)
@@ -95,7 +96,7 @@ QWEN_TIMEOUT_SECONDS=45
         "question_count": len(questions),
         "question_counts_by_exam": dict(Counter(q.exam_type for q in questions)),
         "question_source_json_files": len(sources),
-        "alembic_head": "0007_question_bank_v2",
+        "alembic_head": "0008_feedback_announcements",
         "media_files": len(assets),
         "contents": "Backend, migrations, tests, bank tools, source questions, referenced media and sanitized settings templates",
         "excluded": ["real environment files", "credentials", "local user/answer records", "database dumps", "frontend", "dependencies", "unused media binaries", "Git metadata", "caches"],

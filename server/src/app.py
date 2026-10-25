@@ -34,7 +34,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="留学考霸 API",
         description="CSCA & HKS 备考刷题小程序后端服务",
-        version="1.0.0",
+        version="1.5.1",
     )
 
     cors_origins = settings.cors_origins or ["*"]

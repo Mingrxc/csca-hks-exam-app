@@ -14,6 +14,8 @@ CREATE TABLE content_items (
 	body TEXT NOT NULL COMMENT 'Body content',
 	cover_image VARCHAR(512) COMMENT 'Cover image URL',
 	link_url VARCHAR(512) COMMENT 'Destination URL',
+	release_version VARCHAR(24) COMMENT 'App version for update announcements',
+	published_at DATETIME COMMENT 'Publication time in UTC',
 	sort_order INTEGER COMMENT 'Display order',
 	is_active TINYINT(1) COMMENT 'Whether the content is active',
 	created_at DATETIME COMMENT 'Creation time' DEFAULT now(),
@@ -117,6 +119,25 @@ CREATE INDEX idx_favorites_created ON favorites (created_at);
 CREATE INDEX idx_favorites_question ON favorites (question_id);
 
 CREATE INDEX idx_favorites_user ON favorites (user_id);
+
+CREATE TABLE feedback (
+	id INTEGER NOT NULL AUTO_INCREMENT,
+	user_id INTEGER NOT NULL,
+	request_id VARCHAR(64) NOT NULL COMMENT 'Per-user idempotency key',
+	category VARCHAR(24) NOT NULL,
+	content TEXT NOT NULL,
+	app_version VARCHAR(24) NOT NULL,
+	status VARCHAR(16) NOT NULL DEFAULT 'unread',
+	created_at DATETIME NOT NULL,
+	updated_at DATETIME NOT NULL,
+	PRIMARY KEY (id),
+	CONSTRAINT uk_feedback_user_request UNIQUE (user_id, request_id),
+	CONSTRAINT fk_feedback_user FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+)COMMENT='Private user feedback for the operator';
+
+CREATE INDEX idx_feedback_status_created ON feedback (status, created_at);
+
+CREATE INDEX idx_feedback_user_created ON feedback (user_id, created_at);
 
 CREATE TABLE knowledge_stats (
 	id INTEGER NOT NULL COMMENT 'Statistics ID' AUTO_INCREMENT,

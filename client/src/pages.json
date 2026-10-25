@@ -3,7 +3,7 @@
     {
       "path": "pages/index/index",
       "style": {
-      "navigationBarTitleText": "老外1点通"
+        "navigationBarTitleText": "老外1点通"
       }
     },
     {
@@ -78,6 +78,30 @@
       "style": {
         "navigationBarTitleText": "错题重做",
         "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/feedback/index",
+      "style": {
+        "navigationBarTitleText": "用户反馈"
+      }
+    },
+    {
+      "path": "pages/about/index",
+      "style": {
+        "navigationBarTitleText": "关于"
+      }
+    },
+    {
+      "path": "pages/about/announcements",
+      "style": {
+        "navigationBarTitleText": "更新公告"
+      }
+    },
+    {
+      "path": "pages/about/announcement",
+      "style": {
+        "navigationBarTitleText": "公告详情"
       }
     }
   ],

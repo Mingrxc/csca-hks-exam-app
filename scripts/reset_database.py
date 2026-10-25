@@ -73,7 +73,7 @@ def main():
     command.upgrade(Config(str(SERVER / "alembic.ini")), "head")
     inserted, updated = upsert_questions(questions)
     print(json.dumps({"backup": str(backup), "sha256": checksum, "inserted": inserted, "updated": updated,
-                      "alembic_head": "0007_question_bank_v2"}))
+                      "alembic_head": "0008_feedback_announcements"}))
 
 
 if __name__ == "__main__":

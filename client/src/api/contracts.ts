@@ -220,6 +220,8 @@ export interface ApiContentItem {
   body: string
   cover_image?: string
   link_url?: string
+  release_version?: string | null
+  published_at?: string | null
   sort_order: number
   is_active: boolean
   created_at: string

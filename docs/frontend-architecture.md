@@ -91,3 +91,13 @@ Page styles may define layout, but should not introduce a second brand palette o
 ## New bank UI (2026-10-22)
 
 Catalog data drives version, level, subject, module and knowledge-point controls. Oral and oral-translation tasks are deferred. QuestionItem supports audio lifecycle, image stems/options, written drafts, explicit submission and self-review. API media paths resolve through the configured API origin. Result pages reuse QuestionItem for complete material and solution review. Objective accuracy and self-assessed scores are displayed independently. Version2 snapshots avoid restoring stale IDs after the database rebuild.
+
+## Profile support pages (1.5.1)
+
+Profile links to a private text-feedback form and a dedicated About page. About contains only the brand icon/name/version/introduction, announcements and the official privacy-guide link. It does not add contact, feedback or applicability notices.
+
+Feedback drafts and idempotency keys are scoped to the current user; retry/reopen preserves the key, editing changes it, and success clears the draft. Native textarea/button controls retain input on failures and prevent duplicate submission. The success state scrolls back to the top after rendering.
+
+Announcements use public paginated API calls with explicit loading/empty/error/retry states and text-only detail rendering. The existing admin page can edit versioned drafts and publish/withdraw them. `APP_VERSION` reads manifest.versionName so About and feedback metadata match the build.
+
+The privacy link invokes `wx.openPrivacyContract` only on WeChat and shows an appropriate fallback elsewhere; no custom privacy-authorization flow is introduced. See [release-1.5.1.md](release-1.5.1.md).

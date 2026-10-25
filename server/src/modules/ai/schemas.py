@@ -7,24 +7,23 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ChatRole(str, Enum):
-    SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
 
 
 class ChatMessage(BaseModel):
-    role: Literal["system", "user", "assistant"]
-    content: str = Field(min_length=1)
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=12000)
 
 
 class AIChatRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    messages: List[ChatMessage] = Field(default_factory=list)
+    messages: List[ChatMessage] = Field(default_factory=list, max_length=100)
     exam_type: Optional[Literal["CSCA", "HKS"]] = Field(default=None, validation_alias="examType")
-    question: Optional[str] = None
-    topic: Optional[str] = None
-    context: Optional[str] = None
+    question: Optional[str] = Field(default=None, max_length=12000)
+    topic: Optional[str] = Field(default=None, max_length=200)
+    context: Optional[str] = Field(default=None, max_length=12000)
 
 
 class AIChatResponse(BaseModel):

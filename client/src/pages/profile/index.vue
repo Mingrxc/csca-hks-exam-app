@@ -96,6 +96,12 @@
 
     <view class="app-section">
       <view class="menu-grid">
+        <view class="menu-card app-card" @click="goPage('/pages/feedback/index')">
+          <view class="menu-head">
+            <view class="app-icon-badge"><t-icon name="chat" size="28rpx" /></view>
+          </view>
+          <text class="app-card-title">用户反馈</text>
+        </view>
         <view class="menu-card app-card" @click="showAbout">
           <view class="menu-head">
             <view class="app-icon-badge"><t-icon name="info-circle" size="28rpx" /></view>
@@ -279,11 +285,7 @@ const editNickname = () => {
 }
 
 const showAbout = () => {
-  uni.showModal({
-    title: '关于',
-    content: '老外1点通',
-    showCancel: false,
-  })
+  uni.navigateTo({ url: '/pages/about/index' })
 }
 
 const goPage = (url: string) => {

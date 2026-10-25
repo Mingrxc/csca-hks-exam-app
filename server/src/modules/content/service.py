@@ -1,60 +1,48 @@
 """首页内容业务逻辑."""
 
+from datetime import timezone
+
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from src.common.exceptions import AppException
+from src.common.time import utc_now_naive
 from src.modules.content.models import ContentItem
 from src.modules.content.schemas import ContentItemCreate, ContentItemUpdate
 
-DEFAULT_CONTENTS = [
-    {
-        "category": "consulting",
-        "title": "香港院校申请时间线更新",
-        "summary": "本周补录、面试和奖学金节点整理，先看申请截止日期，再确认材料清单。",
-        "body": "整理了最近一周的留学申请节点和材料提醒，适合在刷题间隙快速查看。",
-        "sort_order": 40,
-        "is_active": True,
-    },
-    {
-        "category": "club",
-        "title": "留学生学联招新",
-        "summary": "新学期社团开始招募志愿者，适合想认识同校同学的你。",
-        "body": "社团活动覆盖学习互助、语言交换和升学经验分享，可按兴趣报名。",
-        "sort_order": 35,
-        "is_active": True,
-    },
-    {
-        "category": "ad",
-        "title": "DYH 备考资料包",
-        "summary": "题型速记、错题模板和冲刺计划示例，先占位，后续可在线替换内容。",
-        "body": "这是一个可在线维护的占位内容，后续可以在内容管理页直接改成正式广告或合作资料。",
-        "sort_order": 30,
-        "is_active": True,
-    },
-    {
-        "category": "notice",
-        "title": "模拟考试周提醒",
-        "summary": "建议每周至少完整做一套模拟卷，保留 20 分钟复盘错题。",
-        "body": "固定周末进行模拟考试，能更快看出时间分配和薄弱知识点。",
-        "sort_order": 20,
-        "is_active": True,
-    },
-]
+def published_query(db: Session):
+    return db.query(ContentItem).filter(
+        ContentItem.is_active == 1,
+        or_(ContentItem.published_at.is_(None), ContentItem.published_at <= utc_now_naive()),
+    )
 
 
-def ensure_default_contents(db: Session) -> None:
-    if db.query(ContentItem).count():
-        return
-    for item in DEFAULT_CONTENTS:
-        db.add(ContentItem(**item))
-    db.commit()
+def announcement_query(db: Session):
+    return published_query(db).filter(
+        ContentItem.category == "notice", ContentItem.release_version.is_not(None),
+        ContentItem.published_at.is_not(None),
+    )
+
+
+def list_announcements(db: Session, *, page: int, page_size: int) -> dict:
+    query = announcement_query(db)
+    total = query.count()
+    items = query.order_by(ContentItem.published_at.desc(), ContentItem.id.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    return {"items": [serialize_content(item) for item in items], "total": total,
+            "page": page, "page_size": page_size}
+
+
+def get_announcement(db: Session, content_id: int) -> dict:
+    item = announcement_query(db).filter(ContentItem.id == content_id).first()
+    if not item:
+        raise AppException(40441, "公告不存在或尚未发布", status_code=404)
+    return serialize_content(item)
 
 
 def list_home_contents(db: Session) -> list[dict]:
-    ensure_default_contents(db)
     items = (
-        db.query(ContentItem)
-        .filter(ContentItem.is_active == 1)
+        published_query(db)
+        .filter(ContentItem.release_version.is_(None))
         .order_by(ContentItem.sort_order.desc(), ContentItem.id.desc())
         .all()
     )
@@ -62,13 +50,12 @@ def list_home_contents(db: Session) -> list[dict]:
 
 
 def list_content_admin(db: Session) -> list[dict]:
-    ensure_default_contents(db)
     items = db.query(ContentItem).order_by(ContentItem.sort_order.desc(), ContentItem.id.desc()).all()
     return [serialize_content(item) for item in items]
 
 
 def get_content(db: Session, content_id: int) -> dict:
-    item = db.query(ContentItem).filter(ContentItem.id == content_id).first()
+    item = published_query(db).filter(ContentItem.id == content_id).first()
     if not item:
         raise AppException(40441, "内容不存在", status_code=404)
     return serialize_content(item)
@@ -76,18 +63,24 @@ def get_content(db: Session, content_id: int) -> dict:
 
 def save_content(db: Session, payload: ContentItemCreate | ContentItemUpdate, content_id: int | None = None) -> dict:
     values = payload.model_dump(exclude_unset=True)
+    for field in ("category", "title", "summary", "body", "sort_order", "is_active"):
+        if field in values and values[field] is None:
+            raise AppException(42241, "内容必填字段不能为空", status_code=422)
     if content_id is None:
         item = ContentItem(**values)
         db.add(item)
-        db.commit()
-        db.refresh(item)
-        return serialize_content(item)
-
-    item = db.query(ContentItem).filter(ContentItem.id == content_id).first()
-    if not item:
-        raise AppException(40441, "内容不存在", status_code=404)
-    for key, value in values.items():
-        setattr(item, key, value)
+    else:
+        item = db.query(ContentItem).filter(ContentItem.id == content_id).first()
+        if not item:
+            raise AppException(40441, "内容不存在", status_code=404)
+        for key, value in values.items():
+            setattr(item, key, value)
+    if item.release_version and item.category != "notice":
+        raise AppException(42242, "更新公告请选择通知分类", status_code=422)
+    if item.published_at and item.published_at.tzinfo:
+        item.published_at = item.published_at.astimezone(timezone.utc).replace(tzinfo=None)
+    if item.is_active and not item.published_at:
+        item.published_at = utc_now_naive()
     db.commit()
     db.refresh(item)
     return serialize_content(item)
@@ -111,6 +104,8 @@ def serialize_content(item: ContentItem) -> dict:
         "body": item.body,
         "cover_image": item.cover_image,
         "link_url": item.link_url,
+        "release_version": item.release_version,
+        "published_at": item.published_at.replace(tzinfo=timezone.utc) if item.published_at else None,
         "sort_order": item.sort_order,
         "is_active": bool(item.is_active),
         "created_at": item.created_at,
