@@ -4,11 +4,11 @@
       <view class="question-section app-card app-card-pad">
         <view class="q-header">
           <view class="tag-row">
-            <t-tag theme="primary" variant="light" shape="round" size="small">{{ question.typeLabel }}</t-tag>
-            <t-tag theme="default" variant="light" shape="round" size="small" :class="question.difficulty">{{ question.diffLabel }}</t-tag>
-            <t-tag theme="warning" variant="light" shape="round" size="small">{{ domainLabel }}·{{ domainValue }}</t-tag>
+            <t-tag theme="primary" variant="light" shape="round" size="small">{{ t(question.typeLabel) }}</t-tag>
+            <t-tag theme="default" variant="light" shape="round" size="small" :class="question.difficulty">{{ t(question.diffLabel) }}</t-tag>
+            <t-tag theme="warning" variant="light" shape="round" size="small">{{ t(domainLabel) }}·{{ t(domainValue) }}</t-tag>
           </view>
-          <t-tag theme="danger" variant="light" shape="round" size="small">错误 {{ question.wrongCount }} 次</t-tag>
+          <t-tag theme="danger" variant="light" shape="round" size="small">{{ t('错误 {n} 次', { n: question.wrongCount }) }}</t-tag>
         </view>
 
         <text class="q-stem">{{ question.stem }}</text>
@@ -36,12 +36,12 @@
     <view class="app-section">
       <view class="analysis-section app-card app-card-pad">
         <view class="analysis-header">
-          <text class="analysis-title">题目解析</text>
+          <text class="analysis-title">{{ t("题目解析") }}</text>
         </view>
         <text class="analysis-text">{{ question.analysis }}</text>
 
         <view class="confusion-box" v-if="question.confusion">
-          <text class="confusion-title">易混选项辨析</text>
+          <text class="confusion-title">{{ t("易混选项辨析") }}</text>
           <text class="confusion-text">{{ question.confusion }}</text>
         </view>
       </view>
@@ -50,42 +50,45 @@
     <view class="app-section">
       <view class="related-section">
         <view class="related-header">
-          <text class="app-section-title">举一反三</text>
-          <text class="app-section-subtitle">以下题目基于相同{{ domainLabel }}「{{ domainValue }}」推荐。</text>
+          <text class="app-section-title">{{ t("举一反三") }}</text>
+          <text class="app-section-subtitle">{{ t('以下题目基于相同{label}「{value}」推荐。', { label: t(domainLabel), value: t(domainValue) }) }}</text>
         </view>
-        <c-app-state v-if="relatedLoading" compact state="loading" title="正在寻找相关练习" />
-        <c-app-state v-else-if="relatedError" compact state="error" title="相关练习暂时无法加载" @retry="loadRelated" />
+        <c-app-state v-if="relatedLoading" compact state="loading" :title="t('正在寻找相关练习')" />
+        <c-app-state v-else-if="relatedError" compact state="error" :title="t('相关练习暂时无法加载')" @retry="loadRelated" />
         <view v-else class="related-list">
           <view class="related-item app-card" v-for="item in relatedQuestions" :key="item.id" @click="goRelated">
             <view class="related-tags">
-              <t-tag theme="primary" variant="light" shape="round" size="small">{{ item.diffLabel }}</t-tag>
-              <t-tag theme="default" variant="light" shape="round" size="small">{{ item.typeLabel }}</t-tag>
+              <t-tag theme="primary" variant="light" shape="round" size="small">{{ t(item.diffLabel) }}</t-tag>
+              <t-tag theme="default" variant="light" shape="round" size="small">{{ t(item.typeLabel) }}</t-tag>
             </view>
             <text class="related-stem">{{ item.stem }}</text>
-            <text class="related-action">去练习 ›</text>
+            <text class="related-action">{{ t("去练习 ›") }}</text>
           </view>
         </view>
-        <c-app-state v-if="!relatedLoading && !relatedError && !relatedQuestions.length" compact state="empty" title="暂时没有相关练习" />
+        <c-app-state v-if="!relatedLoading && !relatedError && !relatedQuestions.length" compact state="empty" :title="t('暂时没有相关练习')" />
       </view>
     </view>
 
     <view class="actions">
       <t-button theme="primary" block shape="round" @click="markMastered">
-        {{ question.mastered ? '已掌握' : '标记为已掌握' }}
+        {{ question.mastered ? t("已掌握") : t("标记为已掌握") }}
       </t-button>
-      <t-button theme="default" variant="outline" block shape="round" @click="sendToAI">发给 AI</t-button>
-      <t-button theme="default" variant="outline" block shape="round" @click="goRedo">重做错题</t-button>
+      <t-button theme="default" variant="outline" block shape="round" @click="sendToAI">{{ t("发给 AI") }}</t-button>
+      <t-button theme="default" variant="outline" block shape="round" @click="goRedo">{{ t("重做错题") }}</t-button>
     </view>
   </view>
   <view class="app-shell" v-else>
     <view class="app-section">
-      <c-app-state v-if="isLoading" state="loading" title="正在加载错题详情" />
-      <c-app-state v-else state="error" title="错题详情暂时无法加载" :description="loadError" @retry="loadDetail(detailId, detailQuestionId)" />
+      <c-app-state v-if="isLoading" state="loading" :title="t('正在加载错题详情')" />
+      <c-app-state v-else state="error" :title="t('错题详情暂时无法加载')" :description="loadError" @retry="loadDetail(detailId, detailQuestionId)" />
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { showToast } from '@/i18n/ui'
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { computed, ref } from 'vue'
 import { onShareAppMessage, onLoad } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
@@ -93,6 +96,8 @@ import { wrongBookApi } from '@/features/wrongbook/api'
 import { toRelatedQuestion, toWrongBookDetail } from '@/api/contracts'
 import { getExamLabel, getQuestionDomain, getQuestionDomainLabel } from '@/constants/exam'
 import type { RelatedQuestion, WrongBookDetail } from '@/types/wrongbook'
+
+usePageI18n('pages/wrongbook/detail')
 
 const question = ref<WrongBookDetail | null>(null)
 const wrongBookId = ref<number | null>(null)
@@ -155,7 +160,7 @@ onLoad((query) => {
   }
   isLoading.value = false
   loadError.value = '未找到这道错题的记录。'
-  uni.showToast({ title: '未找到错题记录', icon: 'none' })
+  showToast({ title: '未找到错题记录', icon: 'none' })
   setTimeout(() => uni.navigateBack(), 300)
 })
 
@@ -164,7 +169,7 @@ const markMastered = async () => {
   try {
     const payload = await wrongBookApi.markMastered(wrongBookId.value)
     question.value.mastered = payload.is_mastered
-    uni.showToast({ title: payload.is_mastered ? '已标记为掌握' : '已取消标记', icon: 'success' })
+    showToast({ title: payload.is_mastered ? '已标记为掌握' : '已取消标记', icon: 'success' })
   } catch {
     // The shared request layer already displays the error message.
   }
@@ -187,14 +192,14 @@ const sendToAI = () => {
   if (!question.value) return
   uni.setStorageSync('ai_prefill', {
     content: question.value.stem,
-    topic: `${getExamLabel(question.value.examType)} 错题咨询`,
+    topic: t('{exam} 错题咨询', { exam: getExamLabel(question.value.examType) }),
     context: [
-      `考试类型：${getExamLabel(question.value.examType)}`,
+      t('考试类型：{value}', { value: getExamLabel(question.value.examType) }),
       `${domainLabel.value}：${domainValue.value}`,
-      `我的答案：${question.value.myAnswer || '未作答'}`,
-      `正确答案：${question.value.answer || '暂无'}`,
-      question.value.analysis ? `解析：${question.value.analysis}` : '',
-      question.value.confusion ? `易混选项：${question.value.confusion}` : '',
+      t('我的答案：{value}', { value: question.value.myAnswer || '未作答' }),
+      t('正确答案：{value}', { value: question.value.answer || '暂无' }),
+      question.value.analysis ? t('解析：{value}', { value: question.value.analysis }) : '',
+      question.value.confusion ? t('易混选项：{value}', { value: question.value.confusion }) : '',
     ]
       .filter(Boolean)
       .join('\n'),

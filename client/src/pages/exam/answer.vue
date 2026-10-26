@@ -2,14 +2,14 @@
   <view class="page app-page">
     <view class="top-bar app-card">
       <t-button class="top-action" theme="default" variant="text" size="small" shape="round" @click="confirmExit">
-        退出
+        {{ t("退出") }}
       </t-button>
       <view class="progress-info">
         <text class="question-index">{{ currentIndex + 1 }} / {{ questions.length }}</text>
       </view>
       <c-countdown-bar v-if="mode === 'exam'" :seconds="remainingSeconds" @timeout="submitExam(true)" />
       <t-tag class="mode-badge" :theme="mode === 'exam' ? 'danger' : 'success'" variant="light" shape="round">
-        {{ mode === 'exam' ? '考试模式' : '练习模式' }}
+        {{ mode === 'exam' ? t("考试模式") : t("练习模式") }}
       </t-tag>
     </view>
 
@@ -33,10 +33,10 @@
           @self-review="submitSelfReview"
           @favorite="toggleFavorite"
         />
-        <view v-else class="empty-question">试卷题目加载失败，请返回重新组卷。</view>
+        <view v-else class="empty-question">{{ t("试卷题目加载失败，请返回重新组卷。") }}</view>
 
         <view class="wrong-reason" v-if="showResult[currentIndex] && currentWrong">
-          <text class="reason-label">这道题为什么错了？</text>
+          <text class="reason-label">{{ t("这道题为什么错了？") }}</text>
           <view class="reason-tags">
             <view
               class="reason-tag"
@@ -45,7 +45,7 @@
               :key="r"
               @click="selectWrongReason(r)"
             >
-              {{ r }}
+              {{ t(r) }}
             </view>
           </view>
         </view>
@@ -62,17 +62,17 @@
           @jump="jumpToAndClose"
         />
         <t-button class="sheet-close" block theme="default" variant="outline" shape="round" @click="showSheet = false">
-          关闭
+          {{ t("关闭") }}
         </t-button>
       </view>
     </view>
 
     <view class="bottom-bar app-card">
       <t-button class="bar-btn" theme="default" variant="outline" shape="round" @click="showSheet = true">
-        答题卡
+        {{ t("答题卡") }}
       </t-button>
       <t-button class="bar-btn" theme="default" variant="outline" shape="round" :disabled="currentIndex === 0" @click="prevQuestion">
-        上一题
+        {{ t("上一题") }}
       </t-button>
       <t-button
         v-if="currentIndex < questions.length - 1"
@@ -81,19 +81,24 @@
         shape="round"
         @click="nextQuestion"
       >
-        下一题
+        {{ t("下一题") }}
       </t-button>
-      <t-button v-else class="bar-btn" theme="primary" shape="round" @click="submitExam()">交卷</t-button>
+      <t-button v-else class="bar-btn" theme="primary" shape="round" @click="submitExam()">{{ t("交卷") }}</t-button>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { showToast } from '@/i18n/ui'
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { ref, onMounted, watch } from 'vue'
 import { onShareAppMessage } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
 import { confirmAction } from '@/shared/ui/confirm'
 import { useAnswerSession } from '@/features/exam/useAnswerSession'
+
+usePageI18n('pages/exam/answer')
 
 const {
   examStore, mode, currentIndex, answers, showResult, questions, remainingSeconds,
@@ -113,7 +118,7 @@ const jumpToAndClose = (i: number) => {
 
 const confirmExit = async () => {
   if (isSubmitting.value) {
-    uni.showToast({ title: '正在保存答案，请稍候', icon: 'none' })
+    showToast({ title: '正在保存答案，请稍候', icon: 'none' })
     return
   }
   examStore.persistProgress()
@@ -127,7 +132,7 @@ const confirmExit = async () => {
 
 const completeExam = () => {
   if (!examStore.paperId) {
-    uni.showToast({ title: '试卷信息已失效，请重新组卷', icon: 'none' })
+    showToast({ title: '试卷信息已失效，请重新组卷', icon: 'none' })
     uni.navigateBack()
     return
   }
@@ -139,7 +144,7 @@ const completeExam = () => {
 const submitExam = async (forced = false) => {
   if (isSubmitting.value) {
     if (forced) watch(isSubmitting, pending => { if (!pending) completeExam() }, { once: true })
-    else uni.showToast({ title: '正在保存答案，请稍候', icon: 'none' })
+    else showToast({ title: '正在保存答案，请稍候', icon: 'none' })
     return
   }
   if (forced) {
@@ -151,19 +156,19 @@ const submitExam = async (forced = false) => {
   const unanswered = questions.value.length - answered
   const confirmed = await confirmAction({
     title: '确认交卷',
-    content: unanswered > 0 ? `还有 ${unanswered} 题未作答，确定交卷吗？` : '已完成全部题目，确定交卷吗？',
+    content: unanswered > 0 ? t('还有 {n} 题未作答，确定交卷吗？', { n: unanswered }) : '已完成全部题目，确定交卷吗？',
   })
   if (confirmed) completeExam()
 }
 
 if (!examStore.paperId || questions.value.length === 0) {
-  uni.showToast({ title: '请先完成组卷', icon: 'none' })
+  showToast({ title: '请先完成组卷', icon: 'none' })
   setTimeout(() => uni.navigateBack(), 300)
 }
 
 onMounted(() => {
   if (examStore.restoredFromStorage) {
-    uni.showToast({ title: '已恢复上次答题进度', icon: 'none' })
+    showToast({ title: '已恢复上次答题进度', icon: 'none' })
     examStore.acknowledgeRestore()
   }
 })

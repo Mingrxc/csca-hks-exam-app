@@ -1,3 +1,5 @@
+import { showActionSheet } from '@/i18n/ui'
+import { t } from '@/i18n'
 import { getExamLabel } from '@/constants/exam'
 import { useUserStore } from '@/stores/user'
 import type { ExamType, PaperStrategy } from '@/types/exam'
@@ -13,8 +15,8 @@ export function useExamNavigation() {
 
     // A paper has one exam type; choosing this session does not change study goals.
     const exams: ExamType[] = ['HKS', 'CSCA']
-    uni.showActionSheet({
-      itemList: exams.map((exam) => `${getExamLabel(exam)} ${action}`),
+    showActionSheet({
+      itemList: exams.map((exam) => `${getExamLabel(exam)} ${t(action)}`),
       success: ({ tapIndex }) => {
         const exam = exams[tapIndex]
         if (exam) open(exam)

@@ -1,3 +1,4 @@
+import { showToast, showLoading } from '@/i18n/ui'
 import type { ApiUser } from './contracts'
 
 const DEFAULT_BASE_URL = 'http://127.0.0.1:8000/api/v1'
@@ -153,7 +154,7 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
 
   return new Promise((resolve, reject) => {
     if (options.showLoading !== false) {
-      uni.showLoading({ title: '加载中...', mask: true })
+      showLoading({ title: '加载中...', mask: true })
     }
 
     const send = (token: string, allowAuthRetry: boolean, networkRetries: number) => {
@@ -195,7 +196,7 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
             uni.removeStorageSync('token')
             error.message = '登录已失效，请重试'
           }
-          uni.showToast({ title: error.message, icon: 'none' })
+          showToast({ title: error.message, icon: 'none' })
           reject(error)
         },
         fail: (rawError) => {
@@ -206,7 +207,7 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
           finishLoading()
           const error = normalizeNetworkError(rawError, requestId)
           console.error('[request fail]', method, options.url, requestId, error)
-          uni.showToast({ title: error.message, icon: 'none' })
+          showToast({ title: error.message, icon: 'none' })
           reject(error)
         },
       })

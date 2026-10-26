@@ -1,29 +1,10 @@
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
-const vm = require('node:vm')
 const test = require('node:test')
 const vue = require('vue')
-const { parse, compileScript } = require('@vue/compiler-sfc')
-const { transformSync } = require('esbuild')
-const root = path.join(__dirname, '../src')
+const { createLoader } = require('./helpers/load-source.cjs')
 
 function load(file, mocks = {}, globals = {}) {
-  const filename = path.join(root, file)
-  let source = fs.readFileSync(filename, 'utf8')
-  if (file.endsWith('.vue')) source = compileScript(parse(source, { filename }).descriptor, { id: 'bank-test' }).content
-  const { code } = transformSync(source, { loader: 'ts', format: 'cjs', define: { 'import.meta.env': JSON.stringify({ PROD: false, VITE_API_BASE_URL: 'https://api.example.com/api/v1' }) } })
-  const module = { exports: {} }
-  vm.runInNewContext(code, { module, exports: module.exports, console, Date, setTimeout, ...globals,
-    require(name) {
-      if (name in mocks) return mocks[name]
-      if (name === 'vue') return vue
-      if (name.startsWith('@/')) return load(name.slice(2) + '.ts', mocks, globals)
-      if (name.startsWith('.')) return load(path.relative(root, path.resolve(path.dirname(filename), name)) + '.ts', mocks, globals)
-      throw new Error('Unexpected import ' + name)
-    },
-  }, { filename })
-  return module.exports
+  return createLoader(mocks, globals)(file)
 }
 
 test('question mapping preserves media, task, level and scoring metadata', () => {

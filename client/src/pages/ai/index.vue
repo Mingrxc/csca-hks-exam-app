@@ -2,35 +2,35 @@
   <view class="ai-page app-shell">
     <view v-if="historyOpen" class="history-mask" @click="historyOpen = false"></view>
     <view v-show="historyOpen" class="history-drawer" :class="{ open: historyOpen }">
-      <view class="history-head"><text class="history-title">历史问答</text><t-button theme="default" variant="text" size="small" :disabled="sending" @click="clearCurrentSession">新建</t-button><button class="icon-button" aria-label="关闭历史问答" @click="historyOpen = false"><t-icon name="close" size="30rpx" /></button></view>
+      <view class="history-head"><text class="history-title">{{ t("历史问答") }}</text><t-button theme="default" variant="text" size="small" :disabled="sending" @click="clearCurrentSession">{{ t("新建") }}</t-button><button class="icon-button" :aria-label="t('关闭历史问答')" @click="historyOpen = false"><t-icon name="close" size="30rpx" /></button></view>
       <scroll-view class="history-list" scroll-y>
         <button v-for="session in sessions" :key="session.id" class="history-item" :class="{ active: session.id === currentSessionId }" :disabled="sending" @click="switchSession(session.id)">
-          <text class="history-item-title">{{ session.title }}</text><view class="history-item-meta"><text>{{ session.messages.length }} 条消息</text><text>{{ formatTimeLabel(session.updatedAt) }}</text></view>
+          <text class="history-item-title">{{ session.title === '新会话' ? t('新会话') : session.title }}</text><view class="history-item-meta"><text>{{ t('{n} 条消息', { n: session.messages.length }) }}</text><text>{{ formatTimeLabel(session.updatedAt) }}</text></view>
         </button>
       </scroll-view>
     </view>
 
     <view class="chat-shell">
       <view class="chat-head">
-        <button class="icon-button" aria-label="历史问答" @click="historyOpen = true"><t-icon name="menu" size="34rpx" /></button>
-        <view class="chat-heading"><text class="chat-title">学习 AI 助手</text><text class="chat-subtitle">{{ getExamLabel(activeExamType) }} · 题目讲解与复习建议</text></view>
-        <button class="icon-button" aria-label="新建会话" :disabled="sending" @click="clearCurrentSession"><t-icon name="edit-1" size="34rpx" /></button>
+        <button class="icon-button" :aria-label="t('历史问答')" @click="historyOpen = true"><t-icon name="menu" size="34rpx" /></button>
+        <view class="chat-heading"><text class="chat-title">{{ t("学习 AI 助手") }}</text><text class="chat-subtitle">{{ getExamLabel(activeExamType) }} {{ t("· 题目讲解与复习建议") }}</text></view>
+        <button class="icon-button" :aria-label="t('新建会话')" :disabled="sending" @click="clearCurrentSession"><t-icon name="edit-1" size="34rpx" /></button>
       </view>
 
       <scroll-view class="chat-list" scroll-y :scroll-into-view="lastMessageId">
         <view v-if="currentMessages.length === 0" class="empty-state">
-          <view class="welcome-icon"><t-icon name="chat" size="52rpx" /></view><text class="welcome-title">一起把问题想明白</text><text class="welcome-desc">贴上题目和你的困惑，从思路讲起。</text>
-          <view class="suggestion-list"><button v-for="item in suggestions" :key="item.key" class="suggestion-chip" @click="useSuggestion(item)"><view><text class="suggestion-title">{{ item.title }}</text><text class="suggestion-desc">{{ item.desc }}</text></view><t-icon name="arrow-right" size="28rpx" /></button></view>
+          <view class="welcome-icon"><t-icon name="chat" size="52rpx" /></view><text class="welcome-title">{{ t("一起把问题想明白") }}</text><text class="welcome-desc">{{ t("贴上题目和你的困惑，从思路讲起。") }}</text>
+          <view class="suggestion-list"><button v-for="item in suggestions" :key="item.key" class="suggestion-chip" @click="useSuggestion(item)"><view><text class="suggestion-title">{{ t(item.title) }}</text><text class="suggestion-desc">{{ t(item.desc) }}</text></view><t-icon name="arrow-right" size="28rpx" /></button></view>
         </view>
         <view v-for="(message, index) in currentMessages" :id="'message-' + index" :key="currentSessionId + '-' + index" class="message-row" :class="message.role">
-          <view class="message-avatar" :class="message.role">{{ message.role === 'assistant' ? 'AI' : '我' }}</view>
-          <view class="message-bubble"><view class="message-head"><text class="message-role">{{ message.role === 'assistant' ? 'AI 助手' : userStore.userInfo.nickname || '我' }}</text><text class="message-time">{{ formatTimeLabel(message.createdAt) }}</text></view><text class="message-content" selectable>{{ message.content }}</text></view>
+          <view class="message-avatar" :class="message.role">{{ message.role === 'assistant' ? 'AI' : t("我") }}</view>
+          <view class="message-bubble"><view class="message-head"><text class="message-role">{{ message.role === 'assistant' ? t("AI 助手") : userStore.userInfo.nickname || t("我") }}</text><text class="message-time">{{ formatTimeLabel(message.createdAt) }}</text></view><text class="message-content" selectable>{{ message.content }}</text></view>
         </view>
-        <view v-if="sending" class="message-row assistant"><view class="message-avatar assistant">AI</view><view class="message-bubble"><text class="message-content typing">正在整理思路…</text></view></view>
+        <view v-if="sending" class="message-row assistant"><view class="message-avatar assistant">AI</view><view class="message-bubble"><text class="message-content typing">{{ t("正在整理思路…") }}</text></view></view>
       </scroll-view>
 
       <view class="composer">
-        <view v-if="contextDraft" class="attachment-row"><view class="attachment-chip"><t-icon name="book" size="24rpx" /><text>已带上题目上下文</text><button class="attachment-close" aria-label="移除上下文" @click="contextDraft = ''"><t-icon name="close" size="22rpx" /></button></view></view>
+        <view v-if="contextDraft" class="attachment-row"><view class="attachment-chip"><t-icon name="book" size="24rpx" /><text>{{ t("已带上题目上下文") }}</text><button class="attachment-close" :aria-label="t('移除上下文')" @click="contextDraft = ''"><t-icon name="close" size="22rpx" /></button></view></view>
         <view class="composer-input-bar">
           <view class="composer-field">
             <textarea
@@ -42,22 +42,24 @@
               confirm-type="send"
               :show-confirm-bar="false"
               :cursor-spacing="20"
-              aria-label="输入题目或你的困惑"
-              placeholder="输入题目或你的困惑"
+              :aria-label="t('输入题目或你的困惑')"
+              :placeholder="t('输入题目或你的困惑')"
               placeholder-style="color: #857970"
               @input="onDraftInput"
               @confirm="onDraftConfirm"
             />
           </view>
-          <button class="composer-send" aria-label="发送消息" :loading="sending" :disabled="!canSend || sending" @tap="send">{{ sending ? '发送中' : '发送' }}</button>
+          <button class="composer-send" :aria-label="t('发送消息')" :loading="sending" :disabled="!canSend || sending" @tap="send">{{ sending ? t("发送中") : t("发送") }}</button>
         </view>
-        <text class="composer-hint">结合题目与解析，理解每一步思路</text>
+        <text class="composer-hint">{{ t("结合题目与解析，理解每一步思路") }}</text>
       </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { computed, onMounted, ref } from 'vue'
 import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
@@ -65,6 +67,8 @@ import { aiApi } from '@/features/ai/api'
 import { useUserStore } from '@/stores/user'
 import { getExamLabel } from '@/constants/exam'
 import type { ExamType } from '@/types/exam'
+
+usePageI18n('pages/ai/index')
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -213,7 +217,7 @@ function appendPrefill(payload: PrefillPayload | string) {
   if (payload.examType === 'CSCA' || payload.examType === 'HKS') {
     activeExamType.value = payload.examType
   }
-  const parts = [payload.topic ? `主题：${payload.topic}` : '', payload.content || '', payload.context || '']
+  const parts = [payload.topic ? t('主题：{value}', { value: payload.topic }) : '', payload.content || '', payload.context || '']
     .filter(Boolean)
     .join('\n\n')
     .trim()
@@ -230,18 +234,18 @@ function consumePrefill() {
 function useSuggestion(item: (typeof suggestions)[number]) {
   if (item.key === 's1') {
     activeExamType.value = userStore.primaryExam
-    draft.value = '帮我安排一个循序渐进的备考计划，先问清楚我的目标和可用时间。'
-    contextDraft.value = '我希望把刷题、错题复习和模拟练习安排到每天。'
+    draft.value = t('帮我安排一个循序渐进的备考计划，先问清楚我的目标和可用时间。')
+    contextDraft.value = t('我希望把刷题、错题复习和模拟练习安排到每天。')
     return
   }
   if (item.key === 's2') {
     activeExamType.value = userStore.primaryExam
-    draft.value = '这道题我卡住了，请直接讲解思路和判断依据。'
+    draft.value = t('这道题我卡住了，请直接讲解思路和判断依据。')
     contextDraft.value = ''
     return
   }
   activeExamType.value = userStore.primaryExam
-  draft.value = '这道题我做错了，帮我整理一下错因和复盘方法。'
+  draft.value = t('这道题我做错了，帮我整理一下错因和复盘方法。')
   contextDraft.value = ''
 }
 
@@ -294,7 +298,7 @@ async function send() {
     })
   } catch {
     updateCurrentSession((session) => {
-      session.messages.push({ role: 'assistant', content: '这次回复没有成功送达，请稍后再试。', createdAt: Date.now() })
+      session.messages.push({ role: 'assistant', content: t('这次回复没有成功送达，请稍后再试。'), createdAt: Date.now() })
     })
   } finally {
     sending.value = false

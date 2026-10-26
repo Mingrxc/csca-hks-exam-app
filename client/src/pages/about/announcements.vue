@@ -1,29 +1,33 @@
 <template>
   <view class="page app-shell">
     <view class="app-section heading">
-      <text class="app-section-title">每一点进步，都在这里</text>
-      <text class="app-section-subtitle">查看新功能、体验优化与修复记录</text>
+      <text class="app-section-title">{{ t("每一点进步，都在这里") }}</text>
+      <text class="app-section-subtitle">{{ t("查看新功能、体验优化与修复记录") }}</text>
     </view>
     <view class="app-section">
-      <view v-if="loading && !items.length" class="app-card"><c-app-state state="loading" title="正在加载更新公告" /></view>
-      <view v-else-if="!error && !items.length" class="app-card"><c-app-state state="empty" title="暂无更新公告" description="新的更新消息会在这里与你见面。" /></view>
+      <view v-if="loading && !items.length" class="app-card"><c-app-state state="loading" :title="t('正在加载更新公告')" /></view>
+      <view v-else-if="!error && !items.length" class="app-card"><c-app-state state="empty" :title="t('暂无更新公告')" :description="t('新的更新消息会在这里与你见面。')" /></view>
       <view v-for="item in items" :key="item.id" class="announcement-card app-card" hover-class="card-pressed" @tap="openAnnouncement(item.id)">
         <view class="announcement-meta"><text class="version-tag">v{{ item.release_version }}</text><text>{{ formatReleaseDate(item.published_at) }}</text></view>
         <view class="announcement-heading"><text class="announcement-title">{{ item.title }}</text><t-icon name="chevron-right" size="30rpx" /></view>
         <text class="announcement-summary">{{ item.summary }}</text>
       </view>
-      <view v-if="error" class="app-card"><c-app-state compact state="error" title="公告暂时无法加载" @retry="retry" /></view>
-      <button v-else-if="hasMore" class="load-more" :loading="loading" :disabled="loading" @tap="loadMore">{{ loading ? '正在加载' : '查看更多' }}</button>
+      <view v-if="error" class="app-card"><c-app-state compact state="error" :title="t('公告暂时无法加载')" @retry="retry" /></view>
+      <button v-else-if="hasMore" class="load-more" :loading="loading" :disabled="loading" @tap="loadMore">{{ loading ? t("正在加载") : t("查看更多") }}</button>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { computed, ref } from 'vue'
 import { onLoad, onReachBottom } from '@dcloudio/uni-app'
 import { contentApi } from '@/features/content/api'
 import { formatReleaseDate } from '@/features/content/date'
 import type { ApiContentItem } from '@/api/contracts'
+
+usePageI18n('pages/about/announcements')
 
 const items = ref<ApiContentItem[]>([])
 const loading = ref(false)

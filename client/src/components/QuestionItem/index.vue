@@ -2,23 +2,23 @@
   <view class="question-item">
     <view class="q-header">
       <view class="q-index-wrap">
-        <text class="q-index">第 {{ index + 1 }} 题</text>
-        <text class="q-index-sub">{{ getExamLabel(question.examType) }} {{ question.level ? question.level + '级' : '' }}</text>
+        <text class="q-index">{{ t('第 {n} 题', { n: index + 1 }) }}</text>
+        <text class="q-index-sub">{{ getExamLabel(question.examType) }} {{ question.level ? levelLabel(question.level) : '' }}</text>
         <text v-if="question.bankId" class="q-index-sub">{{ question.bankId }}</text>
       </view>
       <view class="q-tags">
-        <t-tag theme="primary" variant="light" shape="round" size="small">{{ question.nativeTask || typeLabel }}</t-tag>
-        <t-tag theme="default" variant="light" shape="round" size="small">{{ diffLabel }}</t-tag>
-        <t-tag v-if="question.sourceType" theme="default" variant="light" size="small">{{ question.sourceType }}</t-tag>
-        <t-button v-if="!readonly" theme="default" variant="text" size="small" @click.stop="$emit('favorite')">{{ isFavorite ? '已收藏' : '收藏' }}</t-button>
+        <t-tag theme="primary" variant="light" shape="round" size="small">{{ t(question.nativeTask || typeLabel) }}</t-tag>
+        <t-tag theme="default" variant="light" shape="round" size="small">{{ t(diffLabel) }}</t-tag>
+        <t-tag v-if="question.sourceType" theme="default" variant="light" size="small">{{ t(question.sourceType) }}</t-tag>
+        <t-button v-if="!readonly" theme="default" variant="text" size="small" @click.stop="$emit('favorite')">{{ isFavorite ? t("已收藏") : t("收藏") }}</t-button>
       </view>
     </view>
-    <text class="q-index-sub">{{ domainLabel }} · {{ domainValue }}</text>
-    <text v-if="question.sourceLanguage && question.targetLanguage" class="q-index-sub">翻译方向：{{ languageLabel(question.sourceLanguage) }} → {{ languageLabel(question.targetLanguage) }}</text>
+    <text class="q-index-sub">{{ t(domainLabel) }} · {{ t(domainValue) }}</text>
+    <text v-if="question.sourceLanguage && question.targetLanguage" class="q-index-sub">{{ t("翻译方向：") }}{{ t(languageLabel(question.sourceLanguage)) }} → {{ t(languageLabel(question.targetLanguage)) }}</text>
     <text v-if="question.stimulusNote" class="q-index-sub">{{ question.stimulusNote }}</text>
     <view v-if="question.stemAudio" class="media-card">
-      <button class="audio-button" @tap="toggleAudio">{{ audioError ? '重试播放' : playing ? '暂停音频' : '播放音频' }}</button>
-      <text>{{ audioError || (clock(audioPosition) + ' / ' + clock(audioDuration)) }}</text>
+      <button class="audio-button" @tap="toggleAudio">{{ audioError ? t("重试播放") : playing ? t("暂停音频") : t("播放音频") }}</button>
+      <text>{{ t(audioError) || (clock(audioPosition) + ' / ' + clock(audioDuration)) }}</text>
     </view>
     <view class="q-stem"><text user-select>{{ question.stem }}</text></view>
     <image v-if="question.stemImage" class="stem-image" :src="question.stemImage" mode="widthFix" @tap="preview(question.stemImage)" />
@@ -27,7 +27,7 @@
         <view class="option-key">{{ opt.key }}</view>
         <view class="option-body">
           <image v-if="opt.image" class="option-image" :src="opt.image" mode="aspectFit" />
-          <text v-if="opt.image" class="q-index-sub" @tap.stop="preview(opt.image)">查看大图</text>
+          <text v-if="opt.image" class="q-index-sub" @tap.stop="preview(opt.image)">{{ t("查看大图") }}</text>
           <text v-else class="option-text">{{ opt.text }}</text>
         </view>
         <text class="option-icon" v-if="showResult && opt.key === question.answer">✓</text>
@@ -35,27 +35,27 @@
       </view>
     </view>
     <view v-else-if="!readonly" class="written-answer">
-      <text v-if="question.minimumCharacters" class="q-index-sub">不少于 {{ question.minimumCharacters }} 字</text>
-      <textarea class="response-input" :value="userAnswer" :maxlength="20000" :disabled="showResult || submitting" :auto-height="true" placeholder="写下你的答案或思路" @input="$emit('draft', $event.detail.value)" />
-      <text class="q-index-sub">已输入 {{ userAnswer.length }} 字</text>
-      <button v-if="!showResult" class="submit-answer" :disabled="!userAnswer.trim() || submitting" @tap="$emit('submit', userAnswer)">{{ submitting ? '正在保存…' : '提交答案' }}</button>
+      <text v-if="question.minimumCharacters" class="q-index-sub">{{ t('不少于 {n} 字', { n: question.minimumCharacters }) }}</text>
+      <textarea class="response-input" :value="userAnswer" :maxlength="20000" :disabled="showResult || submitting" :auto-height="true" :placeholder="t('写下你的答案或思路')" @input="$emit('draft', $event.detail.value)" />
+      <text class="q-index-sub">{{ t('已输入 {n} 字', { n: userAnswer.length }) }}</text>
+      <button v-if="!showResult" class="submit-answer" :disabled="!userAnswer.trim() || submitting" @tap="$emit('submit', userAnswer)">{{ submitting ? t("正在保存…") : t("提交答案") }}</button>
     </view>
-    <view v-if="readonly && userAnswer" class="media-card"><text user-select>你的作答：{{ userAnswer }}</text></view>
+    <view v-if="readonly && userAnswer" class="media-card"><text user-select>{{ t("你的作答：") }}{{ userAnswer }}</text></view>
     <template v-if="showResult">
-      <view v-if="!question.options.length" class="analysis"><text class="analysis-label">参考答案</text><text class="analysis-text" user-select>{{ question.answer }}</text></view>
-      <view v-if="question.transcript" class="analysis"><text class="analysis-label">听力原文</text><text class="analysis-text" user-select>{{ question.transcript }}</text></view>
-      <view v-if="question.termNotes" class="analysis"><text class="analysis-label">术语参考</text><text v-for="(note, term) in question.termNotes" :key="term" class="analysis-text">{{ term }}：{{ note }}</text></view>
-      <view v-if="question.analysis" class="analysis"><text class="analysis-label">解析</text><text class="analysis-text" user-select>{{ question.analysis }}</text></view>
+      <view v-if="!question.options.length" class="analysis"><text class="analysis-label">{{ t("参考答案") }}</text><text class="analysis-text" user-select>{{ question.answer }}</text></view>
+      <view v-if="question.transcript" class="analysis"><text class="analysis-label">{{ t("听力原文") }}</text><text class="analysis-text" user-select>{{ question.transcript }}</text></view>
+      <view v-if="question.termNotes" class="analysis"><text class="analysis-label">{{ t("术语参考") }}</text><text v-for="(note, term) in question.termNotes" :key="term" class="analysis-text">{{ term }}：{{ note }}</text></view>
+      <view v-if="question.analysis" class="analysis"><text class="analysis-label">{{ t("解析") }}</text><text class="analysis-text" user-select>{{ question.analysis }}</text></view>
       <view v-if="question.gradingKeyPoints?.length" class="analysis">
-        <text class="analysis-label">评分要点</text>
+        <text class="analysis-label">{{ t("评分要点") }}</text>
         <text v-for="(point, i) in question.gradingKeyPoints" :key="i" class="analysis-text">{{ i + 1 }}. {{ point }}</text>
-        <view v-for="item in question.gradingRubric || []" :key="item.dimension" class="rubric-item"><text>{{ item.dimension }}（{{ item.max_score }}分）</text><text class="analysis-text">{{ item.criteria }}</text></view>
+        <view v-for="item in question.gradingRubric || []" :key="item.dimension" class="rubric-item"><text>{{ item.dimension }} ({{ t('{n}分', { n: item.max_score }) }})</text><text class="analysis-text">{{ item.criteria }}</text></view>
       </view>
       <view v-if="selfReview && question.evaluationStatus !== 'unanswered'" class="media-card self-review">
-        <text class="analysis-label">练习自评 · 满分 {{ question.maxScore || 10 }} 分</text>
-        <text class="q-index-sub">对照参考答案和评分要点自评，结果单独记录。</text>
+        <text class="analysis-label">{{ t('练习自评 · 满分 {n} 分', { n: question.maxScore || 10 }) }}</text>
+        <text class="q-index-sub">{{ t("对照参考答案和评分要点自评，结果单独记录。") }}</text>
         <picker :range="scoreOptions" :value="Math.max(0, scoreOptions.indexOf(question.selfScore || 0))" @change="$emit('self-review', scoreOptions[Number($event.detail.value)])">
-          <view class="score-picker">{{ question.selfScore != null ? '当前自评：' + question.selfScore + ' 分（点击调整）' : '点击选择自评分' }}</view>
+          <view class="score-picker">{{ question.selfScore != null ? t('当前自评：{n} 分（点击调整）', { n: question.selfScore }) : t("点击选择自评分") }}</view>
         </picker>
       </view>
     </template>
@@ -63,6 +63,7 @@
 </template>
 
 <script setup lang="ts">
+import { t, levelLabel } from '@/i18n'
 import { computed, ref, watch, onBeforeUnmount } from 'vue'
 import { onHide } from '@dcloudio/uni-app'
 import type { Question } from '@/types/exam'

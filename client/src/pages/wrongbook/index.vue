@@ -4,9 +4,9 @@
       <view class="hero app-heading">
         <view class="hero-head">
           <view class="hero-copy">
-            <text class="hero-brand">错题本</text>
-            <text class="hero-title">错题复习</text>
-            <text class="hero-subtitle">查看解析，重做练习，巩固掌握。</text>
+            <text class="hero-brand">{{ t("错题本") }}</text>
+            <text class="hero-title">{{ t("错题复习") }}</text>
+            <text class="hero-subtitle">{{ t("查看解析，重做练习，巩固掌握。") }}</text>
           </view>
           <t-tag theme="default" variant="light" shape="round">{{ isLoading || loadError ? '—' : wrongList.length }}</t-tag>
         </view>
@@ -18,12 +18,12 @@
         <view class="filter-tabs">
           <view
             class="filter-tab"
-            :class="{ active: activeTab === t.key }"
-            v-for="t in tabs"
-            :key="t.key"
-            @click="selectTab(t.key)"
+            :class="{ active: activeTab === tab.key }"
+            v-for="tab in tabs"
+            :key="tab.key"
+            @click="selectTab(tab.key)"
           >
-            {{ t.label }}
+            {{ t(tab.label) }}
           </view>
         </view>
         <t-button theme="default" variant="text" size="small" shape="round" @click="showFilters = true">
@@ -34,13 +34,13 @@
 
     <view class="filter-dropdown" v-if="showFilters">
       <view class="dropdown-section">
-        <text class="dropdown-title">考试类型</text>
+        <text class="dropdown-title">{{ t("考试类型") }}</text>
         <view class="dropdown-tags">
           <view
             class="dropdown-tag"
             :class="{ active: filters.examType === 'all' }"
             @click="setExamTypeFilter('all')"
-          >全部</view>
+          >{{ t("全部") }}</view>
           <view
             class="dropdown-tag"
             :class="{ active: filters.examType === 'CSCA' }"
@@ -54,89 +54,92 @@
         </view>
       </view>
       <view class="dropdown-section">
-        <text class="dropdown-title">{{ specialLabel }}</text>
+        <text class="dropdown-title">{{ t(specialLabel) }}</text>
         <view class="dropdown-tags">
           <view
             class="dropdown-tag"
             :class="{ active: filters.knowledge === 'all' }"
             @click="filters.knowledge = 'all'; applyFilters()"
-          >全部</view>
+          >{{ t("全部") }}</view>
           <view
             class="dropdown-tag"
             :class="{ active: filters.knowledge === k }"
             v-for="k in specialOptions"
             :key="k"
             @click="filters.knowledge = k; applyFilters()"
-          >{{ k }}</view>
+          >{{ t(k) }}</view>
         </view>
       </view>
       <view class="dropdown-section">
-        <text class="dropdown-title">错误次数</text>
+        <text class="dropdown-title">{{ t("错误次数") }}</text>
         <view class="dropdown-tags">
           <view
             class="dropdown-tag"
             :class="{ active: filters.wrongCount === 'all' }"
             @click="filters.wrongCount = 'all'; applyFilters()"
-          >全部</view>
+          >{{ t("全部") }}</view>
           <view
             class="dropdown-tag"
             :class="{ active: filters.wrongCount === '1' }"
             @click="filters.wrongCount = '1'; applyFilters()"
-          >1次</view>
+          >{{ t("1次") }}</view>
           <view
             class="dropdown-tag"
             :class="{ active: filters.wrongCount === '2+' }"
             @click="filters.wrongCount = '2+'; applyFilters()"
-          >2次及以上</view>
+          >{{ t("2次及以上") }}</view>
         </view>
       </view>
       <view class="dropdown-actions">
-        <t-button class="dropdown-btn" theme="default" variant="outline" shape="round" @click="resetFilters">重置</t-button>
-        <t-button class="dropdown-btn" theme="primary" shape="round" @click="showFilters = false">确定</t-button>
+        <t-button class="dropdown-btn" theme="default" variant="outline" shape="round" @click="resetFilters">{{ t("重置") }}</t-button>
+        <t-button class="dropdown-btn" theme="primary" shape="round" @click="showFilters = false">{{ t("确定") }}</t-button>
       </view>
     </view>
 
     <view class="app-section" v-if="wrongList.length > 0">
       <view class="stats-bar app-card">
-        <text class="stats-text">共 {{ wrongList.length }} 道错题</text>
-        <text class="stats-text">{{ masteredCount }} 道已掌握</text>
+        <text class="stats-text">{{ t('{n} 道错题', { n: wrongList.length }) }}</text>
+        <text class="stats-text">{{ t('{n} 道已掌握', { n: masteredCount }) }}</text>
       </view>
     </view>
 
     <view class="app-section">
-      <c-app-state v-if="isLoading" state="loading" title="正在加载错题" />
-      <c-app-state v-else-if="loadError" state="error" title="错题暂时无法加载" :description="loadError" @retry="loadWrongList" />
+      <c-app-state v-if="isLoading" state="loading" :title="t('正在加载错题')" />
+      <c-app-state v-else-if="loadError" state="error" :title="t('错题暂时无法加载')" :description="loadError" @retry="loadWrongList" />
       <view v-else class="wrong-list">
         <view class="wrong-card app-card" v-for="item in wrongList" :key="item.id" @click="goDetail(item.id)">
           <view class="card-header">
           <view class="card-tags">
             <t-tag theme="primary" variant="light" shape="round" size="small">{{ getExamLabel(item.examType) }}</t-tag>
-            <t-tag theme="warning" variant="light" shape="round" size="small">{{ domainLabel(item) }}·{{ domainValue(item) }}</t-tag>
-            <t-tag theme="default" variant="light" shape="round" size="small">{{ item.typeLabel }}</t-tag>
+            <t-tag theme="warning" variant="light" shape="round" size="small">{{ t(domainLabel(item)) }}·{{ t(domainValue(item)) }}</t-tag>
+            <t-tag theme="default" variant="light" shape="round" size="small">{{ t(item.typeLabel) }}</t-tag>
             <t-tag :theme="item.mastered ? 'success' : 'danger'" variant="light" shape="round" size="small">
-              {{ item.mastered ? '已掌握' : `错${item.wrongCount}次` }}
+              {{ item.mastered ? t("已掌握") : t('错{n}次', { n: item.wrongCount }) }}
             </t-tag>
             </view>
           </view>
           <text class="card-stem">{{ item.stem }}</text>
           <view class="card-footer">
             <text class="card-date">{{ item.lastWrongAt }}</text>
-            <text class="card-action">查看详情 ›</text>
+            <text class="card-action">{{ t("查看详情 ›") }}</text>
           </view>
         </view>
       </view>
 
-      <c-app-state v-if="!isLoading && !loadError && wrongList.length === 0" state="empty" title="这里还没有错题" description="练习中的错题会收集在这里，方便集中复习。" icon="book" />
+      <c-app-state v-if="!isLoading && !loadError && wrongList.length === 0" state="empty" :title="t('这里还没有错题')" :description="t('练习中的错题会收集在这里，方便集中复习。')" icon="book" />
     </view>
 
     <view class="footer-actions" v-if="wrongList.length > 0">
-      <t-button class="footer-btn" theme="primary" block shape="round" @click="goRedo">错题重做</t-button>
-      <t-button class="footer-btn" theme="default" variant="outline" block shape="round" @click="exportPdf">导出 PDF</t-button>
+      <t-button class="footer-btn" theme="primary" block shape="round" @click="goRedo">{{ t("错题重做") }}</t-button>
+      <t-button class="footer-btn" theme="default" variant="outline" block shape="round" @click="exportPdf">{{ t("导出 PDF") }}</t-button>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { showToast, showLoading, showActionSheet } from '@/i18n/ui'
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { getExamLabel } from '@/constants/exam'
 import { computed, ref, reactive } from 'vue'
 import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
@@ -153,6 +156,8 @@ import {
 } from '@/constants/exam'
 import type { WrongBookListItem } from '@/types/wrongbook'
 import type { ExamType } from '@/types/exam'
+
+usePageI18n('pages/wrongbook/index')
 
 const activeTab = ref('all')
 const showFilters = ref(false)
@@ -194,9 +199,9 @@ const specialOptions = computed(() => {
 const activeFilterLabel = computed(() => {
   const parts = []
   if (filters.examType !== 'all') parts.push(getExamLabel(filters.examType))
-  if (filters.knowledge !== 'all') parts.push(filters.knowledge)
-  if (filters.wrongCount !== 'all') parts.push(filters.wrongCount === '1' ? '错1次' : '错2次+')
-  return parts.length > 0 ? parts.join(' · ') : '筛选'
+  if (filters.knowledge !== 'all') parts.push(t(filters.knowledge))
+  if (filters.wrongCount !== 'all') parts.push(t(filters.wrongCount === '1' ? '错1次' : '错2次+'))
+  return parts.length > 0 ? parts.join(' · ') : t('筛选')
 })
 
 const wrongList = ref<WrongBookListItem[]>([])
@@ -276,7 +281,7 @@ const goRedo = () => {
     return
   }
 
-  uni.showActionSheet({
+  showActionSheet({
     itemList: ['CSCA 错题', 'HSK 错题'],
     success: ({ tapIndex }) => openRedo(tapIndex === 0 ? 'CSCA' : 'HKS'),
   })
@@ -287,7 +292,7 @@ const openRedo = (examType: ExamType) => {
 }
 
 const exportPdf = async () => {
-  uni.showLoading({ title: '正在生成...', mask: true })
+  showLoading({ title: '正在生成...', mask: true })
   try {
     const filePath = await wrongBookApi.exportPdf({
       examType: filters.examType,
@@ -304,7 +309,7 @@ const exportPdf = async () => {
       })
     })
   } catch {
-    uni.showToast({ title: 'PDF 导出失败', icon: 'none' })
+    showToast({ title: 'PDF 导出失败', icon: 'none' })
   } finally {
     uni.hideLoading()
   }

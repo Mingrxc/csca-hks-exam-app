@@ -2,8 +2,8 @@
   <view class="app-state" :class="[`app-state--${state}`, { 'app-state--compact': compact }]">
     <view v-if="state === 'loading'" class="app-state__spinner"></view>
     <t-icon v-else :name="state === 'error' ? 'error-circle' : icon" size="52rpx" :color="iconColor" />
-    <text class="app-state__title">{{ resolvedTitle }}</text>
-    <text v-if="description" class="app-state__description">{{ description }}</text>
+    <text class="app-state__title">{{ t(resolvedTitle) }}</text>
+    <text v-if="description" class="app-state__description">{{ errorText(description) }}</text>
     <t-button
       v-if="state === 'error'"
       class="app-state__action"
@@ -13,12 +13,13 @@
       shape="round"
       @click="$emit('retry')"
     >
-      重新加载
+      {{ t("重新加载") }}
     </t-button>
   </view>
 </template>
 
 <script setup lang="ts">
+import { t, errorText } from '@/i18n'
 import { computed } from 'vue'
 
 const props = withDefaults(defineProps<{

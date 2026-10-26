@@ -1,3 +1,4 @@
+import { showToast } from '@/i18n/ui'
 import { computed, ref } from 'vue'
 import { WRONG_REASONS } from '@/constants/exam'
 import { favoriteApi } from '@/features/favorite/api'
@@ -43,7 +44,7 @@ export function useAnswerSession() {
     try {
       const status = await favoriteApi.toggle(currentQuestion.value.id)
       currentQuestion.value.isFavorite = status.is_favorite
-      uni.showToast({ title: status.is_favorite ? '已收藏' : '已取消收藏', icon: 'none' })
+      showToast({ title: status.is_favorite ? '已收藏' : '已取消收藏', icon: 'none' })
     } catch {}
   }
 

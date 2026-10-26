@@ -20,6 +20,7 @@ class AIChatRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     messages: List[ChatMessage] = Field(default_factory=list, max_length=100)
+    language: Literal["zh", "en"] = "zh"
     exam_type: Optional[Literal["CSCA", "HKS"]] = Field(default=None, validation_alias="examType")
     question: Optional[str] = Field(default=None, max_length=12000)
     topic: Optional[str] = Field(default=None, max_length=200)

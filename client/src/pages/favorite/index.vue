@@ -4,9 +4,9 @@
       <view class="hero app-heading">
         <view class="hero-head">
           <view class="hero-copy">
-            <text class="hero-brand">收藏题目</text>
-            <text class="hero-title">我的收藏</text>
-            <text class="hero-subtitle">值得反复看的题目，集中留在这里。</text>
+            <text class="hero-brand">{{ t("收藏题目") }}</text>
+            <text class="hero-title">{{ t("我的收藏") }}</text>
+            <text class="hero-subtitle">{{ t("值得反复看的题目，集中留在这里。") }}</text>
           </view>
           <t-tag theme="primary" variant="light" shape="round">{{ loading || error ? '—' : items.length }}</t-tag>
         </view>
@@ -14,40 +14,44 @@
     </view>
 
     <view class="app-section">
-      <c-app-state v-if="loading" state="loading" title="正在加载收藏" />
-      <c-app-state v-else-if="error" state="error" title="收藏加载失败" :description="error" @retry="load" />
+      <c-app-state v-if="loading" state="loading" :title="t('正在加载收藏')" />
+      <c-app-state v-else-if="error" state="error" :title="t('收藏加载失败')" :description="error" @retry="load" />
       <view v-else class="favorite-list">
         <view v-for="item in items" :key="item.id" class="favorite-item app-card app-card-compact">
           <view class="meta">
             <t-tag theme="primary" variant="light" shape="round" size="small">{{ getExamLabel(item.question.exam_type) }}</t-tag>
             <t-tag theme="warning" variant="light" shape="round" size="small">
-              {{ item.question.exam_type === 'CSCA' ? item.question.subject : item.question.knowledge_point }}
+              {{ t(item.question.exam_type === 'CSCA' ? item.question.subject : item.question.knowledge_point) }}
             </t-tag>
             <text class="date">{{ item.created_at.slice(0, 10) }}</text>
           </view>
           <text class="stem">{{ item.question.stem_text }}</text>
           <view class="actions">
             <t-button theme="default" variant="outline" size="small" shape="round" @click="askAI(item)">
-              发给 AI
+              {{ t("发给 AI") }}
             </t-button>
             <t-button theme="danger" variant="outline" size="small" shape="round" @click="remove(item.question_id)">
-              取消收藏
+              {{ t("取消收藏") }}
             </t-button>
           </view>
         </view>
       </view>
 
-      <c-app-state v-if="!loading && !error && items.length === 0" state="empty" title="还没有收藏题目" />
+      <c-app-state v-if="!loading && !error && items.length === 0" state="empty" :title="t('还没有收藏题目')" />
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { getExamLabel } from '@/constants/exam'
 import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
 import type { ApiFavoriteItem } from '@/api/contracts'
 import { useFavorites } from '@/features/favorite/useFavorites'
+
+usePageI18n('pages/favorite/index')
 
 const { data: items, loading, error, load, remove: removeFavorite } = useFavorites()
 
@@ -58,14 +62,14 @@ const remove = async (questionId: number) => {
 const askAI = (item: ApiFavoriteItem) => {
   uni.setStorageSync('ai_prefill', {
     content: item.question.stem_text,
-    topic: '收藏题目咨询',
+    topic: t('收藏题目咨询'),
     context: [
-      `考试类型：${getExamLabel(item.question.exam_type)}`,
+      t('考试类型：{value}', { value: getExamLabel(item.question.exam_type) }),
       item.question.exam_type === 'CSCA'
-        ? `科目：${item.question.subject}`
-        : `知识点：${item.question.knowledge_point}`,
-      `收藏时间：${item.created_at.slice(0, 10)}`,
-      item.note ? `备注：${item.note}` : '',
+        ? t('科目：{value}', { value: item.question.subject })
+        : t('知识点：{value}', { value: item.question.knowledge_point }),
+      t('收藏时间：{value}', { value: item.created_at.slice(0, 10) }),
+      item.note ? t('备注：{value}', { value: item.note }) : '',
     ]
       .filter(Boolean)
       .join('\n'),

@@ -6,6 +6,7 @@ const test = require('node:test')
 const { parse, compileScript } = require('@vue/compiler-sfc')
 const { transformSync } = require('esbuild')
 const vue = require('vue')
+const { createLoader } = require('./helpers/load-source.cjs')
 
 // Exercise the page's real setup code without making network or storage writes.
 const filename = path.join(__dirname, '../src/pages/ai/index.vue')
@@ -17,6 +18,8 @@ function createPage(chat = async () => ({ reply: '测试回复' })) {
   const storage = new Map()
   const hooks = []
   const calls = []
+  const uni = { getStorageSync: (key) => storage.get(key), setStorageSync: (key, value) => storage.set(key, value), removeStorageSync: (key) => storage.delete(key) }
+  const loadI18n = createLoader({ '@dcloudio/uni-app': { onShow() {} } }, { uni, getCurrentPages: () => [] })
   const module = { exports: {} }
   const imports = {
     vue: { ...vue, onMounted: (callback) => hooks.push(callback) },
@@ -30,14 +33,15 @@ function createPage(chat = async () => ({ reply: '测试回复' })) {
     module,
     exports: module.exports,
     require: (name) => {
+      if (name.startsWith('@/i18n')) return loadI18n(name.slice(2))
       assert(name in imports, `Unexpected import: ${name}`)
       return imports[name]
     },
-    uni: { getStorageSync: (key) => storage.get(key), setStorageSync: (key, value) => storage.set(key, value), removeStorageSync: (key) => storage.delete(key) },
+    uni,
   }, { filename })
   const page = module.exports.default.setup({}, { expose() {} })
   hooks.forEach((callback) => callback())
-  return { page, calls }
+  return { page, calls, i18n: loadI18n('i18n') }
 }
 
 const input = (value) => ({ detail: { value } })
@@ -116,4 +120,19 @@ test('question context alone can be submitted', async () => {
   await page.send()
   assert.equal(calls[0].context, '仅有题目上下文')
   assert.equal(calls[0].messages.at(-1).content, '仅有题目上下文')
+})
+
+test('language switching keeps a chat draft and previous messages; new suggestions use the current language', async () => {
+  const { page, i18n } = createPage()
+  page.onDraftInput(input('保留这道题'))
+  await page.send()
+  page.onDraftInput(input('未发送的中文草稿'))
+  page.contextDraft.value = '原始中文材料'
+  i18n.setLanguage('en')
+  assert.equal(page.draft.value, '未发送的中文草稿')
+  assert.equal(page.contextDraft.value, '原始中文材料')
+  assert.equal(page.currentMessages.value[0].content, '保留这道题')
+  assert.equal(page.currentMessages.value[1].content, '测试回复')
+  page.useSuggestion(page.suggestions[0])
+  assert.match(page.draft.value, /study plan/)
 })

@@ -1,40 +1,43 @@
 <template>
   <view class="page app-shell">
     <view class="app-section"><view class="hero app-card app-card-pad">
-      <text class="hero-brand">组卷中心</text><text class="hero-title">{{ currentStrategy.title }}</text>
-      <text class="hero-subtitle">{{ currentStrategy.desc }}</text>
+      <text class="hero-brand">{{ t("组卷中心") }}</text><text class="hero-title">{{ t(currentStrategy.title) }}</text>
+      <text class="hero-subtitle">{{ t(currentStrategy.desc) }}</text>
     </view></view>
     <view class="app-section" v-if="catalogLoading || catalogError">
-      <c-app-state v-if="catalogLoading" state="loading" title="正在读取题库分类" />
-      <c-app-state v-else state="error" title="分类暂时无法加载" :description="catalogError" @retry="loadCatalog" />
+      <c-app-state v-if="catalogLoading" state="loading" :title="t('正在读取题库分类')" />
+      <c-app-state v-else state="error" :title="t('分类暂时无法加载')" :description="catalogError" @retry="loadCatalog" />
     </view>
     <view v-else class="app-section config-list">
-      <view class="config-card app-card"><text class="config-label">考试类型</text><view class="config-options">
+      <view class="config-card app-card"><text class="config-label">{{ t("考试类型") }}</text><view class="config-options">
         <view v-for="exam in ['CSCA', 'HKS']" :key="exam" class="option-tag" :class="{ active: form.examType === exam }" @tap="setExamType(exam)">{{ getExamLabel(exam) }}</view>
       </view></view>
       <template v-if="form.examType === 'HKS'">
-        <view class="config-card app-card"><text class="config-label">考试版本</text><view class="config-options"><view v-for="version in versions" :key="version" class="option-tag" :class="{ active: form.examVersion === version }" @tap="form.examVersion = version">{{ version }}</view></view></view>
-        <view class="config-card app-card"><text class="config-label">考试等级</text><view class="config-options"><view v-for="level in levels" :key="level" class="option-tag" :class="{ active: form.level === level }" @tap="selectLevel(level)">{{ level === '7-9' ? '七至九级联合' : level + '级' }}</view></view></view>
+        <view class="config-card app-card"><text class="config-label">{{ t("考试版本") }}</text><view class="config-options"><view v-for="version in versions" :key="version" class="option-tag" :class="{ active: form.examVersion === version }" @tap="form.examVersion = version">{{ version }}</view></view></view>
+        <view class="config-card app-card"><text class="config-label">{{ t("考试等级") }}</text><view class="config-options"><view v-for="level in levels" :key="level" class="option-tag" :class="{ active: form.level === level }" @tap="selectLevel(level)">{{ levelLabel(level) }}</view></view></view>
       </template>
       <view v-if="form.examType === 'CSCA' || (form.level && !isRealStrategy)" class="config-card app-card">
-        <text class="config-label">{{ form.examType === 'CSCA' ? '科目' : '考试模块' }}</text>
+        <text class="config-label">{{ form.examType === 'CSCA' ? t("科目") : t("考试模块") }}</text>
         <view class="config-options">
-          <view v-if="form.examType === 'HKS' && strategyType === 'random'" class="option-tag" :class="{active: !form.subject}" @tap="selectSubject('')">全部模块</view>
-          <view v-for="subject in subjects" :key="subject" class="option-tag" :class="{active: form.subject === subject}" @tap="selectSubject(subject)">{{ subject }}</view>
+          <view v-if="form.examType === 'HKS' && strategyType === 'random'" class="option-tag" :class="{active: !form.subject}" @tap="selectSubject('')">{{ t("全部模块") }}</view>
+          <view v-for="subject in subjects" :key="subject" class="option-tag" :class="{active: form.subject === subject}" @tap="selectSubject(subject)">{{ t(subject) }}</view>
         </view>
       </view>
-      <view v-if="!isRealStrategy && form.subject && modules.length" class="config-card app-card"><text class="config-label">知识模块</text><picker :range="['全部模块', ...modules]" :value="form.knowledgeModule ? modules.indexOf(form.knowledgeModule)+1 : 0" @change="selectModule(Number($event.detail.value))"><view class="option-tag">{{ form.knowledgeModule || '全部模块' }} ›</view></picker></view>
-      <view v-if="!isRealStrategy && form.subject && points.length" class="config-card app-card"><text class="config-label">知识点</text><picker :range="['全部知识点', ...points]" :value="form.knowledgePoint ? points.indexOf(form.knowledgePoint)+1 : 0" @change="form.knowledgePoint = Number($event.detail.value) ? points[Number($event.detail.value)-1] : ''"><view class="option-tag">{{ form.knowledgePoint || '全部知识点' }} ›</view></picker></view>
-      <view v-if="!isRealStrategy" class="config-card app-card"><text class="config-label">题目数量</text><view class="config-options"><view v-for="count in QUESTION_COUNT_OPTIONS" :key="count" class="option-tag" :class="{active: form.questionCount === count}" @tap="form.questionCount = count">{{ count }}题</view></view><text class="hero-subtitle">共享材料按完整题组抽取，实际题量以组卷结果为准。</text></view>
-      <view v-if="!isRealStrategy && strategyType !== 'progressive'" class="config-card app-card"><text class="config-label">难度</text><view class="config-options"><view v-for="item in DIFFICULTY_OPTIONS" :key="item.value" class="option-tag" :class="{active: form.difficulty === item.value}" @tap="form.difficulty = item.value">{{ item.label }}</view></view></view>
-      <view v-if="!isRealStrategy" class="config-card app-card"><text class="config-label">答题模式</text><view class="config-options"><view class="option-tag" :class="{active: form.mode === 'practice'}" @tap="form.mode = 'practice'">练习模式</view><view class="option-tag" :class="{active: form.mode === 'exam'}" @tap="form.mode = 'exam'">考试模式</view></view></view>
-      <view v-if="isRealStrategy || form.mode === 'exam'" class="config-card app-card"><text class="config-label">限时（分钟）</text><view class="config-options"><view v-for="time in TIME_LIMIT_OPTIONS" :key="time" class="option-tag" :class="{active: form.timeLimit === time}" @tap="form.timeLimit = time">{{ time }}</view></view><text class="hero-subtitle" v-if="isRealStrategy">按所选等级的当前模块配置练习，不含口语与口译。</text></view>
-      <view v-if="!subjects.length && (form.examType === 'CSCA' || form.level)" class="config-card app-card">当前筛选暂无可用题目。</view>
+      <view v-if="!isRealStrategy && form.subject && modules.length" class="config-card app-card"><text class="config-label">{{ t("知识模块") }}</text><picker :range="[t('全部模块'), ...modules.map(label => t(label))]" :value="form.knowledgeModule ? modules.indexOf(form.knowledgeModule)+1 : 0" @change="selectModule(Number($event.detail.value))"><view class="option-tag">{{ t(form.knowledgeModule || "全部模块") }} ›</view></picker></view>
+      <view v-if="!isRealStrategy && form.subject && points.length" class="config-card app-card"><text class="config-label">{{ t("知识点") }}</text><picker :range="[t('全部知识点'), ...points.map(label => t(label))]" :value="form.knowledgePoint ? points.indexOf(form.knowledgePoint)+1 : 0" @change="form.knowledgePoint = Number($event.detail.value) ? points[Number($event.detail.value)-1] : ''"><view class="option-tag">{{ t(form.knowledgePoint || "全部知识点") }} ›</view></picker></view>
+      <view v-if="!isRealStrategy" class="config-card app-card"><text class="config-label">{{ t("题目数量") }}</text><view class="config-options"><view v-for="count in QUESTION_COUNT_OPTIONS" :key="count" class="option-tag" :class="{active: form.questionCount === count}" @tap="form.questionCount = count">{{ t('{n}题', { n: count }) }}</view></view><text class="hero-subtitle">{{ t("共享材料按完整题组抽取，实际题量以组卷结果为准。") }}</text></view>
+      <view v-if="!isRealStrategy && strategyType !== 'progressive'" class="config-card app-card"><text class="config-label">{{ t("难度") }}</text><view class="config-options"><view v-for="item in DIFFICULTY_OPTIONS" :key="item.value" class="option-tag" :class="{active: form.difficulty === item.value}" @tap="form.difficulty = item.value">{{ t(item.label) }}</view></view></view>
+      <view v-if="!isRealStrategy" class="config-card app-card"><text class="config-label">{{ t("答题模式") }}</text><view class="config-options"><view class="option-tag" :class="{active: form.mode === 'practice'}" @tap="form.mode = 'practice'">{{ t("练习模式") }}</view><view class="option-tag" :class="{active: form.mode === 'exam'}" @tap="form.mode = 'exam'">{{ t("考试模式") }}</view></view></view>
+      <view v-if="isRealStrategy || form.mode === 'exam'" class="config-card app-card"><text class="config-label">{{ t("限时（分钟）") }}</text><view class="config-options"><view v-for="time in TIME_LIMIT_OPTIONS" :key="time" class="option-tag" :class="{active: form.timeLimit === time}" @tap="form.timeLimit = time">{{ time }}</view></view><text class="hero-subtitle" v-if="isRealStrategy">{{ t("按所选等级的当前模块配置练习，不含口语与口译。") }}</text></view>
+      <view v-if="!subjects.length && (form.examType === 'CSCA' || form.level)" class="config-card app-card">{{ t("当前筛选暂无可用题目。") }}</view>
     </view>
-    <view class="footer"><view class="summary"><text>{{ getExamLabel(form.examType) }} {{ form.level ? form.level + '级' : '' }} · {{ form.subject || '综合练习' }}</text></view><t-button theme="primary" block size="large" shape="round" :loading="isGenerating" :disabled="catalogLoading || !!catalogError" @click="startExam">开始练习</t-button></view>
+    <view class="footer"><view class="summary"><text>{{ getExamLabel(form.examType) }} {{ form.level ? levelLabel(form.level) : '' }} · {{ t(form.subject || "综合练习") }}</text></view><t-button theme="primary" block size="large" shape="round" :loading="isGenerating" :disabled="catalogLoading || !!catalogError" @click="startExam">{{ t("开始练习") }}</t-button></view>
   </view>
 </template>
 <script setup lang="ts">
+import { showToast } from '@/i18n/ui'
+import { t, levelLabel } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { computed, reactive, ref } from 'vue'
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
@@ -45,6 +48,8 @@ import type { ApiCatalogItem } from '@/api/contracts'
 import type { ExamType, PaperStrategy, DifficultyFilter, ExamMode } from '@/types/exam'
 import { useExamStore } from '@/stores/exam'
 import { confirmAction } from '@/shared/ui/confirm'
+
+usePageI18n('pages/exam/paper')
 const examStore = useExamStore()
 const strategyType = ref<PaperStrategy>('random')
 const catalog = ref<ApiCatalogItem[]>([])
@@ -82,8 +87,8 @@ onLoad(async query => {
 })
 async function startExam() {
   if (isGenerating.value || catalogLoading.value || catalogError.value) return
-  if (form.examType === 'HKS' && !form.level) { uni.showToast({title: '请选择考试等级', icon: 'none'}); return }
-  if ((form.examType === 'CSCA' || ['knowledge','progressive'].includes(strategyType.value)) && !form.subject) { uni.showToast({title: '请选择科目或模块', icon:'none'}); return }
+  if (form.examType === 'HKS' && !form.level) { showToast({title: '请选择考试等级', icon: 'none'}); return }
+  if ((form.examType === 'CSCA' || ['knowledge','progressive'].includes(strategyType.value)) && !form.subject) { showToast({title: '请选择科目或模块', icon:'none'}); return }
   if (examStore.hasActiveProgress && !await confirmAction({title:'开始新练习', content:'将替换本机保存的未完成练习，是否继续？'})) return
   isGenerating.value = true
   try {

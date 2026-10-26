@@ -3,22 +3,22 @@
     <view class="app-section history-heading-section">
       <view class="history-heading">
         <view class="history-heading-copy">
-          <text class="app-section-title">历史试卷</text>
-          <text class="app-section-subtitle">查看每一次练习的成绩和答题表现</text>
+          <text class="app-section-title">{{ t("历史试卷") }}</text>
+          <text class="app-section-subtitle">{{ t("查看每一次练习的成绩和答题表现") }}</text>
         </view>
         <view class="history-count">
           <text class="history-count-value">{{ loading || error ? '—' : historyPapers.length }}</text>
-          <text class="history-count-label">份</text>
+          <text class="history-count-label">{{ t("份") }}</text>
         </view>
       </view>
     </view>
 
     <view class="app-section">
-      <c-app-state v-if="loading" state="loading" title="正在加载历史试卷" />
+      <c-app-state v-if="loading" state="loading" :title="t('正在加载历史试卷')" />
       <c-app-state
         v-else-if="error"
         state="error"
-        title="历史试卷加载失败"
+        :title="t('历史试卷加载失败')"
         :description="error"
         @retry="load"
       />
@@ -32,11 +32,11 @@
           <view class="app-list-row">
             <view class="app-list-main">
               <text class="app-list-title">{{ getPaperTitle(paper.title) }}</text>
-              <text class="app-list-desc">{{ paper.objectiveCount === 0 ? '开放题自评' : paper.correctRate + '%' }} · {{ paper.timeUsed }}</text>
+              <text class="app-list-desc">{{ paper.objectiveCount === 0 ? t("开放题自评") : paper.correctRate + '%' }} · {{ paper.timeUsed }}</text>
             </view>
             <view class="paper-side">
               <t-tag :theme="paper.objectiveCount === 0 ? 'default' : paper.passed ? 'success' : 'danger'" variant="light" shape="round" size="small">
-                {{ paper.objectiveCount === 0 ? '自评练习' : paper.passed ? '表现不错' : '继续巩固' }}
+                {{ paper.objectiveCount === 0 ? t("自评练习") : paper.passed ? t("表现不错") : t("继续巩固") }}
               </t-tag>
               <text class="app-list-meta">{{ paper.date }}</text>
             </view>
@@ -45,16 +45,20 @@
         </view>
       </view>
 
-      <c-app-state v-if="!loading && !error && historyPapers.length === 0" state="empty" title="还没有答题记录" />
+      <c-app-state v-if="!loading && !error && historyPapers.length === 0" state="empty" :title="t('还没有答题记录')" />
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { getPaperTitle } from '@/constants/exam'
 import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
 import { useExamHistory } from '@/features/exam/useExamHistory'
+
+usePageI18n('pages/exam/history')
 
 const { data: historyPapers, loading, error, load } = useExamHistory()
 

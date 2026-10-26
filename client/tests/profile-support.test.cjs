@@ -6,6 +6,8 @@ const test = require('node:test')
 const { parse, compileScript } = require('@vue/compiler-sfc')
 const { transformSync } = require('esbuild')
 const vue = require('vue')
+const { createLoader } = require('./helpers/load-source.cjs')
+const APP_VERSION = require('../src/manifest.json').versionName
 
 async function createPage(name, options = {}) {
   const filename = path.join(__dirname, `../src/pages/${name}.vue`)
@@ -25,7 +27,7 @@ async function createPage(name, options = {}) {
   const imports = {
     vue,
     '@dcloudio/uni-app': { onLoad: (callback) => hooks.push(callback), onShow() {}, onHide() {}, onUnload() {}, onReachBottom() {} },
-    '@/constants/brand': { APP_VERSION: '1.5.1', APP_NAME: '老外1点通', APP_ICON_PATH: '/static/brand/icon.png', APP_DESCRIPTION: '面向留学生的 HSK 与 CSCA 学习备考工具' },
+    '@/constants/brand': { APP_VERSION, APP_NAME: '老外1点通', APP_ICON_PATH: '/static/brand/icon.png', APP_DESCRIPTION: '面向留学生的 HSK 与 CSCA 学习备考工具' },
     '@/stores/user': { useUserStore: () => user },
     '@/features/feedback/api': { FEEDBACK_CATEGORIES: categories, feedbackApi: { submit: async (payload) => { calls.push(payload); return options.submit ? options.submit(payload) : { id: 31, status: 'unread', created_at: '2026-10-25T12:00:00Z' } } } },
     '@/features/content/api': { contentApi: {
@@ -36,20 +38,22 @@ async function createPage(name, options = {}) {
   }
   const module = { exports: {} }
   const wx = options.wx || { openPrivacyContract: () => { calls.push('privacy') } }
+  const uni = {
+    getStorageSync: (key) => storage.get(key),
+    setStorageSync: (key, value) => { if (options.failStorage) throw new Error('storage full'); storage.set(key, value) },
+    removeStorageSync: (key) => { if (options.failStorage) throw new Error('storage unavailable'); storage.delete(key) },
+    showToast: (value) => toasts.push(value), navigateTo: (value) => navigation.push(value.url),
+    pageScrollTo: (value) => scrolls.push(value),
+  }
+  const loadI18n = createLoader({ '@dcloudio/uni-app': { onShow() {} } }, { uni, getCurrentPages: () => [] })
   vm.runInNewContext(code, {
     module, exports: module.exports,
-    require: (name) => { assert(name in imports, `Unexpected import: ${name}`); return imports[name] },
-    uni: {
-      getStorageSync: (key) => storage.get(key),
-      setStorageSync: (key, value) => { if (options.failStorage) throw new Error('storage full'); storage.set(key, value) },
-      removeStorageSync: (key) => { if (options.failStorage) throw new Error('storage unavailable'); storage.delete(key) },
-      showToast: (value) => toasts.push(value), navigateTo: (value) => navigation.push(value.url),
-      pageScrollTo: (value) => scrolls.push(value),
-    }, wx,
+    require: (name) => { if (name.startsWith('@/i18n')) return loadI18n(name.slice(2)); assert(name in imports, `Unexpected import: ${name}`); return imports[name] },
+    uni, wx,
   }, { filename })
   const page = module.exports.default.setup({}, { expose() {} })
   for (const callback of hooks) await callback(options.query || {})
-  return { page, calls, storage, user, navigation, toasts, scrolls }
+  return { page, calls, storage, user, navigation, toasts, scrolls, i18n: loadI18n('i18n') }
 }
 
 const input = (value) => ({ detail: { value } })
@@ -67,6 +71,17 @@ test('feedback validates empty input and preserves its draft before submission',
   assert.equal(page.canSubmit.value, false)
 })
 
+test('language changes preserve feedback category, text and retry identity', async () => {
+  const { page, storage, i18n } = await createPage('feedback/index')
+  page.onInput(input('中文反馈内容'))
+  page.selectCategory('bug')
+  const draft = JSON.stringify(storage.get('feedback_draft_v1_7'))
+  i18n.setLanguage('en')
+  assert.equal(page.content.value, '中文反馈内容')
+  assert.equal(page.category.value, 'bug')
+  assert.equal(JSON.stringify(storage.get('feedback_draft_v1_7')), draft)
+})
+
 test('a pending feedback request blocks double submission and input changes', async () => {
   let resolve
   const { page, calls, storage, scrolls } = await createPage('feedback/index', { submit: () => new Promise((done) => { resolve = done }) })
@@ -78,7 +93,7 @@ test('a pending feedback request blocks double submission and input changes', as
   assert.equal(calls.length, 1)
   assert.equal(calls[0].content, '有一个小建议')
   assert.equal(calls[0].category, 'suggestion')
-  assert.equal(calls[0].app_version, '1.5.1')
+  assert.equal(calls[0].app_version, APP_VERSION)
   assert.equal(page.content.value, '  有一个小建议  ')
   resolve({ id: 9, status: 'unread' })
   await pending
@@ -161,12 +176,13 @@ test('about navigates to updates and opens the official privacy guide without re
   assert.equal(calls.join(','), 'privacy')
 })
 
-test('all shipped client version metadata agrees with 1.5.1', () => {
+test('all shipped client version metadata agrees with 1.5.2', () => {
   const root = path.join(__dirname, '..')
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'src/manifest.json'), 'utf8'))
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
   const lock = JSON.parse(fs.readFileSync(path.join(root, 'package-lock.json'), 'utf8'))
-  assert.equal(manifest.versionName, '1.5.1')
+  assert.equal(manifest.versionName, '1.5.2')
+  assert.equal(manifest.versionCode, '152')
   assert.equal(pkg.version, manifest.versionName)
   assert.equal(lock.version, manifest.versionName)
   assert.equal(lock.packages[''].version, manifest.versionName)

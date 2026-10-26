@@ -1,8 +1,8 @@
 <template>
   <view class="page app-shell">
     <view class="app-section">
-      <view v-if="loading" class="app-card"><c-app-state state="loading" title="正在加载公告" /></view>
-      <view v-else-if="error" class="app-card"><c-app-state state="error" title="公告暂时无法查看" description="内容可能已撤下，请返回列表或重试。" @retry="load" /></view>
+      <view v-if="loading" class="app-card"><c-app-state state="loading" :title="t('正在加载公告')" /></view>
+      <view v-else-if="error" class="app-card"><c-app-state state="error" :title="t('公告暂时无法查看')" :description="t('内容可能已撤下，请返回列表或重试。')" @retry="load" /></view>
       <view v-else-if="item" class="detail-card app-card">
         <view class="detail-meta"><text>v{{ item.release_version }}</text><text>{{ formatReleaseDate(item.published_at) }}</text></view>
         <text class="detail-title">{{ item.title }}</text>
@@ -13,11 +13,15 @@
 </template>
 
 <script setup lang="ts">
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { contentApi } from '@/features/content/api'
 import { formatReleaseDate } from '@/features/content/date'
 import type { ApiContentItem } from '@/api/contracts'
+
+usePageI18n('pages/about/announcement')
 
 const id = ref(0)
 const item = ref<ApiContentItem | null>(null)

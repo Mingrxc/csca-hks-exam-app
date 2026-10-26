@@ -1,47 +1,51 @@
 <template>
   <view class="page app-shell">
-    <view class="app-section" v-if="initializing"><view class="app-card"><c-app-state state="loading" title="正在准备反馈" /></view></view>
-    <view class="app-section" v-else-if="loadError"><view class="app-card"><c-app-state state="error" title="暂时无法提交反馈" description="请检查登录和网络状态后重试。" @retry="initialize" /></view></view>
+    <view class="app-section" v-if="initializing"><view class="app-card"><c-app-state state="loading" :title="t('正在准备反馈')" /></view></view>
+    <view class="app-section" v-else-if="loadError"><view class="app-card"><c-app-state state="error" :title="t('暂时无法提交反馈')" :description="t('请检查登录和网络状态后重试。')" @retry="initialize" /></view></view>
     <view v-else-if="receipt" class="app-section">
       <view class="success-card app-card">
         <view class="success-icon"><t-icon name="check-circle" size="72rpx" /></view>
-        <text class="success-title">反馈已收到</text>
-        <text class="success-description">谢谢你，帮助我们把每一点体验做好。</text>
-        <text class="receipt-number">反馈编号 #{{ receipt.id }}</text>
-        <button class="secondary-button" @tap="startAnother">继续反馈</button>
+        <text class="success-title">{{ t("反馈已收到") }}</text>
+        <text class="success-description">{{ t("谢谢你，帮助我们把每一点体验做好。") }}</text>
+        <text class="receipt-number">{{ t('反馈编号 #{id}', { id: receipt.id }) }}</text>
+        <button class="secondary-button" @tap="startAnother">{{ t("继续反馈") }}</button>
       </view>
     </view>
     <view v-else class="feedback-form">
       <view class="app-section heading">
-        <text class="app-section-title">说说你的想法</text>
-        <text class="app-section-subtitle">一道题的疑惑，一次使用体验，或一个小建议</text>
+        <text class="app-section-title">{{ t("说说你的想法") }}</text>
+        <text class="app-section-subtitle">{{ t("一道题的疑惑，一次使用体验，或一个小建议") }}</text>
       </view>
       <view class="app-section">
         <view class="form-card app-card app-card-pad">
-          <text class="field-label">反馈类型</text>
+          <text class="field-label">{{ t("反馈类型") }}</text>
           <view class="category-options">
-            <view v-for="option in FEEDBACK_CATEGORIES" :key="option.value" class="category-chip" :class="{ selected: category === option.value }" @tap="selectCategory(option.value)">{{ option.label }}</view>
+            <view v-for="option in FEEDBACK_CATEGORIES" :key="option.value" class="category-chip" :class="{ selected: category === option.value }" @tap="selectCategory(option.value)">{{ t(option.label) }}</view>
           </view>
-          <text class="field-label content-label">反馈内容</text>
-          <textarea class="feedback-input" :value="content" :disabled="sending" :maxlength="1000" placeholder="请描述你遇到的问题或建议。如果是题目问题，可以附上考试、等级及题目内容。" :adjust-position="true" :show-confirm-bar="true" @input="onInput" />
+          <text class="field-label content-label">{{ t("反馈内容") }}</text>
+          <textarea class="feedback-input" :value="content" :disabled="sending" :maxlength="1000" :placeholder="t('请描述你遇到的问题或建议。如果是题目问题，可以附上考试、等级及题目内容。')" :adjust-position="true" :show-confirm-bar="true" @input="onInput" />
           <text class="word-count">{{ content.length }} / 1000</text>
         </view>
       </view>
       <view class="app-section">
-        <text class="privacy-note">反馈仅开发者可见。请勿填写密码、证件号码等敏感信息。</text>
-        <button class="submit-button" :disabled="!canSubmit" :loading="sending" @tap="submit">{{ sending ? '正在提交' : '提交反馈' }}</button>
+        <text class="privacy-note">{{ t("反馈仅开发者可见。请勿填写密码、证件号码等敏感信息。") }}</text>
+        <button class="submit-button" :disabled="!canSubmit" :loading="sending" @tap="submit">{{ sending ? t("正在提交") : t("提交反馈") }}</button>
       </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { computed, nextTick, ref } from 'vue'
 import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app'
 import { APP_VERSION } from '@/constants/brand'
 import { useUserStore } from '@/stores/user'
 import { FEEDBACK_CATEGORIES, feedbackApi } from '@/features/feedback/api'
 import type { FeedbackCategory, FeedbackReceipt } from '@/features/feedback/api'
+
+usePageI18n('pages/feedback/index')
 
 const userStore = useUserStore()
 const category = ref<FeedbackCategory>('suggestion')

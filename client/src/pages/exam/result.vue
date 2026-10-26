@@ -1,24 +1,26 @@
 <template>
   <view class="page app-shell">
-    <view v-if="isLoading || loadError" class="app-section"><c-app-state v-if="isLoading" state="loading" title="正在整理本次练习" /><c-app-state v-else state="error" title="成绩暂时无法加载" :description="loadError" @retry="loadResult()" /></view>
+    <view v-if="isLoading || loadError" class="app-section"><c-app-state v-if="isLoading" state="loading" :title="t('正在整理本次练习')" /><c-app-state v-else state="error" :title="t('成绩暂时无法加载')" :description="loadError" @retry="loadResult()" /></view>
     <template v-else>
       <view class="app-section"><view class="score-header app-card app-card-pad">
-        <text class="score-title">本次练习已完成</text><text class="score-subtitle">{{ getExamLabel(paperExamType) }} · 自动判分与开放题自评分开记录</text><text v-if="result.unansweredCount" class="score-subtitle">本次有 {{ result.unansweredCount }} 题未作答</text>
-        <view class="score-stats"><view class="stat-item"><text class="stat-value">{{ result.correctCount }}/{{ result.objectiveCount || 0 }}</text><text class="stat-label">客观题答对</text></view><view class="stat-item"><text class="stat-value">{{ result.objectiveCount ? result.correctRate + '%' : '—' }}</text><text class="stat-label">客观题正确率</text></view><view class="stat-item"><text class="stat-value">{{ result.timeUsed }}</text><text class="stat-label">用时</text></view></view>
+        <text class="score-title">{{ t("本次练习已完成") }}</text><text class="score-subtitle">{{ getExamLabel(paperExamType) }} {{ t("· 自动判分与开放题自评分开记录") }}</text><text v-if="result.unansweredCount" class="score-subtitle">{{ t('本次有 {n} 题未作答', { n: result.unansweredCount }) }}</text>
+        <view class="score-stats"><view class="stat-item"><text class="stat-value">{{ result.correctCount }}/{{ result.objectiveCount || 0 }}</text><text class="stat-label">{{ t("客观题答对") }}</text></view><view class="stat-item"><text class="stat-value">{{ result.objectiveCount ? result.correctRate + '%' : '—' }}</text><text class="stat-label">{{ t("客观题正确率") }}</text></view><view class="stat-item"><text class="stat-value">{{ result.timeUsed }}</text><text class="stat-label">{{ t("用时") }}</text></view></view>
       </view></view>
-      <view v-if="result.subjectiveCount" class="app-section"><view class="app-card app-card-pad"><text class="app-section-title">开放题自评</text><text class="score-subtitle">共 {{ result.subjectiveCount }} 题，已作答 {{ result.subjectiveAnsweredCount || 0 }} 题，{{ result.pendingSelfReview }} 题待自评</text><text class="score-subtitle">已自评得分：{{ result.selfScore || 0 }} / {{ result.selfMaxScore || 0 }}。自评不会计入客观题正确率或自动错题。</text></view></view>
-      <view class="app-section" v-if="analysisItems.length"><text class="app-section-title">客观题分析</text><view class="analysis-card app-card"><view class="analysis-item" v-for="item in analysisItems" :key="item.name"><view class="analysis-top"><text>{{ item.name }}</text><text>{{ item.correct }}/{{ item.total }}</text></view><view class="analysis-track"><view class="analysis-fill" :style="{width:item.correctRate + '%'}" /></view></view></view></view>
-      <view class="app-section" v-if="wrongQuestions.length"><text class="app-section-title">错题回顾（{{ wrongQuestions.length }}题）</text><view class="wrong-list"><view class="wrong-item app-card" v-for="q in wrongQuestions" :key="q.id" @tap="goDetail(q.id)"><text class="wrong-stem">{{ q.stem }}</text><text class="wrong-your">你的答案：{{ q.yourAnswer }}</text><text class="wrong-correct">正确答案：{{ q.correctAnswer }}</text></view></view></view>
-      <view class="app-section"><t-button theme="default" variant="outline" block shape="round" @click="showReview = !showReview">{{ showReview ? '收起题目与解析' : '查看题目、解析与自评' }}</t-button></view>
+      <view v-if="result.subjectiveCount" class="app-section"><view class="app-card app-card-pad"><text class="app-section-title">{{ t("开放题自评") }}</text><text class="score-subtitle">{{ t('共 {total} 题，已作答 {answered} 题，{pending} 题待自评', { total: result.subjectiveCount, answered: result.subjectiveAnsweredCount || 0, pending: result.pendingSelfReview }) }}</text><text class="score-subtitle">{{ t('已自评得分：{score} / {max}。自评不会计入客观题正确率或自动错题。', { score: result.selfScore || 0, max: result.selfMaxScore || 0 }) }}</text></view></view>
+      <view class="app-section" v-if="analysisItems.length"><text class="app-section-title">{{ t("客观题分析") }}</text><view class="analysis-card app-card"><view class="analysis-item" v-for="item in analysisItems" :key="item.name"><view class="analysis-top"><text>{{ item.name }}</text><text>{{ item.correct }}/{{ item.total }}</text></view><view class="analysis-track"><view class="analysis-fill" :style="{width:item.correctRate + '%'}" /></view></view></view></view>
+      <view class="app-section" v-if="wrongQuestions.length"><text class="app-section-title">{{ t('错题回顾（{n} 题）', { n: wrongQuestions.length }) }}</text><view class="wrong-list"><view class="wrong-item app-card" v-for="q in wrongQuestions" :key="q.id" @tap="goDetail(q.id)"><text class="wrong-stem">{{ q.stem }}</text><text class="wrong-your">{{ t("你的答案：") }}{{ q.yourAnswer }}</text><text class="wrong-correct">{{ t("正确答案：") }}{{ q.correctAnswer }}</text></view></view></view>
+      <view class="app-section"><t-button theme="default" variant="outline" block shape="round" @click="showReview = !showReview">{{ showReview ? t("收起题目与解析") : t("查看题目、解析与自评") }}</t-button></view>
       <view class="app-section" v-if="showReview"><view class="review-list"><view class="review-item app-card app-card-pad" v-for="(q,index) in reviewQuestions" :key="q.id">
-        <text class="score-subtitle">{{ q.evaluationStatus === 'unanswered' ? '未作答' : q.correct === null ? (q.selfScore == null ? '待自评' : '已自评 ' + q.selfScore + ' 分') : q.correct ? '回答正确' : '需要巩固' }}</text>
+        <text class="score-subtitle">{{ q.evaluationStatus === 'unanswered' ? t("未作答") : q.correct === null ? (q.selfScore == null ? t("待自评") : t('已自评') + ' ' + t('{n}分', { n: q.selfScore })) : q.correct ? t("回答正确") : t("需要巩固") }}</text>
         <c-question-item v-if="q.question" :question="q.question" :index="index" :user-answer="q.userAnswer" :show-result="true" :readonly="true" @self-review="selfReview(q.id, $event)" />
       </view></view></view>
-      <view class="actions"><t-button theme="primary" block shape="round" @click="goHome">返回首页</t-button><t-button v-if="wrongQuestions.length" theme="default" variant="outline" block shape="round" @click="retryWrong">错题重做</t-button></view>
+      <view class="actions"><t-button theme="primary" block shape="round" @click="goHome">{{ t("返回首页") }}</t-button><t-button v-if="wrongQuestions.length" theme="default" variant="outline" block shape="round" @click="retryWrong">{{ t("错题重做") }}</t-button></view>
     </template>
   </view>
 </template>
 <script setup lang="ts">
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { ref } from 'vue'
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
@@ -27,6 +29,8 @@ import { examApi } from '@/features/exam/api'
 import { toExamResultSummary, toResultReviewQuestions, toResultWrongQuestions } from '@/api/contracts'
 import { useExamStore } from '@/stores/exam'
 import type { ExamResultSummary, ExamType, ResultReviewQuestion, ResultWrongQuestion } from '@/types/exam'
+
+usePageI18n('pages/exam/result')
 const examStore = useExamStore()
 const resultPaperId = ref(0)
 const isLoading = ref(true)

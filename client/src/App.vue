@@ -3,11 +3,13 @@ import { onHide, onLaunch, onShow } from '@dcloudio/uni-app'
 import { isTimelinePreview } from '@/constants/share'
 import { useUserStore } from '@/stores/user'
 import { useExamStore } from '@/stores/exam'
+import { initializeLanguage } from '@/i18n'
 
 const userStore = useUserStore()
 const examStore = useExamStore()
 
 onLaunch((options) => {
+  initializeLanguage()
   if (isTimelinePreview(options?.scene)) return
   userStore.login().catch(() => {})
 })

@@ -16,10 +16,10 @@
                 shape="round"
                 size="small"
               >
-                {{ item.label }}
+                {{ t(item.label) }}
               </t-tag>
               <t-tag v-if="!selectedExamLabels.length" theme="default" variant="light" shape="round" size="small">
-                随便看看
+                {{ t("随便看看") }}
               </t-tag>
               <t-tag v-if="userInfo.targetDate && !selectedExamLabels.length" theme="warning" variant="light" shape="round" size="small">
                 {{ userInfo.targetDate }}
@@ -30,37 +30,37 @@
 
         <view class="profile-actions">
           <t-button class="profile-action" theme="primary" variant="outline" size="small" shape="round" open-type="chooseAvatar" @chooseavatar="chooseAvatar">
-            更换头像
+            {{ t("更换头像") }}
           </t-button>
           <t-button class="profile-action" theme="default" variant="outline" size="small" shape="round" @click="editNickname">
-            修改昵称
+            {{ t("修改昵称") }}
           </t-button>
         </view>
       </view>
     </view>
 
     <view class="app-section" v-if="loadError">
-      <view class="app-card"><c-app-state compact state="error" title="个人资料暂时无法加载" description="请检查网络连接后重试。" @retry="loadAll" /></view>
+      <view class="app-card"><c-app-state compact state="error" :title="t('个人资料暂时无法加载')" :description="t('请检查网络连接后重试。')" @retry="loadAll" /></view>
     </view>
 
     <view class="app-section">
-      <c-app-state v-if="isLoading" compact state="loading" title="正在整理学习记录" />
+      <c-app-state v-if="isLoading" compact state="loading" :title="t('正在整理学习记录')" />
       <view v-else class="stats-grid">
         <view class="stat-card app-card">
           <text class="stat-value">{{ profileLoaded ? userInfo.totalQuestions : '—' }}</text>
-          <text class="stat-label">累计刷题数</text>
+          <text class="stat-label">{{ t("累计刷题数") }}</text>
         </view>
         <view class="stat-card app-card">
           <text class="stat-value">{{ profileLoaded && userInfo.objectiveCount !== 0 ? userInfo.correctRate + '%' : '—' }}</text>
-          <text class="stat-label">正确率</text>
+          <text class="stat-label">{{ t("正确率") }}</text>
         </view>
         <view class="stat-card app-card">
           <text class="stat-value">{{ profileLoaded ? userInfo.streakDays : '—' }}</text>
-          <text class="stat-label">连续学习天数</text>
+          <text class="stat-label">{{ t("连续学习天数") }}</text>
         </view>
         <view class="stat-card app-card">
           <text class="stat-value">{{ dashboardLoaded ? dashboard.pendingWrongCount : '—' }}</text>
-          <text class="stat-label">错题数量</text>
+          <text class="stat-label">{{ t("错题数量") }}</text>
         </view>
       </view>
     </view>
@@ -68,12 +68,12 @@
     <view class="app-section">
       <view class="target-card app-card app-card-pad">
         <view class="target-head">
-          <text class="app-section-title">目标设置</text>
+          <text class="app-section-title">{{ t("目标设置") }}</text>
         </view>
 
         <view class="target-mode">
           <view class="mode-chip" :class="{ active: targetDraftExams.length === 0 }" @click="setBrowseMode">
-            随便看看
+            {{ t("随便看看") }}
           </view>
           <view class="mode-chip" :class="{ active: targetDraftExams.includes('CSCA') }" @click="toggleDraftExam('CSCA')">
             CSCA
@@ -83,14 +83,24 @@
 
         <view v-if="targetDraftExams.length > 0" class="target-dates">
           <view v-for="exam in targetDraftExams" :key="exam" class="target-date-row">
-            <text class="target-date-label">{{ getExamLabel(exam) }} 考试日期</text>
+            <text class="target-date-label">{{ t('{exam} 考试日期', { exam: getExamLabel(exam) }) }}</text>
             <picker mode="date" :value="targetDraftDates[exam]" :start="today" @change="selectTargetDate(exam, $event)">
-              <view class="date-picker">{{ targetDraftDates[exam] || '选择考试日期' }}</view>
+              <view class="date-picker">{{ targetDraftDates[exam] || t("选择考试日期") }}</view>
             </picker>
           </view>
         </view>
 
-        <t-button theme="primary" block shape="round" :loading="savingTarget" @click="saveTarget">保存目标</t-button>
+        <t-button theme="primary" block shape="round" :loading="savingTarget" @click="saveTarget">{{ t("保存目标") }}</t-button>
+      </view>
+    </view>
+
+    <view class="app-section">
+      <view class="language-card app-card">
+        <text class="app-card-title">语言 / Language</text>
+        <view class="language-options">
+          <button class="language-option" :class="{ active: language === 'zh' }" :aria-pressed="language === 'zh'" @tap="setLanguage('zh')">简体中文</button>
+          <button class="language-option" :class="{ active: language === 'en' }" :aria-pressed="language === 'en'" @tap="setLanguage('en')">English</button>
+        </view>
       </view>
     </view>
 
@@ -100,19 +110,19 @@
           <view class="menu-head">
             <view class="app-icon-badge"><t-icon name="chat" size="28rpx" /></view>
           </view>
-          <text class="app-card-title">用户反馈</text>
+          <text class="app-card-title">{{ t("用户反馈") }}</text>
         </view>
         <view class="menu-card app-card" @click="showAbout">
           <view class="menu-head">
             <view class="app-icon-badge"><t-icon name="info-circle" size="28rpx" /></view>
           </view>
-          <text class="app-card-title">关于</text>
+          <text class="app-card-title">{{ t("关于") }}</text>
         </view>
         <view class="menu-card app-card danger" @click="handleLogout">
           <view class="menu-head">
             <view class="app-icon-badge"><t-icon name="poweroff" size="28rpx" /></view>
           </view>
-          <text class="app-card-title">退出登录</text>
+          <text class="app-card-title">{{ t("退出登录") }}</text>
         </view>
       </view>
     </view>
@@ -120,6 +130,9 @@
 </template>
 
 <script setup lang="ts">
+import { showToast, showModal } from '@/i18n/ui'
+import { t, language, setLanguage } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { getExamLabel } from '@/constants/exam'
 import { computed, reactive, ref } from 'vue'
 import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
@@ -129,6 +142,8 @@ import { toDashboardData, toUserProfile } from '@/api/contracts'
 import { useUserStore } from '@/stores/user'
 import type { DashboardData, UserProfile } from '@/types/user'
 import type { ExamType } from '@/types/exam'
+
+usePageI18n('pages/profile/index')
 
 const userStore = useUserStore()
 const userInfo = ref<UserProfile>({
@@ -228,7 +243,7 @@ const setBrowseMode = () => {
 const saveTarget = async () => {
   const missingExam = targetDraftExams.value.find((exam) => !targetDraftDates[exam])
   if (missingExam) {
-    uni.showToast({ title: `请选择 ${getExamLabel(missingExam)} 考试日期`, icon: 'none' })
+    showToast({ title: t('请选择 {exam} 考试日期', { exam: getExamLabel(missingExam) }), icon: 'none' })
     return
   }
   savingTarget.value = true
@@ -249,7 +264,7 @@ const saveTarget = async () => {
     targetDraftDates.HKS = userInfo.value.targetDates.HKS || ''
     dashboard.targetExam = updated.target_exam
     dashboard.targetDate = updated.target_date || ''
-    uni.showToast({ title: '目标已更新', icon: 'success' })
+    showToast({ title: '目标已更新', icon: 'success' })
   } catch {
     // request layer handles toast
   } finally {
@@ -263,12 +278,12 @@ const chooseAvatar = async (event: any) => {
   try {
     const updated = await userApi.updateProfile({ avatar_url: avatarUrl })
     userInfo.value = toUserProfile(updated)
-    uni.showToast({ title: '头像已更新', icon: 'success' })
+    showToast({ title: '头像已更新', icon: 'success' })
   } catch {}
 }
 
 const editNickname = () => {
-  uni.showModal({
+  showModal({
     title: '修改昵称',
     editable: true,
     placeholderText: '输入昵称',
@@ -302,7 +317,7 @@ const goRedo = () => {
 }
 
 const handleLogout = () => {
-  uni.showModal({
+  showModal({
     title: '确认退出',
     content: '退出后需要重新登录，确定退出吗？',
     success: (res: any) => {
@@ -323,7 +338,7 @@ const handleLogout = () => {
         profileLoaded.value = false
         dashboardLoaded.value = false
         loadError.value = false
-        uni.showToast({ title: '已退出登录', icon: 'success' })
+        showToast({ title: '已退出登录', icon: 'success' })
       }
     },
   })
@@ -342,6 +357,12 @@ onShareAppMessage(createAppShareMessage)
 .profile-card {
   background: var(--app-surface);
 }
+
+.language-card { padding: 22rpx; }
+.language-options { display: flex; gap: 12rpx; margin-top: 18rpx; }
+.language-option { flex: 1; margin: 0; padding: 16rpx 12rpx; border: 1rpx solid var(--app-border); border-radius: var(--app-radius-md); color: var(--app-text-weak); background: var(--app-surface-quiet); font-size: 26rpx; line-height: 1.5; }
+.language-option::after { border: 0; }
+.language-option.active { color: var(--app-primary); background: var(--app-primary-soft); border-color: var(--app-primary); font-weight: 600; }
 
 .profile-top {
   display: flex;

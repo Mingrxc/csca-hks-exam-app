@@ -6,6 +6,7 @@ import type {
   PaperStrategyItem,
   QuestionType,
 } from '@/types/exam'
+import { getLanguage, levelLabel, t } from '@/i18n'
 
 // Preserve the existing API/database identifier; show the correct exam name.
 export function getExamLabel(examType: string): string {
@@ -13,7 +14,13 @@ export function getExamLabel(examType: string): string {
 }
 
 export function getPaperTitle(title: string): string {
-  return title.replace(/\bHKS\b/g, 'HSK')
+  const normalized = title.replace(/\bHKS\b/g, 'HSK')
+  if (getLanguage() !== 'en') return normalized
+  // Only generated labels change on screen; stored titles stay unchanged.
+  return normalized.split(' ').map(part => {
+    const level = part.match(/^(\d+(?:-\d+)?)级$/)?.[1]
+    return level ? levelLabel(level) : part.split('/').map(label => t(label)).join('/')
+  }).join(' ')
 }
 
 export const QUESTION_TYPE_MAP: Record<QuestionType, string> = {

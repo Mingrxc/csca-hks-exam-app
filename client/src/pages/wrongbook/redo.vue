@@ -2,12 +2,12 @@
   <view class="page app-page">
     <view class="top-bar app-card">
       <t-button class="top-action" theme="default" variant="text" size="small" shape="round" @click="confirmExit">
-        退出
+        {{ t("退出") }}
       </t-button>
       <view class="progress-info">
         <text class="question-index">{{ questions.length ? currentIndex + 1 : 0 }} / {{ questions.length }}</text>
       </view>
-      <t-tag theme="danger" variant="light" shape="round">错题重做</t-tag>
+      <t-tag theme="danger" variant="light" shape="round">{{ t("错题重做") }}</t-tag>
     </view>
 
     <view class="progress-bar">
@@ -27,14 +27,14 @@
           @submit="selectOption"
         />
         <view v-else class="empty-question">
-          {{ isLoading ? '加载错题中...' : '暂无可重做错题' }}
+          {{ isLoading ? t("加载错题中...") : t("暂无可重做错题") }}
         </view>
       </view>
     </scroll-view>
 
     <view class="bottom-bar app-card">
       <t-button class="bar-btn" theme="default" variant="outline" shape="round" :disabled="currentIndex === 0 || isLoading" @click="prevQuestion">
-        上一题
+        {{ t("上一题") }}
       </t-button>
       <t-button
         v-if="currentIndex < questions.length - 1"
@@ -44,16 +44,19 @@
         :disabled="isLoading"
         @click="nextQuestion"
       >
-        下一题
+        {{ t("下一题") }}
       </t-button>
       <t-button class="bar-btn" theme="primary" shape="round" :disabled="isLoading || !questions.length" @click="finishRedo">
-        完成
+        {{ t("完成") }}
       </t-button>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { showModal, showActionSheet } from '@/i18n/ui'
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { computed, ref } from 'vue'
 import { onShareAppMessage, onLoad } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
@@ -62,6 +65,8 @@ import { wrongBookApi } from '@/features/wrongbook/api'
 import { toQuestion } from '@/api/contracts'
 import { useExamStore } from '@/stores/exam'
 import type { ExamType, Question } from '@/types/exam'
+
+usePageI18n('pages/wrongbook/redo')
 
 const examStore = useExamStore()
 const currentIndex = ref(0)
@@ -160,7 +165,7 @@ const prevQuestion = () => moveTo(currentIndex.value - 1)
 const nextQuestion = () => moveTo(currentIndex.value + 1)
 
 const confirmExit = () => {
-  uni.showModal({
+  showModal({
     title: '确认退出',
     content: '退出后当前重做进度将不会继续提交，确定退出吗？',
     success: (res: any) => {
@@ -180,7 +185,7 @@ const finishRedo = () => {
 }
 
 const chooseExamType = () => {
-  uni.showActionSheet({
+  showActionSheet({
     itemList: ['CSCA 错题', 'HSK 错题'],
     success: ({ tapIndex }) => loadRedoPaper(tapIndex === 0 ? 'CSCA' : 'HKS'),
     fail: () => uni.navigateBack(),

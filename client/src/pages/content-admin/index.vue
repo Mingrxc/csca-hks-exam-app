@@ -4,9 +4,9 @@
       <view class="hero app-heading">
         <view class="hero-head">
           <view class="hero-copy">
-            <text class="hero-brand">内容管理</text>
-            <text class="hero-title">维护内容与更新公告</text>
-            <text class="hero-subtitle">更新公告发布后会显示在“关于”中。</text>
+            <text class="hero-brand">{{ t("内容管理") }}</text>
+            <text class="hero-title">{{ t("维护内容与更新公告") }}</text>
+            <text class="hero-subtitle">{{ t("更新公告发布后会显示在“关于”中。") }}</text>
           </view>
           <t-tag theme="primary" variant="light" shape="round">{{ items.length }}</t-tag>
         </view>
@@ -14,23 +14,23 @@
     </view>
 
     <view v-if="loading || loadError" class="app-section">
-      <view class="app-card"><c-app-state :state="loading ? 'loading' : 'error'" :title="loading ? '正在加载内容' : '暂时无法访问内容管理'" description="仅配置了管理权限的账号可以维护内容。" @retry="load" /></view>
+      <view class="app-card"><c-app-state :state="loading ? 'loading' : 'error'" :title="loading ? '正在加载内容' : '暂时无法访问内容管理'" :description="t('仅配置了管理权限的账号可以维护内容。')" @retry="load" /></view>
     </view>
     <view v-else class="app-section">
       <view class="form-card app-card app-card-pad">
-        <picker :range="categoryOptions" range-key="label" @change="changeCategory">
-          <view class="field picker">{{ categoryLabel }}</view>
+        <picker :range="localizedCategories" range-key="label" @change="changeCategory">
+          <view class="field picker">{{ t(categoryLabel) }}</view>
         </picker>
-        <view class="switch-row"><text>作为更新公告展示</text><switch :checked="isAnnouncement" :disabled="saving" color="#b86b4b" @change="toggleAnnouncement" /></view>
-        <input v-if="isAnnouncement" v-model="form.release_version" class="native-field" :disabled="saving" maxlength="24" placeholder="版本号，例如 1.5.1" />
-        <input v-model="form.title" class="native-field" :disabled="saving" maxlength="128" placeholder="标题" />
-        <input v-model="form.summary" class="native-field" :disabled="saving" maxlength="255" placeholder="摘要" />
-        <textarea v-model="form.body" class="native-field native-body" :disabled="saving" maxlength="12000" placeholder="正文" />
-        <view class="switch-row"><text>{{ form.is_active ? '发布展示' : '仅保存草稿' }}</text><switch :checked="form.is_active" :disabled="saving" color="#b86b4b" @change="togglePublished" /></view>
+        <view class="switch-row"><text>{{ t("作为更新公告展示") }}</text><switch :checked="isAnnouncement" :disabled="saving" color="#b86b4b" @change="toggleAnnouncement" /></view>
+        <input v-if="isAnnouncement" v-model="form.release_version" class="native-field" :disabled="saving" maxlength="24" :placeholder="t('版本号，例如 1.5.1')" />
+        <input v-model="form.title" class="native-field" :disabled="saving" maxlength="128" :placeholder="t('标题')" />
+        <input v-model="form.summary" class="native-field" :disabled="saving" maxlength="255" :placeholder="t('摘要')" />
+        <textarea v-model="form.body" class="native-field native-body" :disabled="saving" maxlength="12000" :placeholder="t('正文')" />
+        <view class="switch-row"><text>{{ form.is_active ? t("发布展示") : t("仅保存草稿") }}</text><switch :checked="form.is_active" :disabled="saving" color="#b86b4b" @change="togglePublished" /></view>
         <view class="form-actions">
-          <t-button theme="default" variant="outline" shape="round" :disabled="saving" @click="reset">新建</t-button>
+          <t-button theme="default" variant="outline" shape="round" :disabled="saving" @click="reset">{{ t("新建") }}</t-button>
           <t-button theme="primary" shape="round" :loading="saving" :disabled="saving" @click="save">
-            {{ form.is_active ? '保存并发布' : '保存草稿' }}
+            {{ form.is_active ? t("保存并发布") : t("保存草稿") }}
           </t-button>
         </view>
       </view>
@@ -41,13 +41,13 @@
         <view class="content-head">
           <text class="content-title">{{ item.release_version ? 'v' + item.release_version + ' · ' : '' }}{{ item.title }}</text>
           <t-tag :theme="item.is_active ? 'success' : 'default'" variant="light" shape="round" size="small">
-            {{ item.is_active ? '已启用' : '已停用' }}
+            {{ item.is_active ? t("已启用") : t("已停用") }}
           </t-tag>
         </view>
         <text class="content-summary">{{ item.summary }}</text>
         <view class="content-actions">
-          <t-button theme="default" variant="outline" size="small" shape="round" @click="edit(item)">编辑</t-button>
-          <t-button theme="danger" variant="outline" size="small" shape="round" @click="remove(item.id)">删除</t-button>
+          <t-button theme="default" variant="outline" size="small" shape="round" @click="edit(item)">{{ t("编辑") }}</t-button>
+          <t-button theme="danger" variant="outline" size="small" shape="round" @click="remove(item.id)">{{ t("删除") }}</t-button>
         </view>
       </view>
     </view>
@@ -55,11 +55,16 @@
 </template>
 
 <script setup lang="ts">
+import { showToast, showModal } from '@/i18n/ui'
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { computed, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { contentApi } from '@/features/content/api'
 import type { ApiContentItem } from '@/api/contracts'
 import { APP_VERSION } from '@/constants/brand'
+
+usePageI18n('pages/content-admin/index')
 
 const categoryOptions = [
   { value: 'consulting', label: '留学资讯' },
@@ -85,6 +90,7 @@ const form = reactive({
   sort_order: 0,
 })
 const categoryLabel = computed(() => categoryOptions[categoryIndex.value].label)
+const localizedCategories = computed(() => categoryOptions.map(option => ({ ...option, label: t(option.label) })))
 
 const load = async () => {
   if (loading.value) return
@@ -141,11 +147,11 @@ const edit = (item: ApiContentItem) => {
 const save = async () => {
   if (saving.value) return
   if (!form.title.trim() || !form.summary.trim() || !form.body.trim()) {
-    uni.showToast({ title: '请填写完整内容', icon: 'none' })
+    showToast({ title: '请填写完整内容', icon: 'none' })
     return
   }
   if (isAnnouncement.value && !/^\d+\.\d+\.\d+$/.test(form.release_version.trim())) {
-    uni.showToast({ title: '请填写正确版本号，例如 1.5.1', icon: 'none' })
+    showToast({ title: '请填写正确版本号，例如 1.5.1', icon: 'none' })
     return
   }
   saving.value = true
@@ -156,7 +162,7 @@ const save = async () => {
     saving.value = false
     reset()
     await load()
-    uni.showToast({ title: '已保存', icon: 'success' })
+    showToast({ title: '已保存', icon: 'success' })
   } catch {
   } finally {
     saving.value = false
@@ -165,7 +171,7 @@ const save = async () => {
 
 const remove = (id: number) => {
   if (saving.value) return
-  uni.showModal({
+  showModal({
     title: '删除内容',
     content: '确定删除这条内容吗？',
     success: async (result: any) => {

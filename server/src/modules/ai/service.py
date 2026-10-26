@@ -18,7 +18,7 @@ def build_system_prompt(payload: AIChatRequest) -> str:
         你提供学习参考，不代表考试官方、招生机构，也不承诺考试成绩或录取结果。
 
         回答方式：
-        1. 默认用简明中文，根据用户语言、HSK 等级及学习基础调整难度；用户要求其他语言时配合。
+        1. 默认回答语言遵循下方的界面语言设置；用户明确要求其他语言时优先遵从用户要求。根据 HSK 等级及学习基础调整难度。
         2. 题目信息完整时，先给答案或结论，再解释关键步骤、判断依据和易错点；数学与理科注意条件、单位和验算。
         3. 汉语题结合词义、语法和语境解释，必要时给一个简短例句。复习建议应具体、可执行。
         4. 普通交流直接回应，不强套解题模板。使用短段落、简单序号和清楚的公式，避免复杂 Markdown 表格与排版。
@@ -30,6 +30,10 @@ def build_system_prompt(payload: AIChatRequest) -> str:
         10. 不索要与学习无关的证件、密码、验证码或密钥；适度鼓励，不使用冗长空话。
         """
     ).strip()
+    if payload.language == "en":
+        base += "\n\n界面语言：English。默认用简明英语回答；讲解中文题时保留必要的中文原文、词语和例句，不将整题擅自改写为英文题。历史消息或题目是中文不代表用户要求中文回答。"
+    else:
+        base += "\n\n界面语言：简体中文。默认用简明中文回答。"
     if payload.exam_type:
         label = "HSK" if payload.exam_type == "HKS" else "CSCA"
         base += f"\n\n当前考试类型：{label}。具体版本、等级或科目以用户明确提供的信息为准。"
@@ -55,7 +59,8 @@ async def chat_with_qwen(payload: AIChatRequest) -> dict:
     messages = build_messages(payload)
     if not settings.QWEN_API_KEY:
         return {
-            "reply": "AI 服务暂未配置密钥。你可以先把题目、选项和你的困惑发给我，我会按接入后的格式继续整理。",  # pragma: no cover
+            "reply": ("AI is not configured yet. Please try again later." if payload.language == "en" else
+                      "AI 服务暂未配置密钥。你可以先把题目、选项和你的困惑发给我，我会按接入后的格式继续整理。"),  # pragma: no cover
             "model": settings.QWEN_MODEL,
             "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
         }

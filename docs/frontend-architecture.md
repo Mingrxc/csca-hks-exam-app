@@ -22,6 +22,7 @@ shared/         Domain-neutral composables and UI utilities
 api/            Transport and backend contract mapping
 types/          Product-facing shared types
 constants/      Stable product options and labels
+i18n/           Reactive interface language, messages and native navigation updates
 styles/         Global design tokens and foundations
 ```
 
@@ -34,6 +35,12 @@ Dependencies point downward. Shared code cannot import pages or feature-specific
 - Feature composables own page-scoped server state such as loading, error, empty, and loaded data.
 - Pages compose views and navigation. They do not implement authentication, raw networking, or reusable request-state machinery.
 - Components receive data through props and emit user intent; they do not fetch server data.
+
+## Interface language (2026-10-26)
+
+The profile page offers Simplified Chinese / English without requiring login. `i18n/index.ts` keeps a reactive locale and a local `app_language_v1` preference; first launch follows WeChat language, and an explicit choice takes priority. `i18n/page.ts` updates the active native navigation title and four native tabs, and refreshes cached pages when shown. A locale change does not navigate or reset practice, chat or feedback state.
+
+Translate interface copy and common taxonomy labels at display time with `t()`, keeping raw filter values and API identifiers stable. Keep original question material, detailed bank knowledge points, scoring text, user content, announcement titles/bodies and chat history unchanged. Native prompts use `i18n/ui.ts`, which preserves editable user text. AI requests include an optional `zh` / `en` language, validated by the backend and used as the default reply language. No new dependency or database migration is required. See [interface-language.md](interface-language.md) for implementation and release notes.
 
 ## Active exam recovery
 

@@ -2,8 +2,8 @@
   <view class="exam-page app-shell">
     <view class="app-section">
       <view class="app-heading">
-        <text class="app-heading-title">练习中心</text>
-        <text class="app-heading-desc">按自己的节奏，练好每一题</text>
+        <text class="app-heading-title">{{ t("练习中心") }}</text>
+        <text class="app-heading-desc">{{ t("按自己的节奏，练好每一题") }}</text>
       </view>
       <c-exam-selection :selected-exams="userStore.selectedExams" @toggle="userStore.toggleSelectedExam" />
     </view>
@@ -11,29 +11,29 @@
     <view v-if="examStore.hasActiveProgress" class="app-section">
       <button class="resume-card app-card" @click="goResume">
         <view class="resume-icon"><t-icon name="play-circle" size="40rpx" /></view>
-        <view class="resume-copy"><text class="app-card-title">继续上次答题</text><text class="app-card-desc">{{ getExamLabel(examStore.config.examType) }} · 已完成 {{ examStore.answeredCount }} / {{ examStore.totalCount }} 题</text></view>
+        <view class="resume-copy"><text class="app-card-title">{{ t("继续上次答题") }}</text><text class="app-card-desc">{{ t('{exam} · 已完成 {done} / {total} 题', { exam: getExamLabel(examStore.config.examType), done: examStore.answeredCount, total: examStore.totalCount }) }}</text></view>
         <t-icon name="chevron-right" size="28rpx" />
       </button>
     </view>
 
     <view class="app-section">
-      <view class="app-section-head"><text class="app-section-title">选择练习方式</text><text class="exam-context">{{ userStore.selectedExamText }}</text></view>
+      <view class="app-section-head"><text class="app-section-title">{{ t("选择练习方式") }}</text><text class="exam-context">{{ t(userStore.selectedExamText) }}</text></view>
       <view class="strategy-grid">
         <button v-for="item in strategyCards" :key="item.key" class="strategy-card app-card" @click="goPaper(item.key)">
           <view class="strategy-icon" :class="{ 'strategy-icon--sage': item.sage }"><t-icon :name="item.icon" size="38rpx" /></view>
-          <text class="app-card-title">{{ item.title }}</text>
-          <text class="strategy-desc">{{ item.desc }}</text>
+          <text class="app-card-title">{{ t(item.title) }}</text>
+          <text class="strategy-desc">{{ t(item.desc) }}</text>
           <view class="strategy-arrow"><t-icon name="arrow-right" size="26rpx" /></view>
         </button>
       </view>
     </view>
 
     <view class="app-section">
-      <view class="app-section-head"><text class="app-section-title">复习与积累</text></view>
+      <view class="app-section-head"><text class="app-section-title">{{ t("复习与积累") }}</text></view>
       <view class="tool-list app-card">
         <button v-for="tool in tools" :key="tool.title" class="tool-row" @click="tool.open">
           <view class="tool-icon"><t-icon :name="tool.icon" size="34rpx" /></view>
-          <view class="tool-copy"><text class="tool-title">{{ tool.title }}</text><text class="tool-desc">{{ tool.desc }}</text></view>
+          <view class="tool-copy"><text class="tool-title">{{ t(tool.title) }}</text><text class="tool-desc">{{ t(tool.desc) }}</text></view>
           <t-icon name="chevron-right" size="26rpx" color="#857970" />
         </button>
       </view>
@@ -41,21 +41,23 @@
 
     <view class="app-section">
       <view class="dashboard-card app-card app-card-pad">
-        <view class="app-section-head"><text class="app-card-title">今天的积累</text></view>
-        <c-app-state v-if="studyLoading || loading" compact state="loading" title="正在整理学习数据" />
-        <c-app-state v-else-if="error" compact state="error" title="学习数据加载失败" :description="error" @retry="loadStudyData" />
+        <view class="app-section-head"><text class="app-card-title">{{ t("今天的积累") }}</text></view>
+        <c-app-state v-if="studyLoading || loading" compact state="loading" :title="t('正在整理学习数据')" />
+        <c-app-state v-else-if="error" compact state="error" :title="t('学习数据加载失败')" :description="error" @retry="loadStudyData" />
         <view v-else-if="loaded" class="metric-row">
-          <view class="metric"><text class="app-number">{{ dashboard.todayStats.questionCount }}</text><text class="metric-label">完成题数</text></view>
-          <view class="metric metric--sage"><text class="app-number">{{ dashboard.todayStats.objectiveCount === 0 ? '—' : dashboard.todayStats.correctRate + '%' }}</text><text class="metric-label">正确率</text></view>
-          <view class="metric"><text class="app-number">{{ dashboard.pendingWrongCount }}</text><text class="metric-label">待复习</text></view>
+          <view class="metric"><text class="app-number">{{ dashboard.todayStats.questionCount }}</text><text class="metric-label">{{ t("完成题数") }}</text></view>
+          <view class="metric metric--sage"><text class="app-number">{{ dashboard.todayStats.objectiveCount === 0 ? '—' : dashboard.todayStats.correctRate + '%' }}</text><text class="metric-label">{{ t("正确率") }}</text></view>
+          <view class="metric"><text class="app-number">{{ dashboard.pendingWrongCount }}</text><text class="metric-label">{{ t("待复习") }}</text></view>
         </view>
-        <c-app-state v-else compact state="empty" title="学习数据尚未加载" />
+        <c-app-state v-else compact state="empty" :title="t('学习数据尚未加载')" />
       </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { t } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { ref } from 'vue'
 import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
@@ -65,6 +67,8 @@ import { useUserStore } from '@/stores/user'
 import { useExamStore } from '@/stores/exam'
 import { useExamDashboard } from '@/features/exam/useExamDashboard'
 import { useExamNavigation } from '@/features/exam/useExamNavigation'
+
+usePageI18n('pages/exam/index')
 
 const userStore = useUserStore()
 const examStore = useExamStore()

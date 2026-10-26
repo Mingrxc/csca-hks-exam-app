@@ -7,7 +7,7 @@
         class="app-pill exam-selection-option"
         :class="{ 'app-pill--active': selectedExams.includes(exam) }"
         role="button"
-        :aria-label="'备考 ' + getExamLabel(exam)"
+        :aria-label="t('备考') + ' ' + getExamLabel(exam)"
         :aria-pressed="selectedExams.includes(exam)"
         @click="emit('toggle', exam)"
       >
@@ -15,11 +15,12 @@
         <text>{{ getExamLabel(exam) }}</text>
       </button>
     </view>
-    <text class="exam-selection-hint">{{ selectedExams.length ? '可多选 · 再点取消' : '随便看看 · 可多选' }}</text>
+    <text class="exam-selection-hint">{{ selectedExams.length ? t("可多选 · 再点取消") : t("随便看看 · 可多选") }}</text>
   </view>
 </template>
 
 <script setup lang="ts">
+import { t } from '@/i18n'
 import { getExamLabel } from '@/constants/exam'
 import type { ExamType } from '@/types/exam'
 

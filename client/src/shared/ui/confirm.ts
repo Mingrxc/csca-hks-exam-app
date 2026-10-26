@@ -1,3 +1,4 @@
+import { showModal } from '@/i18n/ui'
 interface ConfirmOptions {
   title: string
   content: string
@@ -6,7 +7,7 @@ interface ConfirmOptions {
 
 export function confirmAction(options: ConfirmOptions): Promise<boolean> {
   return new Promise((resolve) => {
-    uni.showModal({
+    showModal({
       title: options.title,
       content: options.content,
       confirmText: options.confirmText || '确定',

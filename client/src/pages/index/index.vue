@@ -3,8 +3,8 @@
   <view v-else class="home-page app-shell">
     <view class="home-header">
       <view class="home-greeting">
-        <text class="greeting-title">{{ greeting }}，{{ displayName }}</text>
-        <text class="greeting-desc">今天，也向目标靠近一点</text>
+        <text class="greeting-title">{{ t(greeting) }}{{ language === 'en' ? ', ' : '，' }}{{ displayName }}</text>
+        <text class="greeting-desc">{{ t("今天，也向目标靠近一点") }}</text>
       </view>
       <c-exam-selection compact :selected-exams="userStore.selectedExams" @toggle="userStore.toggleSelectedExam" />
     </view>
@@ -13,23 +13,23 @@
       <view class="goal-card app-card app-card-pad">
         <view class="goal-top">
           <view class="goal-copy">
-            <text class="goal-label">我的学习目标</text>
+            <text class="goal-label">{{ t("我的学习目标") }}</text>
             <template v-if="userStore.isBrowseMode">
-              <text class="goal-caption">随便看看，按自己的节奏开始</text>
-              <text class="browse-note">先探索感兴趣的内容，再慢慢确定目标</text>
+              <text class="goal-caption">{{ t("随便看看，按自己的节奏开始") }}</text>
+              <text class="browse-note">{{ t("先探索感兴趣的内容，再慢慢确定目标") }}</text>
             </template>
             <template v-else-if="goalTargets.length === 1">
-              <text class="goal-caption">{{ goalTargets[0].date ? '距 ' + goalTargets[0].label + ' 目标考试' : '为 ' + goalTargets[0].label + ' 设定学习目标' }}</text>
-              <view v-if="goalTargets[0].date" class="countdown"><text class="countdown-value app-number">{{ goalTargets[0].days }}</text><text class="countdown-unit">天</text></view>
-              <button v-else class="target-link app-text-link" @click="goProfile">设置考试日期 <t-icon name="chevron-right" size="24rpx" /></button>
-              <text v-if="goalTargets[0].date" class="goal-date">目标日期 {{ goalTargets[0].date }}</text>
+              <text class="goal-caption">{{ goalTargets[0].date ? t('距 {exam} 目标考试', { exam: goalTargets[0].label }) : t('为 {exam} 设定学习目标', { exam: goalTargets[0].label }) }}</text>
+              <view v-if="goalTargets[0].date" class="countdown"><text class="countdown-value app-number">{{ goalTargets[0].days }}</text><text class="countdown-unit">{{ t("天") }}</text></view>
+              <button v-else class="target-link app-text-link" @click="goProfile">{{ t("设置考试日期") }} <t-icon name="chevron-right" size="24rpx" /></button>
+              <text v-if="goalTargets[0].date" class="goal-date">{{ t("目标日期") }} {{ goalTargets[0].date }}</text>
             </template>
             <template v-else>
-              <text class="goal-caption">同时备考，两份目标一起前进</text>
+              <text class="goal-caption">{{ t("同时备考，两份目标一起前进") }}</text>
               <view class="goal-targets">
                 <button v-for="target in goalTargets" :key="target.exam" class="goal-target" @click="goProfile">
-                  <view><text class="goal-target-label">{{ target.label }}</text><text class="goal-date">{{ target.date || '设置考试日期' }}</text></view>
-                  <view v-if="target.date" class="goal-target-countdown"><text class="app-number">{{ target.days }}</text><text>天</text></view>
+                  <view><text class="goal-target-label">{{ target.label }}</text><text class="goal-date">{{ target.date || t("设置考试日期") }}</text></view>
+                  <view v-if="target.date" class="goal-target-countdown"><text class="app-number">{{ target.days }}</text><text>{{ t("天") }}</text></view>
                   <t-icon v-else name="chevron-right" size="24rpx" />
                 </button>
               </view>
@@ -41,63 +41,65 @@
             <view class="calendar-check"><t-icon name="check" size="28rpx" color="#fffaf3" /></view>
           </view>
         </view>
-        <t-button theme="primary" block size="large" @click="goPrimaryAction"><view class="primary-action-inner"><text>{{ examStore.hasActiveProgress ? '继续上次答题' : '开始今日练习' }}</text><t-icon name="chevron-right" size="28rpx" /></view></t-button>
+        <t-button theme="primary" block size="large" @click="goPrimaryAction"><view class="primary-action-inner"><text>{{ examStore.hasActiveProgress ? t("继续上次答题") : t("开始今日练习") }}</text><t-icon name="chevron-right" size="28rpx" /></view></t-button>
         <view v-if="examStore.hasActiveProgress" class="resume-progress">
-          <text>{{ getExamLabel(examStore.config.examType) }} · 已完成 {{ examStore.answeredCount }} / {{ examStore.totalCount }} 题</text>
+          <text>{{ t('{exam} · 已完成 {done} / {total} 题', { exam: getExamLabel(examStore.config.examType), done: examStore.answeredCount, total: examStore.totalCount }) }}</text>
           <view class="resume-track"><view :style="{ width: examStore.progressPercent + '%' }"></view></view>
         </view>
-        <text v-else class="goal-footer">从一组练习开始，慢慢积累进步</text>
+        <text v-else class="goal-footer">{{ t("从一组练习开始，慢慢积累进步") }}</text>
       </view>
     </view>
 
     <view class="app-section">
       <view class="study-card app-card app-card-pad">
-        <view class="app-section-head"><text class="app-card-title">今日学习</text><button class="plain-link" aria-label="去刷题" @click="goExam"><t-icon name="chevron-right" size="28rpx" /></button></view>
-        <c-app-state v-if="studyLoading && !dashboard" compact state="loading" title="正在整理学习数据" />
-        <c-app-state v-else-if="dashboardState.error.value" compact state="error" title="学习数据暂时不可用" :description="dashboardState.error.value" @retry="loadStudyData" />
+        <view class="app-section-head"><text class="app-card-title">{{ t("今日学习") }}</text><button class="plain-link" :aria-label="t('去刷题')" @click="goExam"><t-icon name="chevron-right" size="28rpx" /></button></view>
+        <c-app-state v-if="studyLoading && !dashboard" compact state="loading" :title="t('正在整理学习数据')" />
+        <c-app-state v-else-if="dashboardState.error.value" compact state="error" :title="t('学习数据暂时不可用')" :description="dashboardState.error.value" @retry="loadStudyData" />
         <view v-else class="metric-row">
-          <view class="metric"><text class="metric-value app-number">{{ dashboard ? dashboard.todayStats.questionCount : '—' }}</text><text class="metric-label">完成题数</text></view>
-          <view class="metric metric--sage"><text class="metric-value app-number">{{ dashboard && dashboard.todayStats.objectiveCount !== 0 ? dashboard.todayStats.correctRate + '%' : '—' }}</text><text class="metric-label">正确率</text></view>
-          <view class="metric"><text class="metric-value app-number">{{ dashboard ? dashboard.pendingWrongCount : '—' }}</text><text class="metric-label">待复习</text></view>
+          <view class="metric"><text class="metric-value app-number">{{ dashboard ? dashboard.todayStats.questionCount : '—' }}</text><text class="metric-label">{{ t("完成题数") }}</text></view>
+          <view class="metric metric--sage"><text class="metric-value app-number">{{ dashboard && dashboard.todayStats.objectiveCount !== 0 ? dashboard.todayStats.correctRate + '%' : '—' }}</text><text class="metric-label">{{ t("正确率") }}</text></view>
+          <view class="metric"><text class="metric-value app-number">{{ dashboard ? dashboard.pendingWrongCount : '—' }}</text><text class="metric-label">{{ t("待复习") }}</text></view>
         </view>
       </view>
     </view>
 
     <view class="app-section">
       <view class="app-card app-card-pad">
-        <view class="app-section-head"><text class="app-card-title">学习工具</text></view>
+        <view class="app-section-head"><text class="app-card-title">{{ t("学习工具") }}</text></view>
         <view class="tool-row">
-          <button class="tool" @click="goWrongBook"><view class="tool-icon"><t-icon name="book" size="42rpx" /></view><text>错题复习</text></button>
-          <button class="tool" @click="goFavorite"><view class="tool-icon"><t-icon name="star" size="42rpx" /></view><text>我的收藏</text></button>
-          <button class="tool" @click="goHistory"><view class="tool-icon tool-icon--sage"><t-icon name="chart-bar" size="42rpx" /></view><text>练习记录</text></button>
+          <button class="tool" @click="goWrongBook"><view class="tool-icon"><t-icon name="book" size="42rpx" /></view><text>{{ t("错题复习") }}</text></button>
+          <button class="tool" @click="goFavorite"><view class="tool-icon"><t-icon name="star" size="42rpx" /></view><text>{{ t("我的收藏") }}</text></button>
+          <button class="tool" @click="goHistory"><view class="tool-icon tool-icon--sage"><t-icon name="chart-bar" size="42rpx" /></view><text>{{ t("练习记录") }}</text></button>
         </view>
       </view>
     </view>
 
     <view class="app-section">
       <view class="recent-card app-card">
-        <view class="recent-heading"><text class="app-card-title">最近练习</text><button class="plain-link" aria-label="全部练习记录" @click="goHistory"><t-icon name="chevron-right" size="28rpx" /></button></view>
+        <view class="recent-heading"><text class="app-card-title">{{ t("最近练习") }}</text><button class="plain-link" :aria-label="t('全部练习记录')" @click="goHistory"><t-icon name="chevron-right" size="28rpx" /></button></view>
         <view v-if="recentPapers.length" class="recent-list">
           <button v-for="paper in recentPapers" :key="paper.id" class="recent-row" @click="goPaper(paper.id)">
             <view class="recent-icon"><t-icon name="file" size="32rpx" /></view>
-            <view class="recent-copy"><text class="recent-title">{{ getPaperTitle(paper.title) }}</text><text class="recent-meta">{{ paper.questionCount }} 题 · {{ paper.date }}</text></view>
-            <text class="recent-score app-number">{{ paper.objectiveCount === 0 ? '自评' : Math.round(paper.score) + '%' }}</text><t-icon name="chevron-right" size="24rpx" color="#857970" />
+            <view class="recent-copy"><text class="recent-title">{{ getPaperTitle(paper.title) }}</text><text class="recent-meta">{{ t('{n}题', { n: paper.questionCount }) }} · {{ paper.date }}</text></view>
+            <text class="recent-score app-number">{{ paper.objectiveCount === 0 ? t("自评") : Math.round(paper.score) + '%' }}</text><t-icon name="chevron-right" size="24rpx" color="#857970" />
           </button>
         </view>
-        <view v-else class="recent-empty"><text>{{ dashboardState.error.value ? '连接恢复后，可查看最近练习' : '完成第一组练习，记录每一次进步' }}</text></view>
+        <view v-else class="recent-empty"><text>{{ dashboardState.error.value ? t("连接恢复后，可查看最近练习") : t("完成第一组练习，记录每一次进步") }}</text></view>
       </view>
     </view>
 
     <view class="app-section">
       <view class="app-card app-card-pad">
-        <view class="app-section-head"><text class="app-card-title">留学资讯</text><text class="preparing-label">筹备中</text></view>
-        <view class="content-empty"><view class="content-icon"><t-icon name="file" size="38rpx" /></view><view><text class="content-title">资讯栏目正在准备中</text><text class="content-desc">考试动态、申请提醒与学习资料</text></view></view>
+        <view class="app-section-head"><text class="app-card-title">{{ t("留学资讯") }}</text><text class="preparing-label">{{ t("筹备中") }}</text></view>
+        <view class="content-empty"><view class="content-icon"><t-icon name="file" size="38rpx" /></view><view><text class="content-title">{{ t("资讯栏目正在准备中") }}</text><text class="content-desc">{{ t("考试动态、申请提醒与学习资料") }}</text></view></view>
       </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { t, language } from '@/i18n'
+import { usePageI18n } from '@/i18n/page'
 import { computed, ref } from 'vue'
 import { onShareAppMessage, onShareTimeline, onShow } from '@dcloudio/uni-app'
 import { createAppShareMessage, createTimelineShareMessage, isTimelinePreview } from '@/constants/share'
@@ -108,6 +110,8 @@ import { useExamStore } from '@/stores/exam'
 import { useHomePage } from '@/features/home/useHomePage'
 import { useExamNavigation } from '@/features/exam/useExamNavigation'
 import type { ExamType } from '@/types/exam'
+
+usePageI18n('pages/index/index')
 
 const userStore = useUserStore()
 const examStore = useExamStore()
