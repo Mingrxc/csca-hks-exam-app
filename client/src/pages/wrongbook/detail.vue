@@ -73,7 +73,6 @@
       <t-button theme="primary" block shape="round" @click="markMastered">
         {{ question.mastered ? t("已掌握") : t("标记为已掌握") }}
       </t-button>
-      <t-button theme="default" variant="outline" block shape="round" @click="sendToAI">{{ t("发给 AI") }}</t-button>
       <t-button theme="default" variant="outline" block shape="round" @click="goRedo">{{ t("重做错题") }}</t-button>
     </view>
   </view>
@@ -94,7 +93,7 @@ import { onShareAppMessage, onLoad } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
 import { wrongBookApi } from '@/features/wrongbook/api'
 import { toRelatedQuestion, toWrongBookDetail } from '@/api/contracts'
-import { getExamLabel, getQuestionDomain, getQuestionDomainLabel } from '@/constants/exam'
+import { getQuestionDomain, getQuestionDomainLabel } from '@/constants/exam'
 import type { RelatedQuestion, WrongBookDetail } from '@/types/wrongbook'
 
 usePageI18n('pages/wrongbook/detail')
@@ -188,25 +187,6 @@ const goRedo = () => {
   uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${question.value.examType}` })
 }
 
-const sendToAI = () => {
-  if (!question.value) return
-  uni.setStorageSync('ai_prefill', {
-    content: question.value.stem,
-    topic: t('{exam} 错题咨询', { exam: getExamLabel(question.value.examType) }),
-    context: [
-      t('考试类型：{value}', { value: getExamLabel(question.value.examType) }),
-      `${domainLabel.value}：${domainValue.value}`,
-      t('我的答案：{value}', { value: question.value.myAnswer || '未作答' }),
-      t('正确答案：{value}', { value: question.value.answer || '暂无' }),
-      question.value.analysis ? t('解析：{value}', { value: question.value.analysis }) : '',
-      question.value.confusion ? t('易混选项：{value}', { value: question.value.confusion }) : '',
-    ]
-      .filter(Boolean)
-      .join('\n'),
-    examType: question.value.examType,
-  })
-  uni.switchTab({ url: '/pages/ai/index' })
-}
 // #ifdef MP-WEIXIN
 onShareAppMessage(createAppShareMessage)
 // #endif

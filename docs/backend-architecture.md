@@ -6,7 +6,7 @@ This document records the backend rules for API version `v1`. These are implemen
 
 - SQLAlchemy uses the synchronous PyMySQL driver.
 - Routes that perform database work are synchronous `def` handlers so FastAPI runs them in its worker thread pool.
-- Async handlers are reserved for real asynchronous I/O. The current examples are WeChat code exchange and the Qwen HTTP request.
+- Async handlers are reserved for real asynchronous I/O, such as WeChat code exchange. The retained Qwen HTTP implementation is not exposed in1.5.3.
 - The WeChat login route completes its database work in a worker thread with a worker-owned session.
 - A full async SQLAlchemy migration is not justified unless profiling demonstrates database-thread saturation.
 
@@ -82,3 +82,7 @@ Stable source question_id maps to unique questions.bank_id. Corrections update t
 - Versioned announcements reuse `content_items`. Public lists and details filter inactive and future publications; normal reads no longer seed demo content. Migration0008 adds the new table/columns and an unpublished release-notes draft, preserving learning data.
 - Only the backend constructs AI system messages. User-supplied question/topic/context stays in a user message; inbound chat roles are restricted to user/assistant. HKS is displayed as HSK in the prompt.
 - See [release-1.5.1.md](release-1.5.1.md) for contracts and incremental deployment steps.
+
+## AI withdrawal (1.5.3)
+
+The API aggregator no longer imports or mounts the AI router. `/api/v1/ai/chat` returns404 and AI contracts are absent from OpenAPI; the implementation under `modules/ai` and its configuration remain available for a future restoration. No other business route or authentication rule changes. Migration0010 adds only the approved1.5.3 announcement, preserving existing data and editorial records. See [release-1.5.3.md](release-1.5.3.md).

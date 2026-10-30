@@ -9,7 +9,6 @@ const pageTitles: Record<string, string> = {
   'pages/exam/answer': '答题中',
   'pages/exam/result': '成绩报告',
   'pages/exam/history': '历史试卷',
-  'pages/ai/index': 'AI问答',
   'pages/profile/index': '我的',
   'pages/favorite/index': '收藏题目',
   'pages/wrongbook/index': '错题本',
@@ -21,8 +20,8 @@ const pageTitles: Record<string, string> = {
   'pages/about/announcement': '公告详情',
   'pages/content-admin/index': '内容管理',
 }
-const tabTitles = ['首页', '刷题', 'AI问答', '我的']
-const tabRoutes = ['pages/index/index', 'pages/exam/index', 'pages/ai/index', 'pages/profile/index']
+const tabTitles = ['首页', '刷题', '我的']
+const tabRoutes = ['pages/index/index', 'pages/exam/index', 'pages/profile/index']
 
 export function updatePageChrome(route: string): void {
   const pages = getCurrentPages()

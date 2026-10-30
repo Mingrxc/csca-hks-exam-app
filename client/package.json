@@ -1,9 +1,8 @@
 {
   "name": "laowai1diantong-miniapp",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "老外1点通 留学考试学习助手",
   "scripts": {
-    "test:ai": "node --test tests/ai-composer.test.cjs",
     "test:bank": "node --test tests/question-bank.test.cjs",
     "test:profile": "node --test tests/profile-support.test.cjs",
     "test:i18n": "node --test tests/i18n.test.cjs",

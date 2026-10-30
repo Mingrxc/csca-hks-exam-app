@@ -176,13 +176,13 @@ test('about navigates to updates and opens the official privacy guide without re
   assert.equal(calls.join(','), 'privacy')
 })
 
-test('all shipped client version metadata agrees with 1.5.2', () => {
+test('all shipped client version metadata agrees with 1.5.3', () => {
   const root = path.join(__dirname, '..')
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'src/manifest.json'), 'utf8'))
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
   const lock = JSON.parse(fs.readFileSync(path.join(root, 'package-lock.json'), 'utf8'))
-  assert.equal(manifest.versionName, '1.5.2')
-  assert.equal(manifest.versionCode, '152')
+  assert.equal(manifest.versionName, '1.5.3')
+  assert.equal(manifest.versionCode, '153')
   assert.equal(pkg.version, manifest.versionName)
   assert.equal(lock.version, manifest.versionName)
   assert.equal(lock.packages[''].version, manifest.versionName)

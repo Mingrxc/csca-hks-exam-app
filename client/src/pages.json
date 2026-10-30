@@ -38,12 +38,6 @@
       }
     },
     {
-      "path": "pages/ai/index",
-      "style": {
-        "navigationBarTitleText": "AI问答"
-      }
-    },
-    {
       "path": "pages/favorite/index",
       "style": {
         "navigationBarTitleText": "收藏题目"
@@ -128,12 +122,6 @@
         "text": "刷题",
         "iconPath": "static/tabbar/exam.png",
         "selectedIconPath": "static/tabbar/exam-active.png"
-      },
-      {
-        "pagePath": "pages/ai/index",
-        "text": "AI问答",
-        "iconPath": "static/tabbar/ai.png",
-        "selectedIconPath": "static/tabbar/ai-active.png"
       },
       {
         "pagePath": "pages/profile/index",

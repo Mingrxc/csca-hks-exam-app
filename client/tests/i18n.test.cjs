@@ -42,13 +42,17 @@ test('switching updates native navigation and all tabs; a cached page cannot ove
     await vue.nextTick()
     assert.equal(env.chrome.filter(item => item[0] === 'title').length, 1)
     assert.equal(env.chrome[0][1], 'Me')
-    assert.deepEqual(env.chrome.filter(item => item[0] === 'tab').map(item => item[2]), ['Home', 'Practice', 'AI Chat', 'Me'])
+    assert.deepEqual(env.chrome.filter(item => item[0] === 'tab'), [
+      ['tab', 0, 'Home'], ['tab', 1, 'Practice'], ['tab', 2, 'Me'],
+    ])
     env.setRoute('pages/exam/index')
     env.hooks[0]()
-    assert.equal(env.chrome.at(-5)[1], 'Practice')
+    assert.equal(env.chrome.at(-4)[1], 'Practice')
     env.i18n.setLanguage('zh')
     await vue.nextTick()
-    assert.equal(env.chrome.at(-5)[1], '刷题')
+    assert.equal(env.chrome.at(-4)[1], '刷题')
+    const tabs = require('../src/pages.json').tabBar.list
+    assert.deepEqual(env.chrome.slice(-3), tabs.map((item, index) => ['tab', index, item.text]))
   } finally { scope.stop() }
 })
 
@@ -90,22 +94,6 @@ test('English filter labels keep Chinese subject/module/topic API values', async
   assert.equal(request.subjects[0], '物理')
   assert.equal(request.knowledgeModules[0], '光学')
   assert.equal(request.knowledgePoints[0], '折射')
-})
-
-test('AI requests carry the current language while the question and history stay original', async () => {
-  const requests = []
-  const env = environment({ mocks: { '@/api/client': { request: async value => { requests.push(value); return { reply: 'mock' } } } } })
-  const { aiApi } = env.load('features/ai/api.ts')
-  const data = { question: '中文题目', messages: [{ role: 'user', content: '已有的中文对话' }] }
-  env.i18n.setLanguage('en')
-  await aiApi.chat(data)
-  env.i18n.setLanguage('zh')
-  await aiApi.chat(data)
-  assert.equal(requests[0].data.language, 'en')
-  assert.equal(requests[1].data.language, 'zh')
-  assert.equal(requests[0].data.question, data.question)
-  assert.equal(requests[0].data.messages[0].content, data.messages[0].content)
-  assert.equal(data.language, undefined)
 })
 
 test('native editable dialogs translate controls while preserving user text', () => {

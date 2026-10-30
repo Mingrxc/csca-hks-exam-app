@@ -27,9 +27,6 @@
           </view>
           <text class="stem">{{ item.question.stem_text }}</text>
           <view class="actions">
-            <t-button theme="default" variant="outline" size="small" shape="round" @click="askAI(item)">
-              {{ t("发给 AI") }}
-            </t-button>
             <t-button theme="danger" variant="outline" size="small" shape="round" @click="remove(item.question_id)">
               {{ t("取消收藏") }}
             </t-button>
@@ -48,7 +45,6 @@ import { usePageI18n } from '@/i18n/page'
 import { getExamLabel } from '@/constants/exam'
 import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
-import type { ApiFavoriteItem } from '@/api/contracts'
 import { useFavorites } from '@/features/favorite/useFavorites'
 
 usePageI18n('pages/favorite/index')
@@ -57,25 +53,6 @@ const { data: items, loading, error, load, remove: removeFavorite } = useFavorit
 
 const remove = async (questionId: number) => {
   try { await removeFavorite(questionId) } catch {}
-}
-
-const askAI = (item: ApiFavoriteItem) => {
-  uni.setStorageSync('ai_prefill', {
-    content: item.question.stem_text,
-    topic: t('收藏题目咨询'),
-    context: [
-      t('考试类型：{value}', { value: getExamLabel(item.question.exam_type) }),
-      item.question.exam_type === 'CSCA'
-        ? t('科目：{value}', { value: item.question.subject })
-        : t('知识点：{value}', { value: item.question.knowledge_point }),
-      t('收藏时间：{value}', { value: item.created_at.slice(0, 10) }),
-      item.note ? t('备注：{value}', { value: item.note }) : '',
-    ]
-      .filter(Boolean)
-      .join('\n'),
-    examType: item.question.exam_type,
-  })
-  uni.switchTab({ url: '/pages/ai/index' })
 }
 
 onShow(load)

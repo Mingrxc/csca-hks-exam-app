@@ -2,7 +2,6 @@
 
 from fastapi import APIRouter
 
-from src.modules.ai.router import router as ai_router
 from src.modules.feedback.router import router as feedback_router
 from src.modules.content.router import router as content_router
 from src.modules.favorite.router import router as favorite_router
@@ -19,5 +18,5 @@ api_router.include_router(exam_router, prefix="/exam", tags=["考试"])
 api_router.include_router(wrongbook_router, prefix="/wrongbook", tags=["错题本"])
 api_router.include_router(favorite_router, prefix="/favorite", tags=["收藏"])
 api_router.include_router(content_router, prefix="/content", tags=["内容"])
-api_router.include_router(ai_router, prefix="/ai", tags=["AI问答"])
+# AI implementation is retained under modules/ai, but is not exposed as of 1.5.3.
 api_router.include_router(feedback_router, prefix="/feedback", tags=["用户反馈"])

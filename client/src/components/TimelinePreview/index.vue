@@ -20,10 +20,6 @@
           <text class="feature-title">{{ t("错题、收藏与学习记录") }}</text>
           <text class="feature-description">{{ t("回顾答题解析，收藏需要巩固的题目，逐步整理个人学习积累。") }}</text>
         </view>
-        <view class="preview-feature">
-          <text class="feature-title">{{ t("AI 学习助手") }}</text>
-          <text class="feature-description">{{ t("围绕题目和学习困惑提问，辅助理解思路。AI 回答可能存在错误，请结合教材核实。") }}</text>
-        </view>
       </view>
     </view>
 

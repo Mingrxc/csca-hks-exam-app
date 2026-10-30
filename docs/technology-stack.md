@@ -1,15 +1,16 @@
 # 老外1点通项目技术栈说明
 
-整理日期：2026-10-26  
-项目版本：1.5.2
+整理日期：2026-10-30
+
+项目版本：1.5.3（本地待发布）
 
 项目本体：`D:\Projects\Deng\csca-hks-exam-app`
 
-本文依据当前仓库源码、依赖锁定文件及2026-10-25服务器部署记录整理。前端精确依赖版本取自 `client/package-lock.json`；后端依赖版本取自 `server/requirements.txt`，不代表本次重新检查了服务器安装清单。服务器信息采用既有部署记录。2026-10-26已在本地实现中英界面切换，尚未部署；没有安装新依赖。
+本文依据当前仓库源码、依赖锁定文件及既有服务器部署记录整理。前端精确依赖版本取自 `client/package-lock.json`；后端依赖版本取自 `server/requirements.txt`，不代表本次重新检查了服务器安装清单。2026-10-30本地1.5.3已撤销AI功能，尚未部署；正式服务器最新既有记录为2026-10-26的1.5.2。本次没有安装新依赖。
 
 ## 1. 项目定位与整体架构
 
-老外1点通是面向留学生的 HSK 与 CSCA 学习备考微信小程序，包含题库练习、限时综合练习、错题复习、收藏、学习统计、AI问答、用户反馈和更新公告。
+老外1点通是面向留学生的 HSK 与 CSCA 学习备考微信小程序，包含题库练习、限时综合练习、错题复习、收藏、学习统计、用户反馈和更新公告。AI功能在1.5.3撤销。
 
 整体采用前后端分离架构：uni-app 编译微信小程序前端，FastAPI 提供单体模块化后端服务，MySQL 保存业务数据，Nginx 提供 HTTPS 入口和题目媒体访问。
 
@@ -21,7 +22,6 @@
         ├── FastAPI / Uvicorn
         │       ├── SQLAlchemy + PyMySQL → MySQL
         │       ├── HTTPX → 微信登录接口
-        │       ├── HTTPX → 阿里云DashScope千问接口
         │       └── ReportLab → 错题PDF
         └── 音频 / 图片静态媒体
 
@@ -46,7 +46,7 @@
 | 包管理 | npm | `package-lock.json`锁定依赖 |
 | 小程序路由与导航 | uni-app配置及导航API | `pages.json`、原生导航栏、原生TabBar |
 | HTTP与文件下载 | uni-app原生API | 封装`uni.request`、`uni.downloadFile` |
-| 本地持久化 | uni-app Storage | 登录令牌、答题快照、AI会话、备考偏好和反馈草稿 |
+| 本地持久化 | uni-app Storage | 登录令牌、答题快照、备考偏好和反馈草稿；旧AI缓存保留但无访问界面 |
 | 音频与图片 | uni-app原生API | `uni.createInnerAudioContext`、`uni.previewImage` |
 | 文档预览 | uni-app原生API | `uni.openDocument`打开错题PDF |
 
@@ -77,11 +77,11 @@ client/src/
 
 每次构建使用明确的`VITE_API_BASE_URL`。请求层统一处理认证、错误、超时、请求ID和重试；GET网络失败重试一次，写请求不自动进行网络重试，401最多重新登录并重发一次。
 
-当前原生Tab为首页、刷题、AI问答、我的。视觉采用米白背景、陶土主色、浅绿辅助色，通过全局CSS变量统一。
+当前原生Tab为首页、刷题、我的三项，中英切换同步更新索引。视觉采用米白背景、陶土主色、浅绿辅助色，通过全局CSS变量统一。
 
-本地代码已支持“我的 → 语言 / Language”切换，题目和用户内容保留原文；AI 问答附加可选 `language: zh/en`，需同步部署后端才能应用新的默认回答语言。没有增加国际化依赖或数据库表。详见 [中英界面切换](interface-language.md)。
+本地代码支持“我的 → 语言 / Language”切换，题目和用户内容保留原文；1.5.3移除AI页面、调用封装及相关入口。没有增加国际化依赖或数据库表。详见 [中英界面切换](interface-language.md)。
 
-1.5.2 定稿公告以 `0009_release_1_5_2` 数据迁移加入现有公告表，执行迁移后可展示，不改数据库结构。此迁移尚未在本次任务中应用到正式库，详见 [1.5.2 发布说明](release-1.5.2.md)。
+1.5.2公告在既有记录中已部署至0009；本次1.5.3新增 `0010_release_1_5_3` 公告数据迁移，正文“撤销AI功能”，不改数据库结构，尚未在正式库执行。详见 [1.5.3 发布说明](release-1.5.3.md)。
 
 ## 3. 后端技术栈
 
@@ -101,7 +101,7 @@ client/src/
 | JWT | python-jose `3.3.0` | 令牌签发与验证 |
 | PDF生成 | ReportLab `4.4.9` | 错题PDF排版与生成 |
 
-数据库访问采用同步SQLAlchemy和PyMySQL，连接字符集为`utf8mb4`。数据库路由使用同步`def`，由FastAPI线程池处理；微信登录交换和AI请求采用异步HTTP I/O。当前不是全异步数据库架构。
+数据库访问采用同步SQLAlchemy和PyMySQL，连接字符集为`utf8mb4`。数据库路由使用同步`def`，由FastAPI线程池处理；微信登录交换采用异步HTTP I/O。当前不是全异步数据库架构，归档AI模块未挂载对外路由。
 
 ### 后端目录与分层
 
@@ -130,7 +130,7 @@ server/
 | wrongbook | `/api/v1/wrongbook` | 错题、掌握标记、重做与PDF |
 | favorite | `/api/v1/favorite` | 个人收藏 |
 | content | `/api/v1/content` | 内容管理与版本更新公告 |
-| ai | `/api/v1/ai` | AI文字问答 |
+| ai（保留实现） | 未挂载 | 1.5.3停用对外接口，原调用返回404 |
 | feedback | `/api/v1/feedback` | 私密反馈及管理员处理 |
 
 业务JSON响应统一使用`code`、`message`、`data`、`request_id`结构。HTTP头`X-Request-ID`用于关联请求与后端日志。PDF和媒体使用对应的文件响应。
@@ -170,7 +170,9 @@ feedback               私密用户反馈
 
 当前题库基线为1221题，CSCA550、HSK671；口语与口译99题暂缓，原稿保留。界面显示HSK，既有接口和数据库枚举继续使用内部标识`HKS`。
 
-## 5. AI问答技术栈
+## 5. 归档AI实现（1.5.3停用）
+
+以下为保留的后端实现及旧版行为记录。1.5.3不再提供AI页面、前端封装、公开接口或OpenAPI契约；配置保留供以后恢复，本次不调用模型、不改私有配置。
 
 | 项目 | 实现 |
 |---|---|
@@ -268,5 +270,5 @@ feedback               私密用户反馈
 ## 11. 可直接复制的简版介绍
 
 ```text
-老外1点通是一款面向留学生的HSK与CSCA备考微信小程序，采用前后端分离架构。前端使用uni-app、Vue 3、TypeScript/JavaScript、Pinia、TDesign UniApp和SCSS，通过Vite与esbuild构建。后端使用Python、FastAPI、Uvicorn、Pydantic、SQLAlchemy、PyMySQL和Alembic，数据库为MySQL 8.4。微信登录基于OpenID与JWT，AI问答通过HTTPX调用阿里云DashScope的qwen3.8-27b模型，错题PDF由ReportLab生成。题库使用JSON原稿与Python导入工具，音频图片由Nginx经HTTPS提供。服务部署在腾讯云Debian服务器，通过Nginx和systemd管理；测试采用pytest、SQLite和Node.js内置测试工具。本地开发复用Conda deng环境。Redis、异步MySQL驱动和OSS配置目前为预留项。
+老外1点通是一款面向留学生的HSK与CSCA备考微信小程序，采用前后端分离架构。前端使用uni-app、Vue 3、TypeScript/JavaScript、Pinia、TDesign UniApp和SCSS，通过Vite与esbuild构建。后端使用Python、FastAPI、Uvicorn、Pydantic、SQLAlchemy、PyMySQL和Alembic，数据库为MySQL 8.4。微信登录基于OpenID与JWT，错题PDF由ReportLab生成；AI功能在1.5.3撤销，后端实现保留但接口未挂载。题库使用JSON原稿与Python导入工具，音频图片由Nginx经HTTPS提供。服务部署在腾讯云Debian服务器，通过Nginx和systemd管理；测试采用pytest、SQLite和Node.js内置测试工具。本地开发复用Conda deng环境。Redis、异步MySQL驱动和OSS配置目前为预留项。
 ```

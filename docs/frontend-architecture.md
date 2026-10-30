@@ -38,9 +38,9 @@ Dependencies point downward. Shared code cannot import pages or feature-specific
 
 ## Interface language (2026-10-26)
 
-The profile page offers Simplified Chinese / English without requiring login. `i18n/index.ts` keeps a reactive locale and a local `app_language_v1` preference; first launch follows WeChat language, and an explicit choice takes priority. `i18n/page.ts` updates the active native navigation title and four native tabs, and refreshes cached pages when shown. A locale change does not navigate or reset practice, chat or feedback state.
+The profile page offers Simplified Chinese / English without requiring login. `i18n/index.ts` keeps a reactive locale and a local `app_language_v1` preference; first launch follows WeChat language, and an explicit choice takes priority. `i18n/page.ts` updates the active native navigation title and three native tabs (Home, Practice, Me), and refreshes cached pages when shown. A locale change does not navigate or reset practice or feedback state.
 
-Translate interface copy and common taxonomy labels at display time with `t()`, keeping raw filter values and API identifiers stable. Keep original question material, detailed bank knowledge points, scoring text, user content, announcement titles/bodies and chat history unchanged. Native prompts use `i18n/ui.ts`, which preserves editable user text. AI requests include an optional `zh` / `en` language, validated by the backend and used as the default reply language. No new dependency or database migration is required. See [interface-language.md](interface-language.md) for implementation and release notes.
+Translate interface copy and common taxonomy labels at display time with `t()`, keeping raw filter values and API identifiers stable. Keep original question material, detailed bank knowledge points, scoring text, user content and announcement titles/bodies unchanged. Native prompts use `i18n/ui.ts`, which preserves editable user text. Version1.5.3 removes the AI page, client API wrapper and all AI entry points. See [interface-language.md](interface-language.md) and [release-1.5.3.md](release-1.5.3.md).
 
 ## Active exam recovery
 
@@ -79,11 +79,11 @@ Page styles may define layout, but should not introduce a second brand palette o
 
 - Background `#F7F1E8`, card surface `#FFFAF3`, primary terracotta `#B86B4B`, charcoal text `#2F2926`, and sage accent `#7E9A80`.
 - Use quiet solid surfaces, light borders and shadows, readable sans-serif text, and serif accents for dashboard numbers.
-- Keep the native navigation and four tabs: 首页、刷题、AI问答、我的.
+- Keep the native navigation and three tabs: 首页、刷题、我的 (updated in1.5.3).
 - Home prioritizes goals, a resume/start action, live study metrics, review tools and recent practice. News remains a preparation state until real content is available.
 - Display HSK in UI text through `getExamLabel` / `getPaperTitle`; preserve the existing `HKS` backend identifier.
 - `AppState` supports `compact` for inline cards. Failed data requests should expose retry, not fabricate zero metrics or successful empty lists.
-- AI uses a full-width conversation and flex composer. Failed sends retain the draft; new conversations retain previous sessions. Photo controls are deferred until actual image submission is supported.
+- AI is withdrawn in1.5.3: no conversation page, navigation item, question-to-AI actions or preview promotion. Backend implementation is retained without a mounted public route.
 - Vite uses the already available esbuild minifier, so local builds do not require the absent optional terser package.
 
 ## Adding a feature

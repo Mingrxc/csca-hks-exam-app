@@ -228,12 +228,6 @@ export interface ApiContentItem {
   updated_at: string
 }
 
-export interface ApiAIReply {
-  reply: string
-  model: string
-  usage: Record<string, number>
-}
-
 export function toQuestion(item: ApiQuestion): Question {
   return {
     id: item.id,
