@@ -112,3 +112,7 @@ The privacy link invokes `wx.openPrivacyContract` only on WeChat and shows an ap
 ## V1.5.4 authentication
 
 Public tabs browse without sign-in. shared/auth/session tracks token, verified user ID and session generation; navigation owns the login prompt and pending destination. Only the login page calls the user store login action. App launch validates an existing token without initiating WeChat login. API responses from earlier sessions are discarded. AuthFrame guards private pages. Profile data is shared through the user store; practice snapshots and preferences are scoped by internal user ID. See release-1.5.4.md for migration and avatar storage.
+
+## Management (1.5.5 trial)
+
+The user store exposes verified isAdmin/isOwner flags derived from the server profile. Ordinary users see no management entry. useAdminPage refreshes permissions before fetching management data, gates writes to the owner, and discards private results after account/role changes or overlapping refreshes. AdminFrame hides unavailable content. Management data stays in memory; end-user text is not translated. Existing content management is shared with viewers but its editor/actions require the owner.

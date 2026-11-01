@@ -1,12 +1,12 @@
 <template>
-  <c-auth-frame>
+  <c-admin-frame :loading="loading" :allowed="allowed" :error="loadError" @retry="load">
   <view class="page app-shell">
     <view class="app-section">
       <view class="hero app-heading">
         <view class="hero-head">
           <view class="hero-copy">
             <text class="hero-brand">{{ t("内容管理") }}</text>
-            <text class="hero-title">{{ t("维护内容与更新公告") }}</text>
+            <text class="hero-title">{{ user.isOwner ? t('维护内容与更新公告') : t('公告与内容') }}</text>
             <text class="hero-subtitle">{{ t("更新公告发布后会显示在“关于”中。") }}</text>
           </view>
           <t-tag theme="primary" variant="light" shape="round">{{ items.length }}</t-tag>
@@ -14,10 +14,7 @@
       </view>
     </view>
 
-    <view v-if="loading || loadError" class="app-section">
-      <view class="app-card"><c-app-state :state="loading ? 'loading' : 'error'" :title="loading ? '正在加载内容' : '暂时无法访问内容管理'" :description="t('仅配置了管理权限的账号可以维护内容。')" @retry="load" /></view>
-    </view>
-    <view v-else class="app-section">
+    <view v-if="user.isOwner" class="app-section">
       <view class="form-card app-card app-card-pad">
         <picker :range="localizedCategories" range-key="label" @change="changeCategory">
           <view class="field picker">{{ t(categoryLabel) }}</view>
@@ -37,7 +34,7 @@
       </view>
     </view>
 
-    <view v-if="!loading && !loadError" class="app-section">
+    <view v-if="!loading" class="app-section">
       <view v-for="item in items" :key="item.id" class="content-item app-card">
         <view class="content-head">
           <text class="content-title">{{ item.release_version ? 'v' + item.release_version + ' · ' : '' }}{{ item.title }}</text>
@@ -46,22 +43,24 @@
           </t-tag>
         </view>
         <text class="content-summary">{{ item.summary }}</text>
-        <view class="content-actions">
+        <text class="admin-body" selectable>{{ item.body }}</text>
+        <view v-if="user.isOwner" class="content-actions">
           <t-button theme="default" variant="outline" size="small" shape="round" @click="edit(item)">{{ t("编辑") }}</t-button>
           <t-button theme="danger" variant="outline" size="small" shape="round" @click="remove(item.id)">{{ t("删除") }}</t-button>
         </view>
       </view>
     </view>
   </view>
-  </c-auth-frame>
+  </c-admin-frame>
 </template>
 
 <script setup lang="ts">
 import { showToast, showModal } from '@/i18n/ui'
 import { t } from '@/i18n'
 import { usePageI18n } from '@/i18n/page'
-import { computed, reactive, ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { computed, reactive, ref, watch } from 'vue'
+import { activeUserId, adminRole } from '@/shared/auth/session'
+import { useAdminPage } from '@/features/admin/useAdminPage'
 import { contentApi } from '@/features/content/api'
 import type { ApiContentItem } from '@/api/contracts'
 import { APP_VERSION } from '@/constants/brand'
@@ -74,11 +73,8 @@ const categoryOptions = [
   { value: 'ad', label: '合作广告' },
   { value: 'notice', label: '通知 / 更新公告' },
 ] as const
-const items = ref<ApiContentItem[]>([])
+const { user, data: items, loading, saving, error: loadError, allowed, load, write } = useAdminPage<ApiContentItem[]>([], contentApi.listAdmin)
 const editingId = ref<number | null>(null)
-const saving = ref(false)
-const loading = ref(false)
-const loadError = ref(false)
 const isAnnouncement = ref(false)
 const categoryIndex = ref(0)
 const form = reactive({
@@ -88,21 +84,11 @@ const form = reactive({
   body: '',
   release_version: '',
   published_at: null as string | null,
-  is_active: true,
+  is_active: false,
   sort_order: 0,
 })
 const categoryLabel = computed(() => categoryOptions[categoryIndex.value].label)
 const localizedCategories = computed(() => categoryOptions.map(option => ({ ...option, label: t(option.label) })))
-
-const load = async () => {
-  if (loading.value) return
-  loading.value = true
-  loadError.value = false
-  try {
-    items.value = await contentApi.listAdmin()
-  } catch { loadError.value = true }
-  finally { loading.value = false }
-}
 
 const changeCategory = (event: any) => {
   categoryIndex.value = Number(event.detail.value)
@@ -122,15 +108,15 @@ const toggleAnnouncement = (event: any) => {
 const togglePublished = (event: any) => { form.is_active = !!event.detail.value }
 
 const reset = () => {
-  if (saving.value) return
+  if (!user.isOwner || saving.value) return
   editingId.value = null
   categoryIndex.value = 0
   isAnnouncement.value = false
-  Object.assign(form, { category: 'consulting', title: '', summary: '', body: '', release_version: '', published_at: null, is_active: true, sort_order: 0 })
+  Object.assign(form, { category: 'consulting', title: '', summary: '', body: '', release_version: '', published_at: null, is_active: false, sort_order: 0 })
 }
 
 const edit = (item: ApiContentItem) => {
-  if (saving.value) return
+  if (!user.isOwner || saving.value) return
   editingId.value = item.id
   categoryIndex.value = categoryOptions.findIndex((option) => option.value === item.category)
   Object.assign(form, {
@@ -147,7 +133,7 @@ const edit = (item: ApiContentItem) => {
 }
 
 const save = async () => {
-  if (saving.value) return
+  if (!user.isOwner || saving.value) return
   if (!form.title.trim() || !form.summary.trim() || !form.body.trim()) {
     showToast({ title: '请填写完整内容', icon: 'none' })
     return
@@ -156,39 +142,35 @@ const save = async () => {
     showToast({ title: '请填写正确版本号，例如 1.5.1', icon: 'none' })
     return
   }
-  saving.value = true
-  try {
-    const payload = { ...form, release_version: isAnnouncement.value ? form.release_version.trim() : null }
-    if (editingId.value) await contentApi.update(editingId.value, payload)
-    else await contentApi.create(payload)
-    saving.value = false
-    reset()
-    await load()
-    showToast({ title: '已保存', icon: 'success' })
-  } catch {
-  } finally {
-    saving.value = false
-  }
+  const payload = { ...form, release_version: isAnnouncement.value ? form.release_version.trim() : null }
+  const result = await write(() => editingId.value ? contentApi.update(editingId.value, payload) : contentApi.create(payload))
+  if (result) { reset(); await load(); showToast({ title: '已保存', icon: 'success' }) }
 }
 
 const remove = (id: number) => {
-  if (saving.value) return
+  if (!user.isOwner || saving.value) return
   showModal({
     title: '删除内容',
     content: '确定删除这条内容吗？',
     success: async (result: any) => {
       if (!result.confirm) return
       try {
-        await contentApi.remove(id)
-        await load()
+        const result = await write(() => contentApi.remove(id))
+        if (result) await load()
       } catch {}
     },
   })
 }
 
-onShow(load)
+watch([activeUserId, adminRole], () => {
+  editingId.value = null
+  categoryIndex.value = 0
+  isAnnouncement.value = false
+  Object.assign(form, { category: 'consulting', title: '', summary: '', body: '', release_version: '', published_at: null, is_active: false, sort_order: 0 })
+}, { flush: 'sync' })
 </script>
 
+<style src="@/features/admin/admin.css"></style>
 <style lang="scss" scoped>
 .hero-head {
   display: flex;

@@ -127,6 +127,10 @@
 
     <view class="app-section">
       <view class="menu-grid">
+        <view v-if="userStore.isAdmin" class="menu-card app-card" @click="goPage('/pages/admin/index')">
+          <view class="menu-head"><view class="app-icon-badge"><t-icon name="setting" size="28rpx" /></view></view>
+          <text class="app-card-title">{{ t('管理中心') }}</text>
+        </view>
         <view class="menu-card app-card" @click="goPage('/pages/feedback/index')">
           <view class="menu-head">
             <view class="app-icon-badge"><t-icon name="chat" size="28rpx" /></view>

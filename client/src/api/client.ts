@@ -1,5 +1,5 @@
 import { showToast, showLoading } from '@/i18n/ui'
-import { clearSession, getToken, notifyLoginRequired, sessionGeneration } from '@/shared/auth/session'
+import { clearSession, getToken, notifyLoginRequired, sessionGeneration, setAdminRole } from '@/shared/auth/session'
 
 const configuredBaseUrl = String(import.meta.env.VITE_API_BASE_URL || '').trim()
 if (!configuredBaseUrl && import.meta.env.PROD) throw new Error('VITE_API_BASE_URL is required for production builds')
@@ -61,6 +61,7 @@ function unauthorized(prompt = true) {
 }
 function staleSession() { return new ApiRequestError('登录状态已改变，请重试', { code: 'SESSION_CHANGED' }) }
 function handleFailure(error: ApiRequestError, token: string, prompt = true) {
+  if (error.statusCode === 403 && error.code === 40341) setAdminRole('user')
   if (error.statusCode === 401) {
     if (getToken() === token) clearSession()
     error.message = '登录已失效，请重试'

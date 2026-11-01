@@ -15,6 +15,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SERVER_ROOT = PROJECT_ROOT / "server"
 
 CHECKS = {
+    "orphan_admin_owner": "SELECT COUNT(*) FROM admin_owner a LEFT JOIN users u ON u.id=a.user_id WHERE u.id IS NULL",
+    "orphan_admin_member": "SELECT COUNT(*) FROM admin_members a LEFT JOIN users u ON u.id=a.user_id LEFT JOIN users g ON g.id=a.granted_by WHERE u.id IS NULL OR g.id IS NULL",
+    "invalid_admin_owner": "SELECT COUNT(*) FROM admin_owner a JOIN users u ON u.id=a.user_id WHERE a.id<>1 OR (a.is_temporary=0 AND u.user_code<>'lw000')",
+    "duplicate_owner_member": "SELECT COUNT(*) FROM admin_members m JOIN admin_owner a ON a.user_id=m.user_id",
     "orphan_feedback_user": """
         SELECT COUNT(*) FROM feedback f
         LEFT JOIN users u ON u.id = f.user_id
@@ -100,6 +104,7 @@ CHECKS = {
 }
 
 EXPECTED_FOREIGN_KEYS = {
+    "fk_admin_owner_user", "fk_admin_member_user", "fk_admin_member_grantor", "fk_admin_audit_actor", "fk_admin_audit_target",
     "fk_feedback_user",
     "fk_papers_user",
     "fk_answer_records_user",
@@ -132,6 +137,7 @@ def main() -> int:
         with engine.connect() as connection:
             tables = set(inspect(connection).get_table_names())
             required = {
+                "admin_owner", "admin_members", "admin_audit_logs", "user_code_counters",
                 "users",
                 "questions",
                 "papers",

@@ -137,6 +137,9 @@ def serialize_user(
     favorite_count: int = 0,
     target_dates: dict[str, str] | None = None,
 ) -> dict:
+    from sqlalchemy.orm import object_session
+    from src.modules.admin.service import role_for
+    session = object_session(user)
     total_questions = user.total_questions or 0
     total_correct = user.total_correct or 0
     objective_count = user.total_objective or (total_questions if total_correct else 0)
@@ -145,6 +148,7 @@ def serialize_user(
     return {
         "id": user.id,
         "user_code": user.user_code,
+        "admin_role": role_for(session, user.id) if session else "user",
         "openid": user.openid,
         "nickname": user.nickname,
         "avatar_url": user.avatar_url,

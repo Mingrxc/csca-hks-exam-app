@@ -93,6 +93,7 @@ export interface ApiHistoryPaper {
 }
 
 export interface ApiUser {
+  admin_role?: 'user' | 'viewer' | 'owner'
   total_objective?: number
   id: number
   user_code: string

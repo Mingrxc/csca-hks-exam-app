@@ -15,6 +15,7 @@ module_name/
 
 | 模块 | 路径 | 职责 |
 |------|------|------|
+| admin | `modules/admin/` | 唯一主管理员、只读成员、后台统计/用户查询、授权撤销及管理审计；不按lw编号或旧白名单判断角色 |
 | user | `modules/user/` | 微信登录、用户信息 CRUD、学习数据 |
 | question | `modules/question/` | 题库查询、智能组卷、题目管理 |
 | exam | `modules/exam/` | 答题提交、自动批改、成绩报告 |

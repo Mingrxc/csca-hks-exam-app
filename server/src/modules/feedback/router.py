@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from src.common.deps import get_admin_openid, get_authenticated_user_id
+from src.common.deps import get_admin_openid, get_authenticated_user_id, get_owner_user
+from src.modules.user.models import User
 from src.common.response import ApiResponse, success
 from src.config.database import get_db
 from src.modules.feedback import service
@@ -25,5 +26,5 @@ def list_feedback(status: FeedbackStatus | None = None, page: int = Query(1, ge=
 
 @router.put("/admin/{feedback_id}/status")
 def update_status(feedback_id: int, payload: FeedbackStatusUpdate, db: Session = Depends(get_db),
-                  _admin: str = Depends(get_admin_openid)) -> ApiResponse[FeedbackAdminItem]:
-    return success(service.update_feedback_status(db, feedback_id, payload.status))
+                  owner: User = Depends(get_owner_user)) -> ApiResponse[FeedbackAdminItem]:
+    return success(service.update_feedback_status(db, feedback_id, payload.status, actor=owner))

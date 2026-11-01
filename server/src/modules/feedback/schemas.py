@@ -23,6 +23,8 @@ class FeedbackReceipt(BaseModel):
 
 
 class FeedbackAdminItem(FeedbackReceipt):
+    user_code: str | None = None
+    nickname: str | None = None
     user_id: int
     category: FeedbackCategory
     content: str

@@ -4,6 +4,7 @@
 
 | 脚本 | 用途 |
 |---|---|
+| bootstrap_admin_owner.py | 默认只读预览本人账号；核实后同时提供--expected-user-id和--apply；正式模式绑定lw000，--temporary保留试用账号原编号，不自动运行。 |
 | import_questions.py | 默认校验原始题库；--apply按稳定题号写入，--verify-db核对。 |
 | check_database_integrity.py | 只读检查业务归属、外键、重复键、题量及迁移版本，包含反馈表。 |
 | manage_feedback.py | 运营者在服务器读取/导出私密反馈；显式--mark配合--to才更新状态。 |
@@ -21,7 +22,7 @@ python scripts/manage_feedback.py --status unread
 python scripts/manage_feedback.py --mark 12 --to read
 ```
 
-反馈可通过--page/--page-size分页，--output导出当前页到指定仓库外私有JSON路径。反馈原文与导出不得提交Git。CLI要求运营者拥有服务器及数据库配置访问权限；对外HTTP管理员接口另要求JWT与CONTENT_ADMIN_OPENIDS白名单。
+反馈可通过--page/--page-size分页，--output导出当前页到指定仓库外私有JSON路径。反馈原文与导出不得提交Git。CLI要求运营者拥有服务器及数据库配置访问权限；1.5.5的HTTP管理权限由数据库角色控制，旧CONTENT_ADMIN_OPENIDS白名单不再授予权限。主管理员首次绑定和试用步骤见docs/release-1.5.5.md。
 
 后端打包：
 

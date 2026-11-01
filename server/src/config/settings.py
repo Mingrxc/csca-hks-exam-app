@@ -49,8 +49,8 @@ class Settings(BaseSettings):
     QWEN_MAX_TOKENS: int = 1024
     QWEN_TIMEOUT_SECONDS: int = 45
 
-    # Content administration
-    CONTENT_ADMIN_OPENIDS: str = "dev-openid"
+    # Legacy setting accepted for existing .env files; it no longer grants access.
+    CONTENT_ADMIN_OPENIDS: str = ""
 
     # Object storage
     OSS_ENDPOINT: str = ""

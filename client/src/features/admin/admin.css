@@ -1,0 +1,25 @@
+.admin-heading { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
+.admin-note { display: block; margin-top: 12rpx; color: var(--app-text-weak); font-size: 23rpx; line-height: 1.6; }
+.admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16rpx; }
+.admin-metric { padding: 28rpx 22rpx; }
+.admin-number { display: block; color: var(--app-primary); font-size: 46rpx; font-family: var(--app-number-font); }
+.admin-label { display: block; margin-top: 10rpx; font-size: 24rpx; color: var(--app-text-weak); }
+.admin-link { display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 0; padding: 26rpx; text-align: left; color: var(--app-text); background: var(--app-surface); font-size: 28rpx; border: 0; border-bottom: 1rpx solid var(--app-border); line-height: 1.5; }
+.admin-link::after, .admin-button::after { border: 0; }
+.admin-search { display: flex; align-items: center; gap: 12rpx; }
+.admin-input { min-width: 0; flex: 1; height: 80rpx; padding: 0 18rpx; border: 1rpx solid var(--app-border); border-radius: 16rpx; background: var(--app-surface-quiet); font-size: 25rpx; color: var(--app-text); }
+.admin-button { margin: 0; padding: 18rpx 24rpx; border-radius: 16rpx; border: 0; background: var(--app-primary); color: var(--app-surface); font-size: 25rpx; line-height: 1.5; }
+.admin-button[disabled] { color: var(--app-text-mute); background: var(--app-surface-quiet); }
+.admin-button-secondary { background: var(--app-primary-soft); color: var(--app-primary); }
+.admin-actions { display: flex; flex-wrap: wrap; gap: 14rpx; margin-top: 24rpx; }
+.admin-row-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 14rpx; }
+.admin-name { font-size: 30rpx; font-weight: 600; color: var(--app-text); overflow-wrap: anywhere; }
+.admin-code { color: var(--app-primary); font-size: 25rpx; }
+.admin-role { margin-left: auto; color: var(--app-text-weak); font-size: 22rpx; }
+.admin-meta { display: block; margin-top: 12rpx; font-size: 23rpx; line-height: 1.6; color: var(--app-text-weak); }
+.admin-body { display: block; margin-top: 22rpx; font-size: 27rpx; line-height: 1.8; color: var(--app-text); white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin-tabs { display: flex; flex-wrap: wrap; gap: 12rpx; }
+.admin-tab { margin: 0; padding: 12rpx 20rpx; border-radius: 999rpx; border: 1rpx solid var(--app-border); background: var(--app-surface); font-size: 25rpx; color: var(--app-text-weak); }
+.admin-tab.active { color: var(--app-primary); background: var(--app-primary-soft); border-color: var(--app-primary); }
+.admin-tab::after { border: 0; }
+.admin-empty { text-align: center; color: var(--app-text-weak); font-size: 26rpx; padding: 36rpx; }

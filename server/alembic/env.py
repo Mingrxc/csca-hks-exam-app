@@ -8,6 +8,7 @@ from sqlalchemy import engine_from_config, pool
 from src.config.database import Base, sync_url
 
 # Register all tables on Base.metadata before Alembic compares schemas.
+from src.modules.admin.models import AdminAudit, AdminMember, AdminOwner  # noqa: F401
 from src.modules.content.models import ContentItem  # noqa: F401
 from src.modules.feedback.models import Feedback  # noqa: F401
 from src.modules.favorite.models import Favorite  # noqa: F401

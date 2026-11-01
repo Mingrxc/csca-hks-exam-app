@@ -29,7 +29,7 @@
         </view>
       </view>
       <view class="app-section">
-        <text class="privacy-note">{{ t("反馈仅开发者可见。请勿填写密码、证件号码等敏感信息。") }}</text>
+        <text class="privacy-note">{{ t("反馈仅开发者及授权管理员可见。请勿填写密码、证件号码等敏感信息。") }}</text>
         <button class="submit-button" :disabled="!canSubmit" :loading="sending" @tap="submit">{{ sending ? t("正在提交") : t("提交反馈") }}</button>
       </view>
     </view>

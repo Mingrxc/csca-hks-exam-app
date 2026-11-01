@@ -8,7 +8,9 @@
     },
     {
       "path": "pages/login/index",
-      "style": { "navigationBarTitleText": "登录" }
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
     },
     {
       "path": "pages/exam/index",
@@ -45,6 +47,30 @@
       "path": "pages/favorite/index",
       "style": {
         "navigationBarTitleText": "收藏题目"
+      }
+    },
+    {
+      "path": "pages/admin/index",
+      "style": {
+        "navigationBarTitleText": "管理中心"
+      }
+    },
+    {
+      "path": "pages/admin/users",
+      "style": {
+        "navigationBarTitleText": "用户列表"
+      }
+    },
+    {
+      "path": "pages/admin/feedback",
+      "style": {
+        "navigationBarTitleText": "反馈查看"
+      }
+    },
+    {
+      "path": "pages/admin/members",
+      "style": {
+        "navigationBarTitleText": "管理员管理"
       }
     },
     {
@@ -145,7 +171,9 @@
       "^c-app-state$": "@/components/AppState/index.vue",
       "^c-exam-selection$": "@/components/ExamSelection/index.vue",
       "^c-ring-chart$": "@/components/RingChart/index.vue",
-      "^c-auth-frame$": "@/components/AuthFrame/index.vue"
+      "^c-auth-frame$": "@/components/AuthFrame/index.vue",
+      "^c-admin-frame$": "@/components/AdminFrame/index.vue",
+      "^c-admin-pager$": "@/components/AdminPager/index.vue"
     }
   }
 }

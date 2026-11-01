@@ -3,7 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { userApi } from '@/features/user/api'
 import { getExamLabel } from '@/constants/exam'
 import { resolveMediaUrl } from '@/api/client'
-import { accessToken, activeUserId, clearSession, establishSession, sessionGeneration } from '@/shared/auth/session'
+import { accessToken, activeUserId, adminRole, setAdminRole, clearSession, establishSession, sessionGeneration } from '@/shared/auth/session'
 import type { ApiUser } from '@/api/contracts'
 import type { ExamType } from '@/types/exam'
 import type { ExamTargetDates } from '@/types/user'
@@ -33,6 +33,7 @@ export const useUserStore = defineStore('user', () => {
   watch(accessToken, token => { if (!token) { userInfo.value = defaultUserInfo(); openid.value = '' } }, { flush: 'sync' })
 
   function applyProfile(profile: ApiUser) {
+    setAdminRole(profile.admin_role)
     userInfo.value = { id: profile.id, userCode: profile.user_code, nickname: profile.nickname,
       avatarUrl: resolveMediaUrl(profile.avatar_url) || '', targetExam: profile.target_exam,
       targetDate: profile.target_date || '', targetDates: profile.target_dates || {},
@@ -72,6 +73,11 @@ export const useUserStore = defineStore('user', () => {
       establishSession(result.token, result.user.id)
     } finally { busy.value = false }
   }
+  async function refreshProfile() {
+    const generation = sessionGeneration()
+    const profile = await userApi.getUserInfo()
+    if (generation === sessionGeneration()) applyProfile(profile)
+  }
   function logout() { clearSession(); userInfo.value = defaultUserInfo(); openid.value = '' }
   function setSelectedExams(exams: ExamType[]) {
     selectedExams.value = normalize(exams).slice(0, 2)
@@ -81,10 +87,12 @@ export const useUserStore = defineStore('user', () => {
     const next = selectedExams.value.includes(exam) ? selectedExams.value.filter(value => value !== exam) : [...selectedExams.value, exam]
     setSelectedExams(next)
   }
-  return { token: accessToken, openid, userInfo, isLogin, busy, selectedExams,
+  return { token: accessToken, openid, userInfo, isLogin, busy, selectedExams, adminRole,
+    isAdmin: computed(() => isLogin.value && adminRole.value !== 'user'),
+    isOwner: computed(() => isLogin.value && adminRole.value === 'owner'),
     isBrowseMode: computed(() => selectedExams.value.length === 0),
     selectedExamText: computed(() => selectedExams.value.length ? selectedExams.value.map(getExamLabel).join(' / ') : '随便看看'),
     primaryExam: computed<ExamType>(() => selectedExams.value[0] || userInfo.value.targetExam),
     correctRate: computed(() => userInfo.value.correctRate),
-    setSelectedExams, toggleSelectedExam, setBrowseMode: () => setSelectedExams([]), applyProfile, restoreSession, login, logout }
+    setSelectedExams, toggleSelectedExam, setBrowseMode: () => setSelectedExams([]), applyProfile, restoreSession, refreshProfile, login, logout }
 })

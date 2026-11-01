@@ -12,6 +12,7 @@ class UserCreate(BaseModel):
 
 
 class UserResponse(BaseModel):
+    admin_role: Literal["user", "viewer", "owner"] = "user"
     id: int
     user_code: str
     nickname: str

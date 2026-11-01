@@ -111,6 +111,42 @@ CREATE INDEX idx_users_openid ON users (openid);
 
 CREATE UNIQUE INDEX uk_users_user_code ON users (user_code);
 
+CREATE TABLE admin_audit_logs (
+	id INTEGER NOT NULL AUTO_INCREMENT,
+	actor_user_id INTEGER,
+	actor_code VARCHAR(32) NOT NULL,
+	action VARCHAR(64) NOT NULL,
+	target_user_id INTEGER,
+	resource_id INTEGER,
+	details JSON,
+	created_at DATETIME NOT NULL DEFAULT now(),
+	PRIMARY KEY (id),
+	CONSTRAINT fk_admin_audit_actor FOREIGN KEY(actor_user_id) REFERENCES users (id) ON DELETE SET NULL,
+	CONSTRAINT fk_admin_audit_target FOREIGN KEY(target_user_id) REFERENCES users (id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_admin_audit_created ON admin_audit_logs (created_at);
+
+CREATE TABLE admin_members (
+	user_id INTEGER NOT NULL,
+	granted_by INTEGER NOT NULL,
+	created_at DATETIME NOT NULL DEFAULT now(),
+	PRIMARY KEY (user_id),
+	CONSTRAINT fk_admin_member_user FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE,
+	CONSTRAINT fk_admin_member_grantor FOREIGN KEY(granted_by) REFERENCES users (id) ON DELETE RESTRICT
+);
+
+CREATE TABLE admin_owner (
+	id INTEGER NOT NULL,
+	user_id INTEGER NOT NULL,
+	is_temporary BOOL NOT NULL DEFAULT false,
+	created_at DATETIME NOT NULL DEFAULT now(),
+	PRIMARY KEY (id),
+	CONSTRAINT ck_admin_owner_singleton CHECK (id = 1),
+	CONSTRAINT uk_admin_owner_user UNIQUE (user_id),
+	CONSTRAINT fk_admin_owner_user FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE RESTRICT
+);
+
 CREATE TABLE favorites (
 	id INTEGER NOT NULL COMMENT 'Favorite ID' AUTO_INCREMENT,
 	user_id INTEGER NOT NULL COMMENT 'User ID',

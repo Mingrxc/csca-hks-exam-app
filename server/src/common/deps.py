@@ -47,7 +47,21 @@ def get_authenticated_user_id(
     return user.id
 
 
-def get_admin_openid(openid: str = Depends(get_authenticated_openid)) -> str:
-    if openid not in settings.content_admin_openids:
+def get_admin_openid(db: Session = Depends(get_db), openid: str = Depends(get_authenticated_openid)) -> str:
+    from src.modules.admin.service import role_for
+    from src.modules.user.service import get_user_by_openid
+    user = get_user_by_openid(db, openid)
+    if role_for(db, user.id) not in {"viewer", "owner"}:
         raise AppException(40341, "没有管理权限", status_code=403)
     return openid
+
+
+def get_owner_user(db: Session = Depends(get_db), openid: str = Depends(get_authenticated_openid)):
+    from src.modules.admin.models import AdminOwner
+    from src.modules.user.service import get_user_by_openid
+    user = get_user_by_openid(db, openid)
+    # Serialize owner writes; permissions always come from current database state.
+    owner = db.query(AdminOwner).filter(AdminOwner.id == 1).with_for_update().first()
+    if not owner or owner.user_id != user.id:
+        raise AppException(40342, "仅主管理员可以执行此操作", status_code=403)
+    return user

@@ -31,6 +31,12 @@ def support_client(db_session, monkeypatch):
     monkeypatch.setattr(settings, "JWT_SECRET_KEY", "offline-tests-only-secret-with-32-characters")
     db_session.add_all([User(openid="learner"), User(openid="other")])
     db_session.commit()
+    owner = User(openid="owner")
+    db_session.add(owner)
+    db_session.flush()
+    from src.modules.admin.models import AdminOwner
+    db_session.add(AdminOwner(id=1, user_id=owner.id))
+    db_session.commit()
     app = create_app()
 
     def override_db():
@@ -63,7 +69,7 @@ def test_feedback_is_private_and_admin_access_requires_a_real_token(support_clie
     receipt = created.json()["data"]
     assert set(receipt) == {"id", "status", "created_at"}
     assert client.get("/api/v1/feedback/admin", headers=auth()).status_code == 403
-    assert client.get("/api/v1/feedback/admin", headers=auth("another-user")).status_code == 403
+    assert client.get("/api/v1/feedback/admin", headers=auth("another-user")).status_code == 401
     assert client.put(f"/api/v1/feedback/admin/{receipt['id']}/status", json={"status": "resolved"}, headers=auth()).status_code == 403
     listed = client.get("/api/v1/feedback/admin", headers=auth("owner")).json()["data"]
     assert listed["total"] == 1
@@ -196,3 +202,43 @@ def test_incremental_migration_preserves_existing_users_and_content():
         assert tuple(draft) == (0, None)
         assert "feedback" in inspect(connection).get_table_names()
         assert inspect(connection).get_foreign_keys("feedback")[0]["name"] == "fk_feedback_user"
+
+
+@pytest.mark.parametrize("existing_state", ["draft", "published", "missing"])
+def test_release_1_5_5_migration_updates_notice_and_schedules_beijing_date(db_session, monkeypatch, existing_state):
+    previous = make_content(db_session, release_version="1.5.4", published_at=datetime(2026, 10, 30))
+    existing = None
+    if existing_state != "missing":
+        existing = make_content(
+            db_session, release_version="1.5.5", summary="新增管理员功能", body="旧草稿正文",
+            is_active=int(existing_state == "published"),
+            published_at=datetime(2026, 11, 1) if existing_state == "published" else None,
+        )
+    original_id = existing.id if existing else None
+    original_created_at = existing.created_at if existing else None
+    path = Path(__file__).resolve().parents[1] / "alembic/versions/0014_release_1_5_5_announcement.py"
+    spec = importlib.util.spec_from_file_location("release_1_5_5_migration", path)
+    migration = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(migration)
+    migration.op = Operations(MigrationContext.configure(db_session.connection()))
+    migration.upgrade()
+    migration.upgrade()  # Reapplying must not duplicate the same-version notice.
+    db_session.expire_all()
+
+    notice = db_session.query(ContentItem).filter_by(category="notice", release_version="1.5.5").one()
+    assert notice.title == "1.5.5 更新公告"
+    assert notice.summary == notice.body == "新增了一些功能"
+    assert notice.is_active == 1
+    assert notice.published_at == datetime(2026, 11, 1, 16)
+    if original_id is not None:
+        assert (notice.id, notice.created_at) == (original_id, original_created_at)
+    assert previous.body == "第一项\n第二项" and previous.published_at == datetime(2026, 10, 30)
+
+    monkeypatch.setattr(content_service, "utc_now_naive", lambda: datetime(2026, 11, 1, 15, 59, 59))
+    assert [item["id"] for item in content_service.list_announcements(db_session, page=1, page_size=20)["items"]] == [previous.id]
+    with pytest.raises(AppException):
+        content_service.get_announcement(db_session, notice.id)
+    monkeypatch.setattr(content_service, "utc_now_naive", lambda: datetime(2026, 11, 1, 16))
+    listed = content_service.list_announcements(db_session, page=1, page_size=20)["items"]
+    assert [item["id"] for item in listed] == [notice.id, previous.id]
+    assert content_service.get_announcement(db_session, notice.id)["body"] == "新增了一些功能"

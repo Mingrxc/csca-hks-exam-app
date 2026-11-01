@@ -61,7 +61,7 @@ def get_content(db: Session, content_id: int) -> dict:
     return serialize_content(item)
 
 
-def save_content(db: Session, payload: ContentItemCreate | ContentItemUpdate, content_id: int | None = None) -> dict:
+def save_content(db: Session, payload: ContentItemCreate | ContentItemUpdate, content_id: int | None = None, *, actor=None) -> dict:
     values = payload.model_dump(exclude_unset=True)
     for field in ("category", "title", "summary", "body", "sort_order", "is_active"):
         if field in values and values[field] is None:
@@ -81,16 +81,24 @@ def save_content(db: Session, payload: ContentItemCreate | ContentItemUpdate, co
         item.published_at = item.published_at.astimezone(timezone.utc).replace(tzinfo=None)
     if item.is_active and not item.published_at:
         item.published_at = utc_now_naive()
+    if actor:
+        from src.modules.admin.service import audit
+        db.flush()
+        audit(db, actor, "content.create" if content_id is None else "content.update", resource_id=item.id,
+              details={"is_active": bool(item.is_active), "release_version": item.release_version})
     db.commit()
     db.refresh(item)
     return serialize_content(item)
 
 
-def delete_content(db: Session, content_id: int) -> dict:
+def delete_content(db: Session, content_id: int, *, actor=None) -> dict:
     item = db.query(ContentItem).filter(ContentItem.id == content_id).first()
     if not item:
         raise AppException(40441, "内容不存在", status_code=404)
     db.delete(item)
+    if actor:
+        from src.modules.admin.service import audit
+        audit(db, actor, "content.delete", resource_id=content_id)
     db.commit()
     return {"id": content_id, "deleted": True}
 

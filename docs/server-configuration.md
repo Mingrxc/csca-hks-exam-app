@@ -1,6 +1,38 @@
 # 服务器配置与部署记录
 
-## 当前版本：V1.5.4（2026-11-01）
+## 当前版本：V1.5.5（2026-11-01）
+
+正式API仍为 `https://api.laowaiyidiantong.icu/api/v1`，HTTPS健康返回1.5.5；数据库仍为csca_hks_exam，最新迁移 `0013_trial_admin_owner`。本次从1.5.4/0011增量升级0012、0013，来源为本机已审阅的1.5.5工作树（基础提交7a4ed5f55ee4589b82549bade3756bd2b59488bd，含未提交文件），没有Git提交/推送或微信小程序发布。
+
+维护时原73用户、52试卷、189答题、80错题、79知识统计、21打卡、2目标日期、1221题及0收藏/反馈保留。用户id、编号、身份和学习记录不变；新增admin_owner、admin_members、admin_audit_logs三表，内容4→5，1.5.5公告仅草稿。以上为维护时点，不代表以后实时数量。
+
+| 项目 | 当前配置或位置 |
+|---|---|
+| 发布标识 | v1.5.5-20261101-141218 |
+| 后端包 | laowai-backend-v1.5.5-20261101-141218.tar.gz，90594字节，108文件 |
+| SHA-256 | 3338cc0b5152f82e932af438e612353468339c9e2286d7bc61e482eeff68d3c8 |
+| 更新前备份 | /var/backups/laowai/before-v1.5.5-20261101-141218 |
+| SQL | laowai-20261101T061239Z.sql.gz，配套配置、上传目录、SHA/metadata及code.before.tar.gz |
+| 旧代码 | /opt/laowai/rollback/v1.5.5-20261101-141218/csca-hks-exam-app |
+| 临时主管理员 | lw005，内部用户ID=5，admin_owner主键1，is_temporary=true |
+| 正式本人编号 | lw000继续预留，当前未绑定 |
+| 当前状态 | /opt/laowai/deployment/current-release.json |
+| 部署报告 | /opt/laowai/deployment/deploy-v1.5.5-20261101-141218.json |
+| HTTPS验收 | /opt/laowai/deployment/verification-v1.5.5-20261101-141218.json |
+
+用户在本次部署会话明确确认同时启用lw005临时主管理员，已按bootstrap_admin_owner.py预览核实ID=5，再显式--temporary --expected-user-id 5 --apply绑定。保留lw005，不改主键和学习记录、不占lw000。该标记不设自动到期，不自动转为正式本人；以后转交须独立授权和核实，不能从小程序直接覆盖唯一owner。
+
+管理角色每次请求从数据库读取：普通用户/游客不可读写管理数据，viewer只能读取总览/用户统计/反馈全文/内容草稿，唯一owner才可维护内容、反馈状态和只读管理员。旧CONTENT_ADMIN_OPENIDS不再授予HTTP管理权限，已核实线上配置为空；编号lw000本身也不授予权限。普通资料接口不能更改admin_role。1.5.5草稿由主管理员试用后决定是否公开，本次未发布。
+
+服务器隔离38项相关检查通过，Alembic check无待更新结构、绑定前后完整性clean。HTTPS验证普通/游客拒绝、lw005角色和管理读取、viewer能读不能发布/授权、owner授权及撤销后同一JWT立即失权。验收合成用户和临时授权已删除、所发编号永久退役；保留真实审计3条（首次临时绑定1条、验收grant/revoke各1条），合成目标删除后target_user_id按外键置空。admin_members未留下正式成员，lw005真实绑定保留。
+
+复用服务器Python环境，依赖未变；无清库、重导题、媒体或头像配置调整。数据库/配置/上传目录已备份并校验，健康与备份定时器恢复。Nginx、TLS、凭据、API端口、媒体与头像持久目录及每日03:20/14天本机备份规则沿用下方1.5.4配置，无异地备份。本轮未重新前端构建或手机验收，用户使用1.5.5前端并在lw005“我的”刷新资料可见管理中心。
+
+回退应用时保留永久编号、角色/审计表及上传文件，不删除式downgrade或覆盖旧SQL而丢失后来记录。不要通过恢复旧白名单权限绕过只读策略；需要回退应先核查权限实现和白名单仍为空。1.5.4旧代码不会展示新管理中心，但应保留数据库中的lw005绑定供后续恢复。
+
+README、memory、版本说明及配置文档同步，本机配置副本 `.deployment-access/server-configuration.md`，服务器副本在 `/opt/laowai/deployment/server-configuration.md` 与 `/home/deploy/laowai-deployment-docs/server-configuration.md`。以下1.5.4及更早版本均为历史记录。
+
+## 历史版本：V1.5.4（2026-11-01）
 
 正式API仍为 `https://api.laowaiyidiantong.icu/api/v1`，HTTPS健康返回1.5.4；MySQL数据库仍为csca_hks_exam，最新迁移 `0011_login_strategy`。本次直接从1.5.2升级，来源为已审阅的本机1.5.4工作树，基础提交984830324e4a357c6928293133a18df5e8400155，包含未提交文件；没有替用户提交、推送或发布微信小程序。
 

@@ -64,16 +64,22 @@ def list_feedback(db: Session, *, status: str | None, page: int, page_size: int)
         query = query.filter(Feedback.status == status)
     total = query.count()
     items = query.order_by(Feedback.created_at.desc(), Feedback.id.desc()).offset((page - 1) * page_size).limit(page_size).all()
-    return {"items": [serialize_feedback(item, admin=True) for item in items], "total": total,
+    owners = {user.id: user for user in db.query(User).filter(User.id.in_([item.user_id for item in items])).all()} if items else {}
+    return {"items": [{**serialize_feedback(item, admin=True), "user_code": owners[item.user_id].user_code,
+                       "nickname": owners[item.user_id].nickname} for item in items], "total": total,
             "page": page, "page_size": page_size}
 
 
-def update_feedback_status(db: Session, feedback_id: int, status: str) -> dict:
+def update_feedback_status(db: Session, feedback_id: int, status: str, *, actor=None) -> dict:
     item = db.query(Feedback).filter(Feedback.id == feedback_id).first()
     if not item:
         raise AppException(40461, "反馈不存在", status_code=404)
+    previous = item.status
     item.status = status
     item.updated_at = utc_now_naive()
+    if actor:
+        from src.modules.admin.service import audit
+        audit(db, actor, "feedback.status", resource_id=feedback_id, details={"from": previous, "to": status})
     db.commit()
     db.refresh(item)
     return serialize_feedback(item, admin=True)

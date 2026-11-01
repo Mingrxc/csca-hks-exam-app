@@ -2,13 +2,17 @@
 
 | 模块 | 页面 | 说明 |
 |------|------|------|
+| 管理 | `admin/index` | 已授权账号的数据概览，普通用户隐藏入口 |
+| 管理 | `admin/users` | 用户编号/昵称查询、学习统计与分页，只读 |
+| 管理 | `admin/feedback` | 管理员可看反馈全文，仅主管理员改状态 |
+| 管理 | `admin/members` | 主管理员按lw编号添加/撤销只读管理员 |
 | 首页 | `index/index` | 学习目标、继续练习、统计与复习入口；资讯仍为筹备状态 |
 | 刷题 | `exam/index` | 组卷策略入口、历史试卷和学习数据（Tab 主页） |
 | 刷题 | `exam/paper` | 组卷配置页（考试类型/题量/难度/知识点/模式/限时） |
 | 刷题 | `exam/answer` | 答题页（复用 `QuestionItem` / `AnswerCard` / `CountdownBar`） |
 | 刷题 | `exam/result` | 成绩报告页（分数、用时统计、错题列表） |
 | 补充 | `favorite/index` | 收藏题目列表与取消收藏 |
-| 补充 | `content-admin/index` | 管理员维护内容和版本公告，支持草稿与发布 |
+| 补充 | `content-admin/index` | 主管理员维护内容和版本公告，只读管理员仅查看全文 |
 | 个人 | `login/index` | 主动微信登录、头像选择和昵称保存 |
 | 个人 | `profile/index` | 个人中心（头像、昵称原位编辑及保存、统计、目标设置） |
 | 个人 | `feedback/index` | 私密文字反馈，用户隔离草稿、失败重试与回执 |

@@ -90,3 +90,7 @@ The API aggregator no longer imports or mounts the AI router. `/api/v1/ai/chat` 
 ## Login strategy (1.5.4)
 
 Protected routes always require a JWT and an existing user; anonymous development fallback is no longer accepted by dependencies. Only explicit wx-login creates users, preserving the OpenID identity and existing learning records. Migration0011 adds permanent unique public user_code values and a transactional counter without changing integer primary keys. lw000 remains reserved and unassigned. Avatar uploads are authenticated, validated and re-encoded using existing Pillow, then stored outside the checkout. See release-1.5.4.md.
+
+## Administration (1.5.5 trial)
+
+AdminOwner is a singleton linked to a verified user; AdminMember rows grant read-only access. Every management request checks current database permissions. Content and feedback writes require the owner, while viewers can read full feedback without marking it read. The legacy OpenID allowlist grants no privileges. Management HTTP writes append AdminAudit in the same transaction. Overview/user DTOs omit OpenID and credentials, and lists are paginated. Migration0012 creates no grants and only an unpublished notice draft. Bootstrap is an explicit, preview-first operator command; see release-1.5.5.md.

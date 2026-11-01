@@ -1,5 +1,7 @@
 # 数据库
 
+当前本地1.5.5最新迁移0014_release_1_5_5（0012新增权限表，0013追加临时主管理员标记，0014仅更新定稿公告），共15张应用表（含user_code_counters）及alembic_version，schema.sql结构无需变化。正式部署记录为1.5.5/0013，lw005已绑定临时主管理员；本轮0014未执行真实迁移。0014将1.5.5公告摘要/正文改为“新增了一些功能”，设为北京时间2026-11-02起公开，保留其他公告、用户/编号/权限/学习数据。首次绑定和权限约束见docs/release-1.5.5.md，下方1.5.4说明为开发阶段历史。
+
 更新：2026-10-30。MySQL8.4，源码最新迁移0011_login_strategy，复用现有Conda deng环境。本轮1.5.4未在现有MySQL或正式库执行迁移。
 
 目标11张业务表及1张发号计数表：user_code_counters、users、user_exam_targets、streak_records、questions、papers、answer_records、wrong_book、knowledge_stats、favorites、content_items、feedback；Alembic另维护版本表。

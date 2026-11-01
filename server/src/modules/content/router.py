@@ -3,7 +3,8 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from src.common.deps import get_admin_openid
+from src.common.deps import get_admin_openid, get_owner_user
+from src.modules.user.models import User
 from src.common.response import ApiResponse, success
 from src.config.database import get_db
 from src.modules.content.schemas import (
@@ -62,9 +63,9 @@ def get_content(
 def create_content(
     payload: ContentItemCreate,
     db: Session = Depends(get_db),
-    _admin: str = Depends(get_admin_openid),
+    owner: User = Depends(get_owner_user),
 ) -> ApiResponse[ContentItemResponse]:
-    return success(save_content_service(db, payload))
+    return success(save_content_service(db, payload, actor=owner))
 
 
 @router.put("/{content_id}")
@@ -72,15 +73,15 @@ def update_content(
     content_id: int,
     payload: ContentItemUpdate,
     db: Session = Depends(get_db),
-    _admin: str = Depends(get_admin_openid),
+    owner: User = Depends(get_owner_user),
 ) -> ApiResponse[ContentItemResponse]:
-    return success(save_content_service(db, payload, content_id))
+    return success(save_content_service(db, payload, content_id, actor=owner))
 
 
 @router.delete("/{content_id}")
 def remove_content(
     content_id: int,
     db: Session = Depends(get_db),
-    _admin: str = Depends(get_admin_openid),
+    owner: User = Depends(get_owner_user),
 ) -> ApiResponse[ContentDeleteResponse]:
-    return success(delete_content_service(db, content_id))
+    return success(delete_content_service(db, content_id, actor=owner))
