@@ -110,3 +110,48 @@ test('failed written submission retains the draft for retry', async () => {
   assert.equal(store.submitted[0], undefined)
   assert.equal(page.isSubmitting.value, false)
 })
+
+test('correct choice feedback never passes through a wrong state while the server response is applied', async () => {
+  let finish
+  const { store, page } = session(() => new Promise(resolve => { finish = resolve }))
+  store.questions[0] = { id: 11, examType: 'HKS', subject: '阅读', type: 'single', difficulty: 'easy', stem: '选择答案', options: [{ key: 'A', text: '甲' }, { key: 'B', text: '乙' }], responseMode: 'choice' }
+  const view = component()
+  view.props.question = store.questions[0]
+  const frames = []
+  const stop = vue.watchEffect(() => {
+    view.props.userAnswer = store.answers[0] || ''
+    view.props.showResult = !!page.showResult.value[0]
+    frames.push({ ...view.page.getOptionClass('B'), visible: view.props.showResult, answer: view.props.question.answer })
+  }, { flush: 'sync' })
+  try {
+    const pending = page.selectOption('B')
+    await vue.nextTick()
+    assert.equal(view.page.getOptionClass('B').selected, true)
+    assert.equal(view.page.getOptionClass('B').wrong, false)
+    assert.equal(view.page.getOptionClass('B').correct, false)
+    finish({ is_correct: true, solution: { id: 11, exam_type: 'HKS', subject: '阅读', question_type: 'single', difficulty: 'easy', stem_text: '选择答案', options: [{ key: 'A', text: '甲' }, { key: 'B', text: '乙' }], answer: 'B', response_mode: 'choice' } })
+    await pending
+    assert.equal(view.page.getOptionClass('B').correct, true)
+    assert.equal(frames.some(frame => frame.wrong), false)
+    assert.equal(frames.some(frame => frame.visible && !frame.answer), false)
+  } finally { stop() }
+})
+
+test('choice feedback stays ungraded if result visibility arrives before the answer', () => {
+  const { page, props } = component()
+  props.userAnswer = 'B'
+  props.showResult = true
+  assert.equal(page.getOptionClass('B').selected, true)
+  assert.equal(page.getOptionClass('B').wrong, false)
+  assert.equal(page.getOptionClass('B').correct, false)
+  props.question.answer = 'B'
+  assert.equal(page.getOptionClass('B').correct, true)
+  assert.equal(page.getOptionClass('B').wrong, false)
+  props.question.answer = 'A'
+  assert.equal(page.getOptionClass('B').wrong, true)
+  assert.equal(page.getOptionClass('A').correct, true)
+  props.showResult = false
+  assert.equal(page.getOptionClass('B').selected, true)
+  assert.equal(page.getOptionClass('B').wrong, false)
+  assert.equal(page.getOptionClass('A').correct, false)
+})

@@ -5,7 +5,6 @@
       <view class="history-heading">
         <view class="history-heading-copy">
           <text class="app-section-title">{{ t("历史试卷") }}</text>
-          <text class="app-section-subtitle">{{ t("查看每一次练习的成绩和答题表现") }}</text>
         </view>
         <view class="history-count">
           <text class="history-count-value">{{ loading || error ? '—' : historyPapers.length }}</text>
@@ -36,8 +35,8 @@
               <text class="app-list-desc">{{ paper.objectiveCount === 0 ? t("开放题自评") : paper.correctRate + '%' }} · {{ paper.timeUsed }}</text>
             </view>
             <view class="paper-side">
-              <t-tag :theme="paper.objectiveCount === 0 ? 'default' : paper.passed ? 'success' : 'danger'" variant="light" shape="round" size="small">
-                {{ paper.objectiveCount === 0 ? t("自评练习") : paper.passed ? t("表现不错") : t("继续巩固") }}
+              <t-tag v-if="paper.objectiveCount === 0" theme="default" variant="light" shape="round" size="small">
+                {{ t("自评练习") }}
               </t-tag>
               <text class="app-list-meta">{{ paper.date }}</text>
             </view>

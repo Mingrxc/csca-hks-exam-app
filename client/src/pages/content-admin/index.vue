@@ -7,7 +7,6 @@
           <view class="hero-copy">
             <text class="hero-brand">{{ t("内容管理") }}</text>
             <text class="hero-title">{{ user.isOwner ? t('维护内容与更新公告') : t('公告与内容') }}</text>
-            <text class="hero-subtitle">{{ t("更新公告发布后会显示在“关于”中。") }}</text>
           </view>
           <t-tag theme="primary" variant="light" shape="round">{{ items.length }}</t-tag>
         </view>
@@ -199,14 +198,6 @@ watch([activeUserId, adminRole], () => {
   line-height: 1.35;
   font-weight: 600;
   color: var(--app-text);
-}
-
-.hero-subtitle {
-  display: block;
-  margin-top: 8rpx;
-  font-size: 24rpx;
-  line-height: 1.6;
-  color: var(--app-text-weak);
 }
 
 .form-card {

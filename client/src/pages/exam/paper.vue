@@ -3,7 +3,6 @@
   <view class="page app-shell">
     <view class="app-section"><view class="hero app-card app-card-pad">
       <text class="hero-brand">{{ t("组卷中心") }}</text><text class="hero-title">{{ t(currentStrategy.title) }}</text>
-      <text class="hero-subtitle">{{ t(currentStrategy.desc) }}</text>
     </view></view>
     <view class="app-section" v-if="catalogLoading || catalogError">
       <c-app-state v-if="catalogLoading" state="loading" :title="t('正在读取题库分类')" />
@@ -26,13 +25,13 @@
       </view>
       <view v-if="!isRealStrategy && form.subject && modules.length" class="config-card app-card"><text class="config-label">{{ t("知识模块") }}</text><picker :range="[t('全部模块'), ...modules.map(label => t(label))]" :value="form.knowledgeModule ? modules.indexOf(form.knowledgeModule)+1 : 0" @change="selectModule(Number($event.detail.value))"><view class="option-tag">{{ t(form.knowledgeModule || "全部模块") }} ›</view></picker></view>
       <view v-if="!isRealStrategy && form.subject && points.length" class="config-card app-card"><text class="config-label">{{ t("知识点") }}</text><picker :range="[t('全部知识点'), ...points.map(label => t(label))]" :value="form.knowledgePoint ? points.indexOf(form.knowledgePoint)+1 : 0" @change="form.knowledgePoint = Number($event.detail.value) ? points[Number($event.detail.value)-1] : ''"><view class="option-tag">{{ t(form.knowledgePoint || "全部知识点") }} ›</view></picker></view>
-      <view v-if="!isRealStrategy" class="config-card app-card"><text class="config-label">{{ t("题目数量") }}</text><view class="config-options"><view v-for="count in QUESTION_COUNT_OPTIONS" :key="count" class="option-tag" :class="{active: form.questionCount === count}" @tap="form.questionCount = count">{{ t('{n}题', { n: count }) }}</view></view><text class="hero-subtitle">{{ t("共享材料按完整题组抽取，实际题量以组卷结果为准。") }}</text></view>
+      <view v-if="!isRealStrategy" class="config-card app-card"><text class="config-label">{{ t("题目数量") }}</text><view class="config-options"><view v-for="count in QUESTION_COUNT_OPTIONS" :key="count" class="option-tag" :class="{active: form.questionCount === count}" @tap="form.questionCount = count">{{ t('{n}题', { n: count }) }}</view></view></view>
       <view v-if="!isRealStrategy && strategyType !== 'progressive'" class="config-card app-card"><text class="config-label">{{ t("难度") }}</text><view class="config-options"><view v-for="item in DIFFICULTY_OPTIONS" :key="item.value" class="option-tag" :class="{active: form.difficulty === item.value}" @tap="form.difficulty = item.value">{{ t(item.label) }}</view></view></view>
       <view v-if="!isRealStrategy" class="config-card app-card"><text class="config-label">{{ t("答题模式") }}</text><view class="config-options"><view class="option-tag" :class="{active: form.mode === 'practice'}" @tap="form.mode = 'practice'">{{ t("练习模式") }}</view><view class="option-tag" :class="{active: form.mode === 'exam'}" @tap="form.mode = 'exam'">{{ t("考试模式") }}</view></view></view>
       <view v-if="isRealStrategy || form.mode === 'exam'" class="config-card app-card"><text class="config-label">{{ t("限时（分钟）") }}</text><view class="config-options"><view v-for="time in TIME_LIMIT_OPTIONS" :key="time" class="option-tag" :class="{active: form.timeLimit === time}" @tap="form.timeLimit = time">{{ time }}</view></view><text class="hero-subtitle" v-if="isRealStrategy">{{ t("按所选等级的当前模块配置练习，不含口语与口译。") }}</text></view>
       <view v-if="!subjects.length && (form.examType === 'CSCA' || form.level)" class="config-card app-card">{{ t("当前筛选暂无可用题目。") }}</view>
+      <view class="practice-actions"><view class="summary"><text>{{ getExamLabel(form.examType) }} {{ form.level ? levelLabel(form.level) : '' }} · {{ t(form.subject || "综合练习") }}</text></view><t-button theme="primary" block size="large" shape="round" :loading="isGenerating" :disabled="catalogLoading || !!catalogError" @click="startExam">{{ t("开始练习") }}</t-button></view>
     </view>
-    <view class="footer"><view class="summary"><text>{{ getExamLabel(form.examType) }} {{ form.level ? levelLabel(form.level) : '' }} · {{ t(form.subject || "综合练习") }}</text></view><t-button theme="primary" block size="large" shape="round" :loading="isGenerating" :disabled="catalogLoading || !!catalogError" @click="startExam">{{ t("开始练习") }}</t-button></view>
   </view>
   </c-auth-frame>
 </template>
@@ -281,12 +280,10 @@ onShareAppMessage(createAppShareMessage)
   font-weight: 600;
 }
 
-.footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
-  margin-top: 28rpx;
-  padding: 20rpx 28rpx calc(24rpx + env(safe-area-inset-bottom));
+.practice-actions {
+  position: static;
+  margin-top: 14rpx;
+  padding-top: 20rpx;
   background: var(--app-bg);
   border-top: 1rpx solid var(--app-border);
 }

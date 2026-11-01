@@ -14,8 +14,8 @@
               <text v-else class="profile-name">{{ userStore.isLogin ? userInfo.nickname : t('未登录') }}</text>
               <text v-if="userStore.isLogin" class="profile-code" @tap.stop="copyUserCode">{{ userInfo.userCode }}</text>
             </view>
-            <text v-if="editingNickname" class="nickname-hint" :class="{ 'nickname-hint-error': nicknameError }">
-              {{ nicknameError || t('在这里修改昵称，也可选用微信昵称') }}
+            <text v-if="editingNickname && nicknameError" class="nickname-hint nickname-hint-error">
+              {{ nicknameError }}
             </text>
             <text v-if="!userStore.isLogin" class="login-link">{{ t('点击登录') }}</text>
             <view class="profile-meta">

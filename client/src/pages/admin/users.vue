@@ -24,7 +24,7 @@ import { adminDate } from '@/features/admin/format'
 import { useAdminPage } from '@/features/admin/useAdminPage'
 usePageI18n('pages/admin/users')
 const page = ref(1), searchDraft = ref(''), query = ref('')
-const roleLabels = { user: '普通用户', viewer: '只读管理员', owner: '主管理员' }
+const roleLabels = { user: '普通用户', viewer: '管理员', owner: '管理员' }
 const { data, loading, error, allowed, load } = useAdminPage<Page<AdminUser>>({ items: [], total: 0, page: 1, page_size: 20 }, () => adminApi.users(query.value, page.value))
 function search() { query.value = searchDraft.value.trim(); page.value = 1; load() }
 function changePage(value: number) { page.value = value; load() }

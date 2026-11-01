@@ -10,6 +10,7 @@ from src.common.deps import get_current_openid, get_current_user_id
 from src.common.response import ApiResponse, success
 from src.config.database import SessionLocal, get_db
 from src.modules.user.schemas import (
+    CheckInResponse,
     DashboardResponse,
     UserProfileUpdate,
     UserResponse,
@@ -19,6 +20,7 @@ from src.modules.user.schemas import (
 from src.modules.user.service import get_dashboard as get_dashboard_service
 from src.modules.user.service import exchange_wx_code
 from src.modules.user.service import (
+    check_in as check_in_service,
     count_user_favorites,
     get_or_create_user_by_openid,
     get_user_by_openid,
@@ -81,6 +83,15 @@ def get_dashboard(
     """Return the current learning dashboard."""
     user = get_user_by_openid(db, openid)
     return success(get_dashboard_service(db, user))
+
+
+@router.post("/check-in")
+def check_in(
+    db: Session = Depends(get_db),
+    openid: str = Depends(get_current_openid),
+) -> ApiResponse[CheckInResponse]:
+    """Check in the authenticated account once per Beijing day."""
+    return success(check_in_service(db, openid))
 
 
 @router.put("/profile")

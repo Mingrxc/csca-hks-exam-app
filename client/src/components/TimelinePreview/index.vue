@@ -4,8 +4,6 @@
       <view class="preview-hero app-card app-card-pad">
         <image class="preview-icon" :src="APP_ICON_PATH" mode="aspectFit" />
         <text class="preview-brand">老外一点通</text>
-        <text class="preview-title">{{ t("留学备考，从每一题开始") }}</text>
-        <text class="preview-description">{{ t("面向 CSCA 与 HSK 备考的学习助手，结合题库练习、模拟考试和错题复习，循序渐进地积累。") }}</text>
       </view>
     </view>
 
@@ -14,11 +12,9 @@
         <text class="app-card-title">{{ t("可以怎样学习") }}</text>
         <view class="preview-feature">
           <text class="feature-title">{{ t("题库练习与模拟考试") }}</text>
-          <text class="feature-description">{{ t("选择考试和科目，按自己的节奏练习，或通过限时模拟检查掌握情况。") }}</text>
         </view>
         <view class="preview-feature">
           <text class="feature-title">{{ t("错题、收藏与学习记录") }}</text>
-          <text class="feature-description">{{ t("回顾答题解析，收藏需要巩固的题目，逐步整理个人学习积累。") }}</text>
         </view>
       </view>
     </view>
@@ -46,8 +42,6 @@ import { APP_ICON_PATH } from '@/constants/brand'
 .preview-hero { text-align: center; }
 .preview-icon { display: block; width: 80rpx; height: 80rpx; margin: 0 auto 16rpx; }
 .preview-brand { display: block; color: var(--app-primary); font-size: 26rpx; font-weight: 600; }
-.preview-title { display: block; margin-top: 16rpx; font-size: 40rpx; font-weight: 600; line-height: 1.5; }
-.preview-description { display: block; margin-top: 20rpx; color: var(--app-text-weak); font-size: 27rpx; line-height: 1.9; text-align: left; }
 .preview-feature { padding-top: 22rpx; margin-top: 22rpx; border-top: 1rpx solid var(--app-border); }
 .feature-title { display: block; color: var(--app-text); font-size: 28rpx; font-weight: 600; }
 .feature-description { display: block; margin-top: 10rpx; color: var(--app-text-weak); font-size: 26rpx; line-height: 1.9; }

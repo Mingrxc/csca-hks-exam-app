@@ -159,37 +159,94 @@ def serialize_user(
         "total_correct": total_correct,
         "total_objective": objective_count,
         "correct_rate": correct_rate,
-        "streak_days": user.streak_days or 0,
+        "streak_days": current_streak_days(user),
         "favorite_count": favorite_count,
         "created_at": user.created_at,
     }
 
 
+def current_streak_days(user: User, today: date | None = None) -> int:
+    today = today or study_today()
+    if user.last_streak_at in {today, today - timedelta(days=1)}:
+        return user.streak_days or 0
+    return 0
+
+
+def record_daily_activity(db: Session, user: User, activity_on: date | None = None,
+                          *, answered: bool = False) -> None:
+    """Share a daily record between manual check-in and answering; caller commits."""
+    # Both writers lock the same user, then read the daily row with a current read
+    # so MySQL REPEATABLE READ cannot duplicate a concurrent first check-in. Leave
+    # pending answer writes for the caller's commit/conflict-retry transaction.
+    with db.no_autoflush:
+        streak_days, last_streak_at = (
+            db.query(User.streak_days, User.last_streak_at)
+            .filter(User.id == user.id).with_for_update().one()
+        )
+    streak_date = activity_on or study_today()
+    with db.no_autoflush:
+        record = (
+            db.query(StreakRecord)
+            .filter(
+                StreakRecord.user_id == user.id,
+                StreakRecord.streak_date == streak_date,
+            )
+            .with_for_update().first()
+        )
+    if record:
+        if answered:
+            record.question_count = (record.question_count or 0) + 1
+    else:
+        db.add(StreakRecord(user_id=user.id, streak_date=streak_date,
+                            question_count=1 if answered else 0))
+        if last_streak_at == streak_date - timedelta(days=1):
+            streak_days = (streak_days or 0) + 1
+        elif last_streak_at != streak_date:
+            streak_days = 1
+        last_streak_at = streak_date
+    user.streak_days = streak_days
+    user.last_streak_at = last_streak_at
+
+
 def record_daily_answer(db: Session, user: User, answered_on: date | None = None) -> None:
     """Record one newly answered question without double-counting resubmissions."""
-    streak_date = answered_on or study_today()
-    record = (
-        db.query(StreakRecord)
-        .filter(
-            StreakRecord.user_id == user.id,
-            StreakRecord.streak_date == streak_date,
-        )
-        .first()
-    )
-    if record:
-        record.question_count = (record.question_count or 0) + 1
-        return
+    record_daily_activity(db, user, answered_on, answered=True)
 
-    db.add(StreakRecord(user_id=user.id, streak_date=streak_date, question_count=1))
-    if user.last_streak_at == streak_date - timedelta(days=1):
-        user.streak_days = (user.streak_days or 0) + 1
-    elif user.last_streak_at != streak_date:
-        user.streak_days = 1
-    user.last_streak_at = streak_date
+
+def get_check_in(db: Session, user: User, today: date | None = None) -> dict:
+    today = today or study_today()
+    monday = today - timedelta(days=today.weekday())
+    checked_dates = {
+        row.streak_date for row in db.query(StreakRecord).filter(
+            StreakRecord.user_id == user.id,
+            StreakRecord.streak_date >= monday,
+            StreakRecord.streak_date <= today,
+        ).all()
+    }
+    return {
+        "today": today,
+        "checked_in": today in checked_dates,
+        "streak_days": current_streak_days(user, today),
+        "week": [
+            {"date": monday + timedelta(days=offset),
+             "checked": monday + timedelta(days=offset) in checked_dates}
+            for offset in range(7)
+        ],
+    }
+
+
+def check_in(db: Session, openid: str) -> dict:
+    user = get_user_by_openid(db, openid)
+    record_daily_activity(db, user)
+    # Keep the same Beijing date even if a request happens to cross midnight.
+    checked_on = user.last_streak_at
+    db.commit()
+    return get_check_in(db, user, checked_on)
 
 
 def get_dashboard(db: Session, user: User) -> dict:
-    day_start, day_end = study_day_utc_bounds()
+    today = study_today()
+    day_start, day_end = study_day_utc_bounds(today)
     today_records = (
         db.query(AnswerRecord)
         .filter(
@@ -222,6 +279,7 @@ def get_dashboard(db: Session, user: User) -> dict:
         "pending_wrong_count": pending_wrong_count,
         "favorite_count": count_user_favorites(db, user.id),
         "recent_papers": list_papers(db, user.id, limit=3),
+        "check_in": get_check_in(db, user, today),
     }
 
 

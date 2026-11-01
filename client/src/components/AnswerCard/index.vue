@@ -3,7 +3,6 @@
     <view class="card-header">
       <view>
         <text class="card-title">{{ t("答题卡") }}</text>
-        <text class="card-subtitle">{{ t("点选题号快速跳转") }}</text>
       </view>
       <view class="card-stats">{{ answeredCount }}/{{ total }} {{ t("已答") }}</view>
     </view>
@@ -84,13 +83,6 @@ defineEmits<{
   font-size: 26rpx;
   font-weight: 600;
   color: var(--app-text);
-}
-
-.card-subtitle {
-  display: block;
-  margin-top: 4rpx;
-  font-size: var(--app-font-xs);
-  color: var(--app-text-weak);
 }
 
 .card-stats {

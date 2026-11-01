@@ -7,7 +7,7 @@ import type {
   ResultReviewQuestion,
   ResultWrongQuestion,
 } from '@/types/exam'
-import type { DashboardData, ExamTargetDates, UserProfile } from '@/types/user'
+import type { CheckInStatus, DashboardData, ExamTargetDates, UserProfile } from '@/types/user'
 import type { RelatedQuestion, WrongBookDetail, WrongBookListItem } from '@/types/wrongbook'
 import { DIFFICULTY_MAP, QUESTION_TYPE_MAP } from '@/constants/exam'
 import { resolveMediaUrl } from './client'
@@ -109,7 +109,15 @@ export interface ApiUser {
   favorite_count: number
 }
 
+export interface ApiCheckIn {
+  today: string
+  checked_in: boolean
+  streak_days: number
+  week: Array<{ date: string; checked: boolean }>
+}
+
 export interface ApiDashboard {
+  check_in?: ApiCheckIn
   user_name: string
   target_exam: 'CSCA' | 'HKS'
   target_date?: string
@@ -270,8 +278,13 @@ export function toHistoryPaper(item: ApiHistoryPaper): HistoryPaper {
   }
 }
 
+export function toCheckInStatus(item: ApiCheckIn): CheckInStatus {
+  return { today: item.today, checkedIn: item.checked_in, streakDays: item.streak_days, week: item.week }
+}
+
 export function toDashboardData(item: ApiDashboard): DashboardData {
   return {
+    checkIn: item.check_in ? toCheckInStatus(item.check_in) : null,
     userName: item.user_name,
     targetExam: item.target_exam,
     targetDate: item.target_date || '',

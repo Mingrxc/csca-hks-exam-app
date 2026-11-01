@@ -1,12 +1,11 @@
 <template>
   <view class="page app-shell">
     <view class="app-section heading">
-      <text class="app-section-title">{{ t("每一点进步，都在这里") }}</text>
-      <text class="app-section-subtitle">{{ t("查看新功能、体验优化与修复记录") }}</text>
+      <text class="app-section-title">{{ t("更新公告") }}</text>
     </view>
     <view class="app-section">
       <view v-if="loading && !items.length" class="app-card"><c-app-state state="loading" :title="t('正在加载更新公告')" /></view>
-      <view v-else-if="!error && !items.length" class="app-card"><c-app-state state="empty" :title="t('暂无更新公告')" :description="t('新的更新消息会在这里与你见面。')" /></view>
+      <view v-else-if="!error && !items.length" class="app-card"><c-app-state state="empty" :title="t('暂无更新公告')" /></view>
       <view v-for="item in items" :key="item.id" class="announcement-card app-card" hover-class="card-pressed" @tap="openAnnouncement(item.id)">
         <view class="announcement-meta"><text class="version-tag">v{{ item.release_version }}</text><text>{{ formatReleaseDate(item.published_at) }}</text></view>
         <view class="announcement-heading"><text class="announcement-title">{{ item.title }}</text><t-icon name="chevron-right" size="30rpx" /></view>

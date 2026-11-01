@@ -7,7 +7,6 @@
           <view class="hero-copy">
             <text class="hero-brand">{{ t("收藏题目") }}</text>
             <text class="hero-title">{{ t("我的收藏") }}</text>
-            <text class="hero-subtitle">{{ t("值得反复看的题目，集中留在这里。") }}</text>
           </view>
           <t-tag theme="primary" variant="light" shape="round">{{ loading || error ? '—' : items.length }}</t-tag>
         </view>
@@ -91,14 +90,6 @@ onShareAppMessage(createAppShareMessage)
   line-height: 1.35;
   font-weight: 600;
   color: var(--app-text);
-}
-
-.hero-subtitle {
-  display: block;
-  margin-top: 8rpx;
-  font-size: 24rpx;
-  line-height: 1.6;
-  color: var(--app-text-weak);
 }
 
 .favorite-list {

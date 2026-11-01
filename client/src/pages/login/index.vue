@@ -2,7 +2,6 @@
   <view class="login-page app-shell">
     <view class="app-section"><view class="login-card app-card app-card-pad">
       <text class="login-title">{{ user.isLogin ? t('完善个人资料') : t('欢迎回来') }}</text>
-      <text class="login-copy">{{ t('登录后保存你的学习记录与进度') }}</text>
       <button class="avatar-picker" open-type="chooseAvatar" :disabled="saving" @chooseavatar="chooseAvatar">
         <image v-if="avatarDraft || user.userInfo.avatarUrl" :src="avatarDraft || user.userInfo.avatarUrl" mode="aspectFill" class="avatar-image" />
         <t-icon v-else name="user-circle" size="90rpx" color="#b86b4b" />
@@ -65,7 +64,6 @@ onUnload(cancelLogin)
 .login-page { min-height: 100vh; padding-top: 40rpx; }
 .login-card { padding: 48rpx 36rpx; }
 .login-title { display: block; font-size: 40rpx; font-weight: 600; }
-.login-copy { display: block; margin-top: 14rpx; font-size: 26rpx; line-height: 1.6; color: var(--app-text-weak); }
 .avatar-picker { display: flex; align-items: center; justify-content: center; width: 140rpx; height: 140rpx; margin: 42rpx auto 0; padding: 0; border: 1rpx solid var(--app-border); border-radius: 50%; background: var(--app-primary-soft); overflow: hidden; }
 .avatar-picker::after { border: 0; }
 .avatar-image { width: 100%; height: 100%; }

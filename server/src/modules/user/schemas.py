@@ -70,6 +70,18 @@ class DashboardPaperResponse(BaseModel):
     finished_at: datetime
 
 
+class CheckInDayResponse(BaseModel):
+    date: date
+    checked: bool
+
+
+class CheckInResponse(BaseModel):
+    today: date
+    checked_in: bool
+    streak_days: int
+    week: list[CheckInDayResponse]
+
+
 class DashboardResponse(BaseModel):
     user_name: str
     target_exam: str
@@ -79,3 +91,4 @@ class DashboardResponse(BaseModel):
     pending_wrong_count: int
     favorite_count: int
     recent_papers: list[DashboardPaperResponse] = Field(default_factory=list)
+    check_in: CheckInResponse

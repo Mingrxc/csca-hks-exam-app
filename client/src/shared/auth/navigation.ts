@@ -27,7 +27,7 @@ export function promptLogin(action?: () => unknown) {
   const pages = getCurrentPages()
   if (pages[pages.length - 1]?.route === 'pages/login/index') return
   prompting = true
-  showModal({ title: t('登录后即可使用'), content: t('登录后保存你的学习记录与进度'), confirmText: t('去登录'),
+  showModal({ title: t('登录后即可使用'), confirmText: t('去登录'),
     success: result => { if (result.confirm) openLogin(action) }, complete: () => { prompting = false },
   })
 }

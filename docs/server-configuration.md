@@ -1,6 +1,62 @@
 # 服务器配置与部署记录
 
-## 当前版本：V1.5.5（2026-11-01）
+## 当前运行：首页签到已部署（2026-11-01 19:33，V1.5.5 / 0014）
+
+正式API已提供POST `/api/v1/user/check-in`，GET `/api/v1/user/dashboard`含check_in。使用既有streak_records及用户连续天数字段，没有结构变更或迁移，版本仍1.5.5，head仍 `0014_release_1_5_5`。本次发布aef540d5基础上的未提交签到工作树，不是只部署该旧提交。没有前端构建、Git提交/推送或微信发布，既有client/dist/build/mp-weixin可供用户试用与后续发布。
+
+| 项目 | 本次配置或位置 |
+|---|---|
+| 发布标识 | v1.5.5-check-in-20261101-193324 |
+| 后端包 | laowai-backend-v1.5.5-check-in-20261101-193324.tar.gz，98142字节，110文件 |
+| SHA-256 | 33b34e817bc3914e8cc7e327eb406428e6c8d386bc8d2333f5e8638c4ba3434d |
+| 更新前备份 | /var/backups/laowai/before-v1.5.5-check-in-20261101-193324 |
+| SQL | laowai-20261101T113356Z.sql.gz，配套配置/头像归档、SHA/metadata及code.before.tar.gz |
+| 旧代码 | /opt/laowai/rollback/v1.5.5-check-in-20261101-193324/csca-hks-exam-app |
+| 当前状态 | /opt/laowai/deployment/current-release.json |
+| 部署记录 | /opt/laowai/deployment/deploy-v1.5.5-check-in-20261101-193324.json |
+| HTTPS验收 | /opt/laowai/deployment/verification-v1.5.5-check-in-20261101-193324.json |
+
+维护前后73用户、55试卷、205答题、91错题、86知识统计、22打卡、2目标日期、1221题、5内容、1发号计数行、1owner、0成员、5审计及0收藏/反馈记录数量一致。lw005原owner创建时间/temporary标记及所有公告元数据不改。此前viewer查看已恢复，本轮不重复恢复、bootstrap或更改其他权限，不重置用户编号。
+
+服务器隔离运行签到和看板相关11项专项全部通过；结构检查无新操作、完整性clean。HTTPS验证游客及不存在账号401、两次并发签到返回一致、只生成一条北京时间当日记录/连续天数1，手动签到不产生答题数，周一至周日状态及看板/资料持久读取一致；lw005资料owner且成员管理读取200。仅合成账号用于写入验收，账号/签到记录已清理，编号退役，不动真实用户记录或管理审计。
+
+先备份再代码替换/重启，数据库、配置、上传目录与旧代码归档验证通过；用户此前决定备份暂不变动，原规则和既有副本继续保留。无迁移、清库、导题、环境安装或全盘回归，Nginx/证书/凭据/媒体/头像配置不改，API与备份/健康timer恢复active。README、memory、版本说明与配置副本同步，本轮不代表微信端已上传发布。
+
+## 当前权限：lw005主管理员已恢复（2026-11-01）
+
+用户查看结束后明确要求恢复。现已在正式库事务内删除本次viewer成员、原样恢复唯一owner(user_id=5)，保留原is_temporary=true和created_at，lw005编号/学习记录不变，并增加owner.restore_after_preview审计。真实HTTPS资料owner，总览和管理员成员接口200，owner权限校验通过。私有快照 `/opt/laowai/deployment/lw005-viewer-preview-20261101.json` 状态restored，禁止重复restore或bootstrap覆盖原绑定。应用仍1.5.5/0014，没有应用部署、迁移、重启、内容写入或微信发布。
+
+## 临时权限状态：lw005只读查看（2026-11-01，历史，已恢复）
+
+用户知悉lw005是唯一主管理员后，明确确认临时改为viewer查看界面、稍后恢复。现已在正式数据库单事务移除该临时owner、增加user_id=5的viewer成员并写入owner.preview_viewer审计，账号编号、用户资料和学习记录不变；当前owner数量为0，管理写功能暂不可用。原owner记录及绑定时间保存于root私有600文件 `/opt/laowai/deployment/lw005-viewer-preview-20261101.json`，待用户看完后按快照恢复。
+
+本机私有维护工具 `.deployment-access/tmp/lw005-viewer-preview-20261101/run.py` 支持preview/verify/restore。恢复需确认无其他owner及viewer成员未被替换，原样恢复owner的is_temporary和created_at并记录审计，不重新bootstrap或分配lw000。正式HTTPS资料已为viewer，总览/用户/反馈/内容读取200，成员管理403，owner写校验拒绝。无部署、迁移、服务重启、业务内容写入或微信发布；应用仍1.5.5/0014。该状态优先于以下部署时点的owner记录。
+
+## 历史部署：V1.5.5 / 0014（2026-11-01 14:33）
+
+正式API `https://api.laowaiyidiantong.icu/api/v1`，健康版本仍1.5.5，数据库csca_hks_exam增量升级至 `0014_release_1_5_5`。最新后端来源提交aef540d56d43d4488ed45186e6bac3d2d7cbc4e6；本机另有前端界面/文档修改，不属于服务器后端行为。本次未Git提交/推送、前端构建或微信发布。
+
+本轮仅应用定稿公告数据迁移：现有id=5的1.5.5公告标题“1.5.5 更新公告”，摘要与正文均“新增了一些功能”，is_active=1，published_at为UTC `2026-11-01 16:00:00`，即北京时间 **2026-11-02 00:00** 起公开。公告id和创建时间保持，5条内容没有重复新增，其余版本不改。发布时间之前公开列表及两个详情入口仍隐藏，管理员能查看定稿；现有查询条件在日期到达后自动展示，无额外cron或人工启用步骤。
+
+| 项目 | 本次配置或位置 |
+|---|---|
+| 发布标识 | v1.5.5-0014-20261101-143253 |
+| 后端包 | laowai-backend-v1.5.5-0014-20261101-143253.tar.gz，92911字节，109文件 |
+| SHA-256 | 3f618c63bc0073d02d2c8a9ef06120bbbf9a7ef34510cc8690fda2f2e6b4326d |
+| 更新前备份 | /var/backups/laowai/before-v1.5.5-0014-20261101-143253 |
+| SQL | laowai-20261101T063317Z.sql.gz，配套配置/头像归档、校验/metadata及code.before.tar.gz |
+| 旧代码 | /opt/laowai/rollback/v1.5.5-0014-20261101-143253/csca-hks-exam-app |
+| 当前状态 | /opt/laowai/deployment/current-release.json |
+| 部署记录 | /opt/laowai/deployment/deploy-v1.5.5-0014-20261101-143253.json |
+| HTTPS验收 | /opt/laowai/deployment/verification-v1.5.5-0014-20261101-143253.json |
+
+全部原业务表记录数量保持：73用户、52试卷、189答题、80错题、79知识统计、21打卡、2目标日期、1221题、5内容、1发号计数行，收藏/反馈为0；唯一lw005临时owner、0只读成员和3条审计保留。owner绑定及创建时间、用户编号/计数器不重置，未重复bootstrap。验收为只读，无测试账号、管理授权或审计写入。
+
+服务器5项相关专项通过，覆盖0014既有/缺失公告及幂等、时区和11月2日发布边界；Alembic check无新操作，完整性clean。实际HTTPS确认版本、游客保护、既有lw005 owner及定稿/UTC日期、未到发布时间公开隐藏。未来边界用隔离测试验证，没有修改生产时钟或宣称已等到次日。
+
+数据库/配置/上传目录和旧代码先备份并验证，备份/健康timer恢复。没有清库、导题、媒体/头像配置变更、依赖安装或全盘回归；基础部署参数与以下1.5.5/0013、1.5.4配置相同。README、memory、发布说明与本配置同步至本机.deployment-access及服务器交付目录。首页/刷题页文字精简仍需用户另行构建并上传微信小程序。
+
+## 历史部署：V1.5.5 / 0013（2026-11-01 14:12）
 
 正式API仍为 `https://api.laowaiyidiantong.icu/api/v1`，HTTPS健康返回1.5.5；数据库仍为csca_hks_exam，最新迁移 `0013_trial_admin_owner`。本次从1.5.4/0011增量升级0012、0013，来源为本机已审阅的1.5.5工作树（基础提交7a4ed5f55ee4589b82549bade3756bd2b59488bd，含未提交文件），没有Git提交/推送或微信小程序发布。
 

@@ -1,7 +1,7 @@
 <template>
   <c-admin-frame :loading="loading" :allowed="allowed" :error="error" @retry="load">
     <view class="app-section">
-      <view class="admin-heading"><text class="app-section-title">{{ t('管理中心') }}</text><text class="admin-role">{{ user.isOwner ? t('主管理员') : t('只读管理员') }}</text></view>
+      <view class="admin-heading"><text class="app-section-title">{{ t('管理中心') }}</text><text class="admin-role">{{ t('管理员') }}</text></view>
       <text class="admin-note">{{ t('今日数据按北京时间统计') }}</text>
     </view>
     <view v-if="data" class="app-section admin-grid">

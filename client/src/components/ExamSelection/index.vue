@@ -15,7 +15,7 @@
         <text>{{ getExamLabel(exam) }}</text>
       </button>
     </view>
-    <text class="exam-selection-hint">{{ selectedExams.length ? t("可多选 · 再点取消") : t("随便看看 · 可多选") }}</text>
+    <text v-if="showHint" class="exam-selection-hint">{{ selectedExams.length ? t("可多选 · 再点取消") : t("随便看看 · 可多选") }}</text>
   </view>
 </template>
 
@@ -24,7 +24,7 @@ import { t } from '@/i18n'
 import { getExamLabel } from '@/constants/exam'
 import type { ExamType } from '@/types/exam'
 
-withDefaults(defineProps<{ selectedExams: ExamType[]; compact?: boolean }>(), { compact: false })
+withDefaults(defineProps<{ selectedExams: ExamType[]; compact?: boolean; showHint?: boolean }>(), { compact: false, showHint: true })
 const emit = defineEmits<{ (event: 'toggle', exam: ExamType): void }>()
 const examOptions: ExamType[] = ['HKS', 'CSCA']
 </script>

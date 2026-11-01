@@ -52,7 +52,6 @@
       <view class="related-section">
         <view class="related-header">
           <text class="app-section-title">{{ t("举一反三") }}</text>
-          <text class="app-section-subtitle">{{ t('以下题目基于相同{label}「{value}」推荐。', { label: t(domainLabel), value: t(domainValue) }) }}</text>
         </view>
         <c-app-state v-if="relatedLoading" compact state="loading" :title="t('正在寻找相关练习')" />
         <c-app-state v-else-if="relatedError" compact state="error" :title="t('相关练习暂时无法加载')" @retry="loadRelated" />

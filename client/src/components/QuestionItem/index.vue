@@ -30,8 +30,8 @@
           <text v-if="opt.image" class="q-index-sub" @tap.stop="preview(opt.image)">{{ t("查看大图") }}</text>
           <text v-else class="option-text">{{ opt.text }}</text>
         </view>
-        <text class="option-icon" v-if="showResult && opt.key === question.answer">✓</text>
-        <text class="option-icon wrong" v-else-if="showResult && userAnswer === opt.key">✗</text>
+        <text class="option-icon" v-if="optionResultReady && opt.key === question.answer">✓</text>
+        <text class="option-icon wrong" v-else-if="optionResultReady && userAnswer === opt.key">✗</text>
       </view>
     </view>
     <view v-else-if="!readonly" class="written-answer">
@@ -69,6 +69,7 @@ import { onHide } from '@dcloudio/uni-app'
 import type { Question } from '@/types/exam'
 import { DIFFICULTY_MAP, QUESTION_TYPE_MAP, getQuestionDomain, getQuestionDomainLabel, getExamLabel } from '@/constants/exam'
 const props = defineProps<{ question: Question; index: number; userAnswer: string; showResult: boolean; isFavorite?: boolean; readonly?: boolean; submitting?: boolean }>()
+const optionResultReady = computed(() => props.showResult && !!props.question.answer)
 defineEmits<{ (e: 'select', key: string): void; (e: 'favorite'): void; (e: 'draft', value: string): void; (e: 'submit', value: string): void; (e: 'self-review', score: number): void }>()
 const typeLabel = computed(() => QUESTION_TYPE_MAP[props.question.type] || props.question.type)
 const diffLabel = computed(() => DIFFICULTY_MAP[props.question.difficulty] || props.question.difficulty)
@@ -103,7 +104,8 @@ watch(() => props.question.id, stopAudio)
 onHide(() => { audio?.pause(); playing.value = false })
 onBeforeUnmount(stopAudio)
 function getOptionClass(key: string) {
-  return { selected: props.userAnswer === key && !props.showResult, correct: props.showResult && key === props.question.answer, wrong: props.showResult && props.userAnswer === key && key !== props.question.answer }
+  const ready = optionResultReady.value
+  return { selected: props.userAnswer === key && !ready, correct: ready && key === props.question.answer, wrong: ready && props.userAnswer === key && key !== props.question.answer }
 }
 </script>
 
@@ -189,8 +191,8 @@ function getOptionClass(key: string) {
 }
 
 .option-item.selected {
-  border-color: rgba(184, 107, 75, 0.28);
-  background: var(--app-primary-soft);
+  border-color: var(--app-text-mute);
+  background: var(--app-surface-quiet);
 }
 
 .option-item.correct {
@@ -217,7 +219,7 @@ function getOptionClass(key: string) {
 }
 
 .option-item.selected .option-key {
-  background: var(--app-primary);
+  background: var(--app-text-mute);
   color: #ffffff;
 }
 

@@ -7,15 +7,13 @@
       <view class="success-card app-card">
         <view class="success-icon"><t-icon name="check-circle" size="72rpx" /></view>
         <text class="success-title">{{ t("反馈已收到") }}</text>
-        <text class="success-description">{{ t("谢谢你，帮助我们把每一点体验做好。") }}</text>
         <text class="receipt-number">{{ t('反馈编号 #{id}', { id: receipt.id }) }}</text>
         <button class="secondary-button" @tap="startAnother">{{ t("继续反馈") }}</button>
       </view>
     </view>
     <view v-else class="feedback-form">
       <view class="app-section heading">
-        <text class="app-section-title">{{ t("说说你的想法") }}</text>
-        <text class="app-section-subtitle">{{ t("一道题的疑惑，一次使用体验，或一个小建议") }}</text>
+        <text class="app-section-title">{{ t("用户反馈") }}</text>
       </view>
       <view class="app-section">
         <view class="form-card app-card app-card-pad">
@@ -29,7 +27,6 @@
         </view>
       </view>
       <view class="app-section">
-        <text class="privacy-note">{{ t("反馈仅开发者及授权管理员可见。请勿填写密码、证件号码等敏感信息。") }}</text>
         <button class="submit-button" :disabled="!canSubmit" :loading="sending" @tap="submit">{{ sending ? t("正在提交") : t("提交反馈") }}</button>
       </view>
     </view>
@@ -151,13 +148,11 @@ onUnload(() => { pageVisible = false; persistDraft() })
 .content-label { margin-top: 36rpx; }
 .feedback-input { display: block; width: 100%; min-height: 340rpx; margin-top: 20rpx; padding: 20rpx; border: 1rpx solid var(--app-border); border-radius: 18rpx; background: var(--app-surface-quiet); font-size: 28rpx; line-height: 1.8; color: var(--app-text); }
 .word-count { display: block; margin-top: 12rpx; text-align: right; font-size: 22rpx; color: var(--app-text-mute); }
-.privacy-note { display: block; padding: 0 4rpx; color: var(--app-text-mute); font-size: 23rpx; line-height: 1.8; }
-.submit-button { width: 100%; margin: 24rpx 0 0; border-radius: 22rpx; background: var(--app-primary); color: var(--app-surface); font-size: 30rpx; font-weight: 600; line-height: 1.5; padding: 25rpx; }
+.submit-button { width: 100%; margin: 0; border-radius: 22rpx; background: var(--app-primary); color: var(--app-surface); font-size: 30rpx; font-weight: 600; line-height: 1.5; padding: 25rpx; }
 .submit-button[disabled] { color: var(--app-text-mute); background: var(--app-primary-soft); }
 .success-card { padding: 64rpx 32rpx 44rpx; text-align: center; }
 .success-icon { color: var(--app-secondary); }
 .success-title { display: block; margin-top: 22rpx; font-size: 36rpx; font-weight: 600; }
-.success-description { display: block; margin-top: 16rpx; color: var(--app-text-weak); font-size: 26rpx; line-height: 1.8; }
 .receipt-number { display: block; margin-top: 20rpx; font-size: 24rpx; color: var(--app-text-mute); }
 .secondary-button { margin: 36rpx 0 0; color: var(--app-primary); background: var(--app-primary-soft); border-radius: 20rpx; font-size: 28rpx; padding: 12rpx; }
 </style>

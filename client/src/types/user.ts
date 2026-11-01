@@ -24,7 +24,15 @@ export interface RecentPaper {
   date: string
 }
 
+export interface CheckInStatus {
+  today: string
+  checkedIn: boolean
+  streakDays: number
+  week: Array<{ date: string; checked: boolean }>
+}
+
 export interface DashboardData {
+  checkIn: CheckInStatus | null
   userName: string
   targetExam: ExamType
   targetDate: string

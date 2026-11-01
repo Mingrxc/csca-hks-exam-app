@@ -23,4 +23,4 @@
 
 `AppState` 的 `compact` 属性用于卡片内的状态提示，保持与首页和学习指标一致的间距；加载失败时通过 `retry` 事件重新请求。
 
-`ExamSelection` 接收 `selectedExams`，通过 `toggle` 事件返回被点击的考试类型。页面调用用户 store 更新和保存选择；组件本身不持有业务状态。
+`ExamSelection` 接收 `selectedExams`，通过 `toggle` 事件返回被点击的考试类型。页面调用用户 store 更新和保存选择；组件本身不持有业务状态。`showHint` 默认true，首页传false隐藏选项下方提示；刷题页按用户要求不再显示该选择组件，组卷页仍可选择本次考试类型。

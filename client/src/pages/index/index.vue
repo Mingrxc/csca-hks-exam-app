@@ -4,49 +4,33 @@
     <view class="home-header">
       <view class="home-greeting">
         <text class="greeting-title">{{ t(greeting) }}{{ language === 'en' ? ', ' : '，' }}{{ displayName }}</text>
-        <text class="greeting-desc">{{ t("今天，也向目标靠近一点") }}</text>
       </view>
-      <c-exam-selection compact :selected-exams="userStore.selectedExams" @toggle="userStore.toggleSelectedExam" />
     </view>
 
-    <view class="app-section goal-section">
-      <view class="goal-card app-card app-card-pad">
-        <view class="goal-top">
-          <view class="goal-copy">
-            <text class="goal-label">{{ t("我的学习目标") }}</text>
-            <template v-if="userStore.isBrowseMode">
-              <text class="goal-caption">{{ t("随便看看，按自己的节奏开始") }}</text>
-              <text class="browse-note">{{ t("先探索感兴趣的内容，再慢慢确定目标") }}</text>
-            </template>
-            <template v-else-if="goalTargets.length === 1">
-              <text class="goal-caption">{{ goalTargets[0].date ? t('距 {exam} 目标考试', { exam: goalTargets[0].label }) : t('为 {exam} 设定学习目标', { exam: goalTargets[0].label }) }}</text>
-              <view v-if="goalTargets[0].date" class="countdown"><text class="countdown-value app-number">{{ goalTargets[0].days }}</text><text class="countdown-unit">{{ t("天") }}</text></view>
-              <button v-else class="target-link app-text-link" @click="goProfile">{{ t("设置考试日期") }} <t-icon name="chevron-right" size="24rpx" /></button>
-              <text v-if="goalTargets[0].date" class="goal-date">{{ t("目标日期") }} {{ goalTargets[0].date }}</text>
-            </template>
-            <template v-else>
-              <text class="goal-caption">{{ t("同时备考，两份目标一起前进") }}</text>
-              <view class="goal-targets">
-                <button v-for="target in goalTargets" :key="target.exam" class="goal-target" @click="goProfile">
-                  <view><text class="goal-target-label">{{ target.label }}</text><text class="goal-date">{{ target.date || t("设置考试日期") }}</text></view>
-                  <view v-if="target.date" class="goal-target-countdown"><text class="app-number">{{ target.days }}</text><text>{{ t("天") }}</text></view>
-                  <t-icon v-else name="chevron-right" size="24rpx" />
-                </button>
-              </view>
-            </template>
-          </view>
-          <view class="calendar-art" aria-hidden="true">
-            <view class="calendar-binding"><view></view><view></view></view>
-            <view class="calendar-grid"><view v-for="day in 9" :key="day" :class="{ 'calendar-day--active': day === 5 }"></view></view>
-            <view class="calendar-check"><t-icon name="check" size="28rpx" color="#fffaf3" /></view>
+    <view class="app-section check-in-section">
+      <view class="check-in-card app-card app-card-pad">
+        <view class="check-in-heading">
+          <text class="check-in-streak">{{ t('连续学习 {n} 天', { n: streakDays }) }}</text>
+          <button class="check-in-button" :class="{ 'check-in-button--done': checkedIn }"
+            :disabled="checkInState.loading.value || checkedIn" @click="handleCheckIn">
+            <t-icon :name="checkedIn ? 'check' : 'calendar'" size="32rpx" />
+            <text>{{ checkInState.loading.value ? t('签到中') : checkedIn ? t('已签到') : t('签到') }}</text>
+          </button>
+        </view>
+        <view class="check-in-week">
+          <view v-for="(day, index) in checkInWeek" :key="day.date" class="check-in-day"
+            :class="{ 'check-in-day--done': day.checked, 'check-in-day--today': day.date === checkInToday, 'check-in-day--future': day.date > checkInToday }"
+            :aria-label="day.date + ' · ' + t(day.checked ? '已打卡' : checkInStatus || !userStore.isLogin ? '未打卡' : '签到数据暂不可用')">
+            <text class="check-in-weekday">{{ t(weekdays[index]) }}</text>
+            <view class="check-in-mark"><t-icon v-if="day.checked" name="check" size="30rpx" /><text v-else>{{ Number(day.date.slice(8)) }}</text></view>
           </view>
         </view>
+        <text v-if="checkInState.error.value" class="check-in-error">{{ t('签到失败，请重试') }}</text>
         <t-button theme="primary" block size="large" @click="goPrimaryAction"><view class="primary-action-inner"><text>{{ examStore.hasActiveProgress ? t("继续上次答题") : t("开始今日练习") }}</text><t-icon name="chevron-right" size="28rpx" /></view></t-button>
         <view v-if="examStore.hasActiveProgress" class="resume-progress">
           <text>{{ t('{exam} · 已完成 {done} / {total} 题', { exam: getExamLabel(examStore.config.examType), done: examStore.answeredCount, total: examStore.totalCount }) }}</text>
           <view class="resume-track"><view :style="{ width: examStore.progressPercent + '%' }"></view></view>
         </view>
-        <text v-else class="goal-footer">{{ t("从一组练习开始，慢慢积累进步") }}</text>
       </view>
     </view>
 
@@ -84,14 +68,14 @@
             <text class="recent-score app-number">{{ paper.objectiveCount === 0 ? t("自评") : Math.round(paper.score) + '%' }}</text><t-icon name="chevron-right" size="24rpx" color="#857970" />
           </button>
         </view>
-        <view v-else class="recent-empty"><text>{{ dashboardState.error.value ? t("连接恢复后，可查看最近练习") : t("完成第一组练习，记录每一次进步") }}</text></view>
+        <view v-else class="recent-empty"><text>{{ dashboardState.error.value ? t("连接恢复后，可查看最近练习") : t("暂无练习记录") }}</text></view>
       </view>
     </view>
 
     <view class="app-section">
       <view class="app-card app-card-pad">
         <view class="app-section-head"><text class="app-card-title">{{ t("留学资讯") }}</text><text class="preparing-label">{{ t("筹备中") }}</text></view>
-        <view class="content-empty"><view class="content-icon"><t-icon name="file" size="38rpx" /></view><view><text class="content-title">{{ t("资讯栏目正在准备中") }}</text><text class="content-desc">{{ t("考试动态、申请提醒与学习资料") }}</text></view></view>
+        <view class="content-empty"><view class="content-icon"><t-icon name="file" size="38rpx" /></view><view><text class="content-title">{{ t("资讯栏目正在准备中") }}</text></view></view>
       </view>
     </view>
   </view>
@@ -108,17 +92,16 @@ import { getExamLabel, getPaperTitle } from '@/constants/exam'
 import { useUserStore } from '@/stores/user'
 import { useExamStore } from '@/stores/exam'
 import { useHomePage } from '@/features/home/useHomePage'
+import { beijingDate, emptyCheckInWeek } from '@/features/home/checkInCalendar'
 import { useExamNavigation } from '@/features/exam/useExamNavigation'
-import { navigateProtected } from '@/shared/auth/navigation'
-import type { ExamType } from '@/types/exam'
+import { navigateProtected, requireLogin } from '@/shared/auth/navigation'
 
 usePageI18n('pages/index/index')
 
 const userStore = useUserStore()
 const examStore = useExamStore()
-const { dashboardState, recentPapers, loadDashboard } = useHomePage()
+const { dashboardState, checkInState, recentPapers, loadDashboard, checkIn } = useHomePage()
 const { goPractice } = useExamNavigation()
-const examTabs: ExamType[] = ['HKS', 'CSCA']
 const now = ref(Date.now())
 const timelinePreview = ref(isTimelinePreview())
 const studyLoading = ref(false)
@@ -128,17 +111,22 @@ const greeting = computed(() => {
   const hour = new Date(now.value).getHours()
   return hour < 11 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好'
 })
-function daysRemaining(date: string) {
-  if (!date) return 0
-  const [year, month, day] = date.split('-').map(Number)
-  const today = new Date(now.value)
-  const midnight = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
-  return Math.max(0, Math.ceil((new Date(year, month - 1, day).getTime() - midnight) / 86400000))
+const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+const checkInStatus = computed(() => userStore.isLogin ? checkInState.data.value : null)
+const checkInToday = computed(() => checkInStatus.value?.today || beijingDate(now.value))
+const checkInWeek = computed(() => checkInStatus.value?.week || emptyCheckInWeek(now.value))
+const checkedIn = computed(() => !!checkInStatus.value?.checkedIn)
+const streakDays = computed(() => !userStore.isLogin ? 0 : checkInStatus.value?.streakDays ?? '—')
+
+async function handleCheckIn() {
+  if (checkInState.loading.value || checkedIn.value) return
+  if (!await requireLogin(handleCheckIn)) return
+  const result = await checkIn()
+  if (result) {
+    userStore.userInfo.streakDays = result.streakDays
+    uni.showToast({ title: t('签到成功'), icon: 'success' })
+  }
 }
-const goalTargets = computed(() => examTabs.filter((exam) => userStore.selectedExams.includes(exam)).map((exam) => {
-  const date = dashboard.value?.targetDates[exam] || userStore.userInfo.targetDates[exam] || ''
-  return { exam, label: getExamLabel(exam), date, days: daysRemaining(date) }
-}))
 
 async function loadStudyData() {
   if (timelinePreview.value || studyLoading.value) return
@@ -155,7 +143,6 @@ async function loadStudyData() {
 }
 
 const goExam = () => uni.switchTab({ url: '/pages/exam/index' })
-const goProfile = () => uni.switchTab({ url: '/pages/profile/index' })
 const goWrongBook = () => navigateProtected('/pages/wrongbook/index')
 const goFavorite = () => navigateProtected('/pages/favorite/index')
 const goHistory = () => navigateProtected('/pages/exam/history')
@@ -188,34 +175,24 @@ onShareTimeline(createTimelineShareMessage)
 .home-header { padding: 30rpx 28rpx 0; display: flex; align-items: center; flex-wrap: wrap; gap: 18rpx; }
 .home-greeting { flex: 1; min-width: 300rpx; }
 .greeting-title { display: block; color: var(--app-text); font-size: 36rpx; line-height: 1.4; font-weight: 600; overflow-wrap: anywhere; }
-.greeting-desc { display: block; margin-top: 8rpx; color: var(--app-text-weak); font-size: 24rpx; }
-.goal-section { margin-top: 26rpx; }
-.goal-top { display: flex; align-items: center; justify-content: space-between; gap: 24rpx; min-height: 206rpx; margin-bottom: 24rpx; }
-.goal-copy { flex: 1; min-width: 0; }
-.goal-label { display: block; font-size: 28rpx; font-weight: 600; }
-.goal-caption { display: block; margin-top: 10rpx; color: var(--app-text-weak); font-size: 24rpx; }
-.countdown { display: flex; align-items: baseline; gap: 12rpx; }
-.countdown-value { color: var(--app-primary); font-size: 92rpx; line-height: 1.2; }
-.countdown-unit { color: var(--app-text-weak); font-size: 30rpx; }
-.goal-date { display: block; color: var(--app-text-mute); font-size: 20rpx; }
-.browse-note { display: block; margin-top: 18rpx; color: var(--app-text-mute); font-size: 22rpx; line-height: 1.7; }
-.goal-targets { display: flex; flex-direction: column; gap: 10rpx; margin-top: 14rpx; }
-.goal-target { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; width: 100%; margin: 0; padding: 10rpx 14rpx; background: var(--app-surface-quiet); border-radius: var(--app-radius-sm); color: var(--app-primary); text-align: left; line-height: 1.4; }
-.goal-target-label { display: block; color: var(--app-text); font-size: 23rpx; font-weight: 600; }
-.goal-target-countdown { display: flex; align-items: baseline; gap: 6rpx; flex: none; font-size: 20rpx; }
-.goal-target-countdown .app-number { font-size: 38rpx; }
-.target-link { margin: 16rpx 0 0; padding: 0; background: transparent; text-align: left; min-height: 56rpx; }
-.calendar-art { position: relative; width: 138rpx; height: 126rpx; flex: none; margin-right: 16rpx; border-radius: 18rpx; background: var(--app-primary-soft); border-top: 28rpx solid #ebccb7; }
-.calendar-binding { position: absolute; display: flex; justify-content: space-around; width: 100%; top: -40rpx; }
-.calendar-binding view { width: 9rpx; height: 32rpx; border-radius: 6rpx; background: var(--app-primary); }
-.calendar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8rpx; padding: 18rpx; }
-.calendar-grid view { height: 15rpx; border-radius: 3rpx; background: #e6cbb8; }
-.calendar-grid .calendar-day--active { background: var(--app-primary); }
-.calendar-check { position: absolute; right: -18rpx; bottom: -10rpx; width: 48rpx; height: 48rpx; border: 4rpx solid var(--app-surface); border-radius: 50%; background: var(--app-secondary); display: flex; align-items: center; justify-content: center; }
+.check-in-section { margin-top: 26rpx; }
+.check-in-heading { display: flex; align-items: center; justify-content: space-between; gap: 18rpx; }
+.check-in-streak { flex: 1; min-width: 0; font-size: 34rpx; line-height: 1.4; font-weight: 600; }
+.check-in-button { display: flex; align-items: center; justify-content: center; flex: none; gap: 8rpx; min-width: 140rpx; margin: 0; padding: 18rpx 20rpx; border-radius: var(--app-radius-md); background: var(--app-primary); color: var(--app-surface); font-size: 25rpx; line-height: 1.4; }
+.check-in-button[disabled] { background: var(--app-primary-soft); color: var(--app-primary); }
+.check-in-button--done[disabled] { background: var(--app-secondary-soft); color: var(--app-success); }
+.check-in-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10rpx; margin: 30rpx 0; }
+.check-in-day { display: flex; flex-direction: column; align-items: center; gap: 12rpx; color: var(--app-text-weak); }
+.check-in-weekday { font-size: 21rpx; line-height: 1.5; }
+.check-in-mark { display: flex; align-items: center; justify-content: center; width: 60rpx; height: 60rpx; box-sizing: border-box; border: 2rpx solid transparent; border-radius: 50%; background: var(--app-surface-quiet); font-size: 25rpx; }
+.check-in-day--today .check-in-weekday { color: var(--app-primary); font-weight: 600; }
+.check-in-day--today .check-in-mark { border-color: var(--app-primary); }
+.check-in-day--done .check-in-mark { background: var(--app-secondary-soft); color: var(--app-success); }
+.check-in-day--future .check-in-mark { color: var(--app-text-mute); background: transparent; }
+.check-in-error { display: block; margin: -10rpx 0 20rpx; color: var(--app-danger); font-size: 24rpx; }
 .resume-progress { display: flex; align-items: center; gap: 20rpx; margin-top: 14rpx; color: var(--app-text-weak); font-size: 21rpx; }
 .resume-track { height: 10rpx; flex: 1; border-radius: 999px; background: var(--app-border); overflow: hidden; }
 .resume-track view { height: 100%; background: var(--app-primary); border-radius: 999px; }
-.goal-footer { display: block; margin-top: 14rpx; color: var(--app-text-mute); font-size: 21rpx; text-align: center; }
 .plain-link { display: flex; align-items: center; justify-content: center; margin: -8rpx -8rpx -8rpx 0; padding: 8rpx; min-width: 52rpx; min-height: 52rpx; color: var(--app-text-weak); background: transparent; }
 .metric-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .metric { text-align: center; border-left: 1rpx solid var(--app-border); }
@@ -239,5 +216,4 @@ onShareTimeline(createTimelineShareMessage)
 .content-empty { display: flex; align-items: center; gap: 20rpx; padding: 22rpx; border-radius: var(--app-radius-md); background: var(--app-surface-quiet); }
 .content-icon { color: var(--app-text-mute); flex: none; }
 .content-title { display: block; font-size: 24rpx; }
-.content-desc { display: block; margin-top: 6rpx; color: var(--app-text-mute); font-size: 22rpx; line-height: 1.5; }
 </style>

@@ -18,7 +18,7 @@
       <view class="progress-fill" :style="{ width: progressPercent + '%' }"></view>
     </view>
 
-    <scroll-view class="question-area" scroll-y :scroll-into-view="'q-' + currentIndex">
+    <view class="question-area">
       <view class="question-card app-card app-card-pad" :id="'q-' + currentIndex">
         <c-question-item
           v-if="currentQuestion"
@@ -51,7 +51,7 @@
           </view>
         </view>
       </view>
-    </scroll-view>
+    </view>
 
     <view class="answer-sheet-mask" v-if="showSheet" @click="showSheet = false">
       <view class="answer-sheet" @click.stop>
@@ -94,7 +94,7 @@
 import { showToast } from '@/i18n/ui'
 import { t } from '@/i18n'
 import { usePageI18n } from '@/i18n/page'
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { onShareAppMessage } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
 import { confirmAction } from '@/shared/ui/confirm'
@@ -110,6 +110,14 @@ const {
   commitElapsedTime, moveTo, setDraft, submitSelfReview, isSubmitting,
 } = useAnswerSession()
 const showSheet = ref(false)
+
+watch(currentIndex, async () => {
+  await nextTick()
+  const pages = getCurrentPages()
+  if (pages[pages.length - 1]?.route === 'pages/exam/answer') {
+    uni.pageScrollTo({ scrollTop: 0, duration: 0 })
+  }
+})
 
 const prevQuestion = () => moveTo(currentIndex.value - 1)
 const nextQuestion = () => moveTo(currentIndex.value + 1)
@@ -182,10 +190,8 @@ onShareAppMessage(createAppShareMessage)
 
 <style lang="scss" scoped>
 .page {
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  min-height: 100vh;
+  padding-top: calc(88rpx + env(safe-area-inset-top));
   background: var(--app-bg);
 }
 
@@ -195,8 +201,7 @@ onShareAppMessage(createAppShareMessage)
   justify-content: space-between;
   gap: 12rpx;
   padding: 16rpx 20rpx;
-  margin: calc(88rpx + env(safe-area-inset-top)) 28rpx 0;
-  flex-shrink: 0;
+  margin: 0 28rpx;
 }
 
 .top-action {
@@ -234,10 +239,7 @@ onShareAppMessage(createAppShareMessage)
 }
 
 .question-area {
-  flex: 1;
   padding: 24rpx 28rpx;
-  height: 0;
-  min-height: 0;
 }
 
 .question-card {
@@ -312,7 +314,6 @@ onShareAppMessage(createAppShareMessage)
   gap: 12rpx;
   padding: 16rpx 20rpx calc(28rpx + env(safe-area-inset-bottom));
   margin: 0 28rpx 20rpx;
-  flex-shrink: 0;
 }
 
 .bar-btn {

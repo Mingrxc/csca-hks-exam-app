@@ -68,8 +68,6 @@ export interface PaperStrategyItem {
   key: PaperStrategy
   icon: string
   title: string
-  desc: string
-  shortDesc?: string
 }
 
 export interface HistoryPaper {

@@ -65,11 +65,11 @@ export function useAnswerSession() {
         timeSpent: commitElapsedTime(),
         wrongReason: currentSelectedReason.value || undefined,
       })
-      examStore.markSubmitted(index, response.is_correct)
       if (response.solution) Object.assign(questions.value[index], toQuestion(response.solution), {
         isFavorite: questions.value[index].isFavorite,
         evaluationStatus: response.evaluation_status, selfScore: response.self_score,
       })
+      examStore.markSubmitted(index, response.is_correct)
       examStore.persistProgress()
     } catch {
       if (previousAnswer == null) examStore.clearAnswer(index)

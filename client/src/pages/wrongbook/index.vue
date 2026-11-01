@@ -7,7 +7,6 @@
           <view class="hero-copy">
             <text class="hero-brand">{{ t("错题本") }}</text>
             <text class="hero-title">{{ t("错题复习") }}</text>
-            <text class="hero-subtitle">{{ t("查看解析，重做练习，巩固掌握。") }}</text>
           </view>
           <t-tag theme="default" variant="light" shape="round">{{ isLoading || loadError ? '—' : wrongList.length }}</t-tag>
         </view>
@@ -127,7 +126,7 @@
         </view>
       </view>
 
-      <c-app-state v-if="!isLoading && !loadError && wrongList.length === 0" state="empty" :title="t('这里还没有错题')" :description="t('练习中的错题会收集在这里，方便集中复习。')" icon="book" />
+      <c-app-state v-if="!isLoading && !loadError && wrongList.length === 0" state="empty" :title="t('这里还没有错题')" icon="book" />
     </view>
 
     <view class="footer-actions" v-if="wrongList.length > 0">
@@ -354,14 +353,6 @@ onShareAppMessage(createAppShareMessage)
   line-height: 1.35;
   font-weight: 600;
   color: var(--app-text);
-}
-
-.hero-subtitle {
-  display: block;
-  margin-top: 8rpx;
-  font-size: 24rpx;
-  line-height: 1.6;
-  color: var(--app-text-weak);
 }
 
 .filter-section {

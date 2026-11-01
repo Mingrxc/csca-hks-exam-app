@@ -41,29 +41,21 @@ export const PAPER_STRATEGIES: PaperStrategyItem[] = [
     key: 'random',
     icon: '随机',
     title: '随机练习',
-    desc: '选择题量和难度，开始一组日常练习',
-    shortDesc: '从题库随机抽取题目',
   },
   {
     key: 'knowledge',
     icon: '专项',
     title: '专项训练',
-    desc: '按科目或知识点做针对性训练',
-    shortDesc: '按分类做针对性训练',
   },
   {
     key: 'progressive',
     icon: '递进',
     title: '难度递进',
-    desc: '从易到难，逐步提升',
-    shortDesc: '逐步提升题目难度',
   },
   {
     key: 'real',
     icon: '模拟',
     title: '限时综合练习',
-    desc: '按科目或等级完成限时练习，熟悉答题节奏',
-    shortDesc: '限时练习，熟悉答题节奏',
   },
 ]
 
