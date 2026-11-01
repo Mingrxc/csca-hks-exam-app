@@ -12,26 +12,22 @@ from src.config.settings import settings
 
 
 def get_current_openid(authorization: Optional[str] = Header(default=None)) -> str:
-    if authorization and authorization.startswith("Bearer "):
-        return decode_token(authorization[7:])
-    if settings.AUTH_ALLOW_DEV_OPENID:
-        return settings.DEV_OPENID
-    raise HTTPException(status_code=401, detail="Missing bearer token")
+    return get_authenticated_openid(authorization)
 
 
 def get_current_user_id(
     db: Session = Depends(get_db),
     authorization: Optional[str] = Header(default=None),
 ) -> int:
-    from src.modules.user.service import get_or_create_user_by_openid
+    from src.modules.user.service import get_user_by_openid
 
     openid = get_current_openid(authorization)
-    user = get_or_create_user_by_openid(db, openid)
+    user = get_user_by_openid(db, openid)
     return user.id
 
 
 def get_authenticated_openid(authorization: Optional[str] = Header(default=None)) -> str:
-    """Private feedback and administration never use the anonymous dev fallback."""
+    """Protected routes require an explicit login token, including in development."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="请先登录")
     return decode_token(authorization[7:])

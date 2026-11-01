@@ -95,6 +95,7 @@ export interface ApiHistoryPaper {
 export interface ApiUser {
   total_objective?: number
   id: number
+  user_code: string
   nickname: string
   avatar_url?: string
   target_exam: 'CSCA' | 'HKS'
@@ -296,9 +297,11 @@ export function toDashboardData(item: ApiDashboard): DashboardData {
 
 export function toUserProfile(item: ApiUser): UserProfile {
   return {
+    id: item.id,
+    userCode: item.user_code,
     objectiveCount: item.total_objective,
     nickname: item.nickname,
-    avatarUrl: item.avatar_url || '',
+    avatarUrl: resolveMediaUrl(item.avatar_url) || '',
     targetExam: item.target_exam,
     targetDate: item.target_date || '',
     targetDates: normalizeTargetDates(item.target_dates, item.target_exam, item.target_date),

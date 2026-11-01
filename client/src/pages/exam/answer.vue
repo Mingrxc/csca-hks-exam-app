@@ -1,4 +1,5 @@
 <template>
+  <c-auth-frame>
   <view class="page app-page">
     <view class="top-bar app-card">
       <t-button class="top-action" theme="default" variant="text" size="small" shape="round" @click="confirmExit">
@@ -86,6 +87,7 @@
       <t-button v-else class="bar-btn" theme="primary" shape="round" @click="submitExam()">{{ t("交卷") }}</t-button>
     </view>
   </view>
+  </c-auth-frame>
 </template>
 
 <script setup lang="ts">
@@ -97,6 +99,7 @@ import { onShareAppMessage } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
 import { confirmAction } from '@/shared/ui/confirm'
 import { useAnswerSession } from '@/features/exam/useAnswerSession'
+import { useUserStore } from '@/stores/user'
 
 usePageI18n('pages/exam/answer')
 
@@ -161,7 +164,7 @@ const submitExam = async (forced = false) => {
   if (confirmed) completeExam()
 }
 
-if (!examStore.paperId || questions.value.length === 0) {
+if (useUserStore().isLogin && (!examStore.paperId || questions.value.length === 0)) {
   showToast({ title: '请先完成组卷', icon: 'none' })
   setTimeout(() => uni.navigateBack(), 300)
 }

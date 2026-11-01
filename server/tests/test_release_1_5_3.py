@@ -25,7 +25,7 @@ def test_ai_endpoint_is_unavailable_and_other_routes_remain_registered(client):
     assert "/api/v1/exam/submit" in paths
     assert "/api/v1/content/announcements" in paths
     assert client.post("/api/v1/ai/chat", json={"messages": [{"role": "user", "content": "test"}]}).status_code == 404
-    assert client.get("/api/v1/health").json()["version"] == "1.5.3"
+    assert client.get("/api/v1/health").json()["version"] == "1.5.4"
 
 
 def test_approved_announcement_is_public_once_and_keeps_previous_release(db_session):

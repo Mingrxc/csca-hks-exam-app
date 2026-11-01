@@ -44,12 +44,12 @@
         <view class="app-section-head"><text class="app-card-title">{{ t("今天的积累") }}</text></view>
         <c-app-state v-if="studyLoading || loading" compact state="loading" :title="t('正在整理学习数据')" />
         <c-app-state v-else-if="error" compact state="error" :title="t('学习数据加载失败')" :description="error" @retry="loadStudyData" />
-        <view v-else-if="loaded" class="metric-row">
+        <view v-else-if="userStore.isLogin && loaded" class="metric-row">
           <view class="metric"><text class="app-number">{{ dashboard.todayStats.questionCount }}</text><text class="metric-label">{{ t("完成题数") }}</text></view>
           <view class="metric metric--sage"><text class="app-number">{{ dashboard.todayStats.objectiveCount === 0 ? '—' : dashboard.todayStats.correctRate + '%' }}</text><text class="metric-label">{{ t("正确率") }}</text></view>
           <view class="metric"><text class="app-number">{{ dashboard.pendingWrongCount }}</text><text class="metric-label">{{ t("待复习") }}</text></view>
         </view>
-        <c-app-state v-else compact state="empty" :title="t('学习数据尚未加载')" />
+        <c-app-state v-else compact state="empty" :title="t(userStore.isLogin ? '学习数据尚未加载' : '登录后查看学习数据')" />
       </view>
     </view>
   </view>
@@ -67,6 +67,7 @@ import { useUserStore } from '@/stores/user'
 import { useExamStore } from '@/stores/exam'
 import { useExamDashboard } from '@/features/exam/useExamDashboard'
 import { useExamNavigation } from '@/features/exam/useExamNavigation'
+import { navigateProtected } from '@/shared/auth/navigation'
 
 usePageI18n('pages/exam/index')
 
@@ -82,20 +83,19 @@ const strategyCards: Array<{ key: PaperStrategy; icon: string; title: string; de
   { key: 'knowledge', icon: 'book', title: '专项训练', desc: '集中巩固科目与知识点', sage: true },
   { key: 'progressive', icon: 'chart-bar', title: '难度递进', desc: '从易到难，逐步提升', sage: false },
 ]
-const goResume = () => uni.navigateTo({ url: '/pages/exam/answer' })
+const goResume = () => navigateProtected('/pages/exam/answer')
 const tools = [
-  { title: '错题复习', desc: '回看解析，找到容易错的地方', icon: 'book', open: () => uni.navigateTo({ url: '/pages/wrongbook/index' }) },
-  { title: '我的收藏', desc: '留住值得反复看的题目', icon: 'star', open: () => uni.navigateTo({ url: '/pages/favorite/index' }) },
-  { title: '练习记录', desc: '查看每一次练习的表现', icon: 'time', open: () => uni.navigateTo({ url: '/pages/exam/history' }) },
+  { title: '错题复习', desc: '回看解析，找到容易错的地方', icon: 'book', open: () => navigateProtected('/pages/wrongbook/index') },
+  { title: '我的收藏', desc: '留住值得反复看的题目', icon: 'star', open: () => navigateProtected('/pages/favorite/index') },
+  { title: '练习记录', desc: '查看每一次练习的表现', icon: 'time', open: () => navigateProtected('/pages/exam/history') },
   { title: '错题重做', desc: '把理解变成真正的掌握', icon: 'refresh', open: goWrongRedo },
 ]
 
 const loadStudyData = async () => {
   if (studyLoading.value) return
   studyLoading.value = true
-  if (!userStore.isLogin) {
-    try { await userStore.login() } catch {}
-  }
+  await userStore.restoreSession()
+  if (!userStore.isLogin) { loaded.value = false; studyLoading.value = false; return }
   await loadDashboard()
   loaded.value = !error.value
   studyLoading.value = false

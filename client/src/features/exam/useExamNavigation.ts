@@ -3,6 +3,7 @@ import { t } from '@/i18n'
 import { getExamLabel } from '@/constants/exam'
 import { useUserStore } from '@/stores/user'
 import type { ExamType, PaperStrategy } from '@/types/exam'
+import { requireLogin } from '@/shared/auth/navigation'
 
 export function useExamNavigation() {
   const userStore = useUserStore()
@@ -24,12 +25,18 @@ export function useExamNavigation() {
     })
   }
 
-  const goPractice = (strategy: PaperStrategy) => chooseExam('练习', (exam) => {
-    uni.navigateTo({ url: `/pages/exam/paper?strategy=${strategy}&examType=${exam}` })
-  })
-  const goWrongRedo = () => chooseExam('错题重做', (exam) => {
-    uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${exam}` })
-  })
+  const goPractice = async (strategy: PaperStrategy) => {
+    if (!await requireLogin(() => goPractice(strategy))) return
+    chooseExam('练习', (exam) => {
+      uni.navigateTo({ url: `/pages/exam/paper?strategy=${strategy}&examType=${exam}` })
+    })
+  }
+  const goWrongRedo = async () => {
+    if (!await requireLogin(goWrongRedo)) return
+    chooseExam('错题重做', (exam) => {
+      uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${exam}` })
+    })
+  }
 
   return { goPractice, goWrongRedo }
 }

@@ -1,4 +1,5 @@
 <template>
+  <c-auth-frame>
   <view class="page app-page">
     <view class="top-bar app-card">
       <t-button class="top-action" theme="default" variant="text" size="small" shape="round" @click="confirmExit">
@@ -51,6 +52,7 @@
       </t-button>
     </view>
   </view>
+  </c-auth-frame>
 </template>
 
 <script setup lang="ts">

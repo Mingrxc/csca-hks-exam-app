@@ -1,6 +1,6 @@
 """用户模块 Pydantic 模型"""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import date, datetime
 from typing import Literal, Optional
 
@@ -13,6 +13,7 @@ class UserCreate(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
+    user_code: str
     nickname: str
     avatar_url: Optional[str]
     target_exam: Optional[str]
@@ -28,7 +29,9 @@ class UserResponse(BaseModel):
 
 
 class WxLoginRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     code: str = Field(min_length=1, max_length=256)
+    nickname: Optional[str] = Field(default=None, min_length=1, max_length=64)
 
 
 class WxLoginResponse(BaseModel):
@@ -38,7 +41,8 @@ class WxLoginResponse(BaseModel):
 
 
 class UserProfileUpdate(BaseModel):
-    nickname: Optional[str] = None
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    nickname: Optional[str] = Field(default=None, min_length=1, max_length=64)
     avatar_url: Optional[str] = None
     target_exam: Optional[Literal["CSCA", "HKS"]] = None
     target_date: Optional[date] = None

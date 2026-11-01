@@ -3,6 +3,7 @@ import { onShow } from '@dcloudio/uni-app'
 import { language, t } from './index'
 
 const pageTitles: Record<string, string> = {
+  'pages/login/index': '登录',
   'pages/index/index': '老外1点通',
   'pages/exam/index': '刷题',
   'pages/exam/paper': '组卷',

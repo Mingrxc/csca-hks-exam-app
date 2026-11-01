@@ -1,4 +1,4 @@
-import { request } from '@/api/client'
+import { request, upload } from '@/api/client'
 import type { ApiDashboard, ApiUser } from '@/api/contracts'
 
 export interface LoginResult {
@@ -8,11 +8,12 @@ export interface LoginResult {
 }
 
 export const userApi = {
-  wxLogin: (code: string) => request<LoginResult>({
-    url: '/user/wx-login', method: 'POST', data: { code }, requireAuth: false,
+  wxLogin: (code: string, nickname?: string) => request<LoginResult>({
+    url: '/user/wx-login', method: 'POST', data: { code, ...(nickname ? { nickname } : {}) }, requireAuth: false,
   }),
-  getDashboard: () => request<ApiDashboard>({ url: '/user/dashboard' }),
-  getUserInfo: () => request<ApiUser>({ url: '/user/info' }),
+  getDashboard: () => request<ApiDashboard>({ url: '/user/dashboard', authPrompt: false, showLoading: false }),
+  getUserInfo: () => request<ApiUser>({ url: '/user/info', authPrompt: false, showLoading: false }),
+  uploadAvatar: (filePath: string) => upload<ApiUser>('/user/avatar', filePath),
   updateProfile: (data: Record<string, unknown>) =>
     request<ApiUser>({ url: '/user/profile', method: 'PUT', data }),
 }

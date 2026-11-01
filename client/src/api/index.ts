@@ -1,4 +1,4 @@
-export { ApiRequestError, ensureLogin } from './client'
+export { ApiRequestError } from './client'
 export { userApi } from '@/features/user/api'
 export { contentApi } from '@/features/content/api'
 export { questionApi, examApi } from '@/features/exam/api'

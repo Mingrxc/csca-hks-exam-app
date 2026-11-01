@@ -58,16 +58,17 @@ test('switching updates native navigation and all tabs; a cached page cannot ove
 
 test('language changes preserve the active practice, Chinese material and answer snapshot', () => {
   const env = environment()
+  env.load('shared/auth/session').establishSession('test-token', 7)
   const store = env.load('stores/exam.ts').useExamStore(pinia.createPinia())
   store.setPaper(12, [{ id: 3, examType: 'HKS', type: 'single', difficulty: 'easy', stem: '今天星期几？', options: [{ key: 'A', text: '星期一' }], answer: 'A', analysis: '原始中文解析', transcript: '原始听力内容' }])
   store.start()
   store.setAnswer(0, 'A')
   store.persistProgress()
-  const snapshot = JSON.stringify(env.storage.get('exam_active_progress_v2'))
+  const snapshot = JSON.stringify(env.storage.get('exam_active_progress_v3_7'))
   const state = JSON.stringify(store.$state)
   env.i18n.setLanguage('en')
   assert.equal(JSON.stringify(store.$state), state)
-  assert.equal(JSON.stringify(env.storage.get('exam_active_progress_v2')), snapshot)
+  assert.equal(JSON.stringify(env.storage.get('exam_active_progress_v3_7')), snapshot)
   assert.equal(store.currentQuestion.analysis, '原始中文解析')
 })
 

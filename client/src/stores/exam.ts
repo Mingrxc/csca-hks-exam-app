@@ -1,14 +1,16 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { activeUserId } from '@/shared/auth/session'
 import type { ExamConfig, Question } from '@/types/exam'
 
 export type { ExamConfig, Question } from '@/types/exam'
 
-const PROGRESS_STORAGE_KEY = 'exam_active_progress_v2'
+const PROGRESS_STORAGE_KEY = 'exam_active_progress_v3_'
 const PROGRESS_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
 interface ExamProgressSnapshot {
-  version: 2
+  version: 3
+  ownerId: number
   savedAt: number
   config: ExamConfig
   paperId: number
@@ -25,7 +27,8 @@ interface ExamProgressSnapshot {
 function isProgressSnapshot(value: unknown): value is ExamProgressSnapshot {
   if (!value || typeof value !== 'object') return false
   const snapshot = value as Partial<ExamProgressSnapshot>
-  return snapshot.version === 2
+  return snapshot.version === 3
+    && typeof snapshot.ownerId === 'number'
     && typeof snapshot.savedAt === 'number'
     && Date.now() - snapshot.savedAt <= PROGRESS_MAX_AGE_MS
     && typeof snapshot.paperId === 'number'
@@ -35,6 +38,8 @@ function isProgressSnapshot(value: unknown): value is ExamProgressSnapshot {
 }
 
 export const useExamStore = defineStore('exam', () => {
+  let boundUserId = 0
+  const storageKey = () => PROGRESS_STORAGE_KEY + boundUserId
   const config = ref<ExamConfig>({
     examType: 'CSCA',
     questionCount: 20,
@@ -148,9 +153,11 @@ export const useExamStore = defineStore('exam', () => {
   }
 
   function persistProgress() {
+    if (!boundUserId) return
     if (!paperId.value || !questions.value.length || !startTime.value || endTime.value) return
     const snapshot: ExamProgressSnapshot = {
-      version: 2,
+      version: 3,
+      ownerId: boundUserId,
       savedAt: Date.now(),
       config: { ...config.value, knowledgePoints: [...config.value.knowledgePoints] },
       paperId: paperId.value,
@@ -164,7 +171,7 @@ export const useExamStore = defineStore('exam', () => {
       startTime: startTime.value,
     }
     try {
-      uni.setStorageSync(PROGRESS_STORAGE_KEY, snapshot)
+      uni.setStorageSync(storageKey(), snapshot)
     } catch (error) {
       console.warn('[exam progress] local persistence unavailable', error)
     }
@@ -172,21 +179,22 @@ export const useExamStore = defineStore('exam', () => {
 
   function clearPersistedProgress() {
     try {
-      uni.removeStorageSync(PROGRESS_STORAGE_KEY)
+      if (boundUserId) uni.removeStorageSync(storageKey())
     } catch (error) {
       console.warn('[exam progress] local cleanup unavailable', error)
     }
   }
 
   function hydrateProgress() {
+    if (!boundUserId) return false
     let stored: unknown
     try {
-      stored = uni.getStorageSync(PROGRESS_STORAGE_KEY)
+      stored = uni.getStorageSync(storageKey())
     } catch (error) {
       console.warn('[exam progress] local recovery unavailable', error)
       return false
     }
-    if (!isProgressSnapshot(stored)) {
+    if (!isProgressSnapshot(stored) || stored.ownerId !== boundUserId) {
       clearPersistedProgress()
       return false
     }
@@ -209,7 +217,7 @@ export const useExamStore = defineStore('exam', () => {
     restoredFromStorage.value = false
   }
 
-  function reset() {
+  function reset(clearStorage = true) {
     config.value = {
       examType: 'CSCA', questionCount: 20, difficulty: 'all',
       strategy: 'random', knowledgePoints: [], mode: 'practice', timeLimit: 60,
@@ -224,10 +232,16 @@ export const useExamStore = defineStore('exam', () => {
     elapsedByQuestion.value = {}
     startTime.value = 0
     endTime.value = 0
-    clearPersistedProgress()
+    restoredFromStorage.value = false
+    if (clearStorage) clearPersistedProgress()
   }
 
-  hydrateProgress()
+  watch(activeUserId, userId => {
+    persistProgress()
+    reset(false)
+    boundUserId = userId
+    hydrateProgress()
+  }, { immediate: true, flush: 'sync' })
 
   return {
     config, paperId, questions, currentIndex, answers, submitted, answerCorrectness, wrongReasons, elapsedByQuestion,

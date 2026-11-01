@@ -86,3 +86,7 @@ Stable source question_id maps to unique questions.bank_id. Corrections update t
 ## AI withdrawal (1.5.3)
 
 The API aggregator no longer imports or mounts the AI router. `/api/v1/ai/chat` returns404 and AI contracts are absent from OpenAPI; the implementation under `modules/ai` and its configuration remain available for a future restoration. No other business route or authentication rule changes. Migration0010 adds only the approved1.5.3 announcement, preserving existing data and editorial records. See [release-1.5.3.md](release-1.5.3.md).
+
+## Login strategy (1.5.4)
+
+Protected routes always require a JWT and an existing user; anonymous development fallback is no longer accepted by dependencies. Only explicit wx-login creates users, preserving the OpenID identity and existing learning records. Migration0011 adds permanent unique public user_code values and a transactional counter without changing integer primary keys. lw000 remains reserved and unassigned. Avatar uploads are authenticated, validated and re-encoded using existing Pillow, then stored outside the checkout. See release-1.5.4.md.

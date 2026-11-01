@@ -1,4 +1,5 @@
 <template>
+  <c-auth-frame>
   <view class="page app-shell" v-if="question">
     <view class="app-section">
       <view class="question-section app-card app-card-pad">
@@ -82,6 +83,7 @@
       <c-app-state v-else state="error" :title="t('错题详情暂时无法加载')" :description="loadError" @retry="loadDetail(detailId, detailQuestionId)" />
     </view>
   </view>
+  </c-auth-frame>
 </template>
 
 <script setup lang="ts">

@@ -1,8 +1,14 @@
 """User module SQLAlchemy models."""
-from sqlalchemy import Column, Date, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint
+from sqlalchemy import Column, Date, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint, event
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.sql import func
 from src.config.database import Base
+
+
+class UserCodeCounter(Base):
+    __tablename__ = "user_code_counters"
+    id = Column(Integer, primary_key=True)
+    next_value = Column(Integer, nullable=False, default=1)
 
 
 class User(Base):
@@ -10,13 +16,15 @@ class User(Base):
     __table_args__ = (
         Index("idx_users_openid", "openid"),
         Index("idx_users_created", "created_at"),
+        Index("uk_users_user_code", "user_code", unique=True),
         {"comment": "Application users"},
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment="User ID")
+    user_code = Column(String(32), nullable=False, comment="Permanent public user number; lw000 is reserved")
     openid = Column(String(64), nullable=False, unique=True, comment="WeChat OpenID")
     unionid = Column(String(64), nullable=True, comment="WeChat UnionID for cross-app identity")
-    nickname = Column(String(64), default="考霸同学", comment="Display name")
+    nickname = Column(String(64), default="留学同学", comment="Display name")
     avatar_url = Column(String(512), nullable=True, comment="Avatar URL")
     target_exam = Column(SAEnum("CSCA", "HKS"), default="CSCA", comment="Primary target exam")
     target_date = Column(Date, nullable=True, comment="Primary target exam date")
@@ -32,6 +40,13 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(id={self.id}, nickname={self.nickname})>"
+
+
+@event.listens_for(User, "before_insert")
+def assign_public_user_code(mapper, connection, user):
+    if user.user_code is None:
+        from src.modules.user.codes import allocate_user_code
+        user.user_code = allocate_user_code(connection)
 
 
 class UserExamTarget(Base):

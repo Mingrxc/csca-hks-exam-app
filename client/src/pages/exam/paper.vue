@@ -1,4 +1,5 @@
 <template>
+  <c-auth-frame>
   <view class="page app-shell">
     <view class="app-section"><view class="hero app-card app-card-pad">
       <text class="hero-brand">{{ t("组卷中心") }}</text><text class="hero-title">{{ t(currentStrategy.title) }}</text>
@@ -33,6 +34,7 @@
     </view>
     <view class="footer"><view class="summary"><text>{{ getExamLabel(form.examType) }} {{ form.level ? levelLabel(form.level) : '' }} · {{ t(form.subject || "综合练习") }}</text></view><t-button theme="primary" block size="large" shape="round" :loading="isGenerating" :disabled="catalogLoading || !!catalogError" @click="startExam">{{ t("开始练习") }}</t-button></view>
   </view>
+  </c-auth-frame>
 </template>
 <script setup lang="ts">
 import { showToast } from '@/i18n/ui'

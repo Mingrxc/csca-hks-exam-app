@@ -1,12 +1,14 @@
 # 数据库
 
-更新：2026-10-25。MySQL8.4，源码最新迁移0008_feedback_announcements，复用现有Conda deng环境。本轮1.5.1未在现有MySQL或正式库执行迁移。
+更新：2026-10-30。MySQL8.4，源码最新迁移0011_login_strategy，复用现有Conda deng环境。本轮1.5.4未在现有MySQL或正式库执行迁移。
 
-目标11张业务表：users、user_exam_targets、streak_records、questions、papers、answer_records、wrong_book、knowledge_stats、favorites、content_items、feedback；Alembic另维护版本表。
+目标11张业务表及1张发号计数表：user_code_counters、users、user_exam_targets、streak_records、questions、papers、answer_records、wrong_book、knowledge_stats、favorites、content_items、feedback；Alembic另维护版本表。
 
 0007保存稳定bank_id、完整原题、材料与作答/评分方式，答案和作答为TEXT，开放题通过is_correct空值及self_score单独管理。0008新增私密反馈表和版本公告字段，不更改题库与学习记录，并准备一份未公开的1.5.1公告草稿。
 
-## 1.5.1增量升级
+## 1.5.4增量升级
+
+0011新增users.user_code（唯一非空）与user_code_counters，回填原用户编号并添加已定稿1.5.4公告。用户主键/外键和学习记录保留，lw000暂未绑定。永久编号不提供删字段downgrade，应用回退保留结构。参见docs/release-1.5.4.md。
 
 先核对目标环境并按现有流程备份，再从server目录使用既有Python环境执行：
 

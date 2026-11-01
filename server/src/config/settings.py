@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     # WeChat Mini Program
     WX_APPID: str = ""
     WX_SECRET: str = ""
+    USER_AVATAR_ROOT: str = str(Path(__file__).resolve().parents[4] / "user_uploads" / "avatars")
 
     # AI
     QWEN_API_KEY: str = ""

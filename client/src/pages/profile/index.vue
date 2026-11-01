@@ -2,11 +2,22 @@
   <view class="page app-shell">
     <view class="app-section">
       <view class="profile-card app-card app-card-pad">
-        <view class="profile-top">
-          <t-avatar v-if="userInfo.avatarUrl" class="profile-avatar" :image="userInfo.avatarUrl" size="112rpx" shape="circle" />
-          <view v-else class="profile-avatar-fallback">{{ userInfo.nickname.slice(0, 1) }}</view>
+        <view class="profile-top" @tap="loginFromProfile">
+          <t-avatar v-if="userStore.isLogin && userInfo.avatarUrl" class="profile-avatar" :image="userInfo.avatarUrl" size="112rpx" shape="circle" />
+          <view v-else class="profile-avatar-fallback"><t-icon name="user-circle" size="64rpx" /></view>
           <view class="profile-copy">
-            <text class="profile-name">{{ userInfo.nickname }}</text>
+            <view class="profile-name-row">
+              <input v-if="editingNickname" class="profile-name-input" type="nickname" :value="nicknameDraft"
+                :focus="nicknameFocused" :disabled="savingNickname" maxlength="64" confirm-type="done"
+                :placeholder="t('输入昵称，或选择微信昵称')" :aria-label="t('昵称')"
+                @input="onNicknameInput" @blur="onNicknameBlur" @confirm="confirmNickname" @nicknamereview="reviewNickname" />
+              <text v-else class="profile-name">{{ userStore.isLogin ? userInfo.nickname : t('未登录') }}</text>
+              <text v-if="userStore.isLogin" class="profile-code" @tap.stop="copyUserCode">{{ userInfo.userCode }}</text>
+            </view>
+            <text v-if="editingNickname" class="nickname-hint" :class="{ 'nickname-hint-error': nicknameError }">
+              {{ nicknameError || t('在这里修改昵称，也可选用微信昵称') }}
+            </text>
+            <text v-if="!userStore.isLogin" class="login-link">{{ t('点击登录') }}</text>
             <view class="profile-meta">
               <t-tag
                 v-for="item in selectedExamLabels"
@@ -28,13 +39,23 @@
           </view>
         </view>
 
-        <view class="profile-actions">
+        <view v-if="userStore.isLogin" class="profile-actions">
+          <template v-if="editingNickname">
+            <t-button class="profile-action" theme="default" variant="outline" size="small" shape="round" :disabled="savingNickname" @click="cancelNicknameEdit">
+              {{ t('取消') }}
+            </t-button>
+            <t-button class="profile-action" theme="primary" size="small" shape="round" :loading="savingNickname" :disabled="!canSaveNickname" @click="saveNickname">
+              {{ t('保存昵称') }}
+            </t-button>
+          </template>
+          <template v-else>
           <t-button class="profile-action" theme="primary" variant="outline" size="small" shape="round" open-type="chooseAvatar" @chooseavatar="chooseAvatar">
             {{ t("更换头像") }}
           </t-button>
           <t-button class="profile-action" theme="default" variant="outline" size="small" shape="round" @click="editNickname">
             {{ t("修改昵称") }}
           </t-button>
+          </template>
         </view>
       </view>
     </view>
@@ -81,7 +102,7 @@
           <view class="mode-chip" :class="{ active: targetDraftExams.includes('HKS') }" @click="toggleDraftExam('HKS')">HSK</view>
         </view>
 
-        <view v-if="targetDraftExams.length > 0" class="target-dates">
+        <view v-if="userStore.isLogin && targetDraftExams.length > 0" class="target-dates">
           <view v-for="exam in targetDraftExams" :key="exam" class="target-date-row">
             <text class="target-date-label">{{ t('{exam} 考试日期', { exam: getExamLabel(exam) }) }}</text>
             <picker mode="date" :value="targetDraftDates[exam]" :start="today" @change="selectTargetDate(exam, $event)">
@@ -118,7 +139,7 @@
           </view>
           <text class="app-card-title">{{ t("关于") }}</text>
         </view>
-        <view class="menu-card app-card danger" @click="handleLogout">
+        <view v-if="userStore.isLogin" class="menu-card app-card danger" @click="handleLogout">
           <view class="menu-head">
             <view class="app-icon-badge"><t-icon name="poweroff" size="28rpx" /></view>
           </view>
@@ -131,32 +152,24 @@
 
 <script setup lang="ts">
 import { showToast, showModal } from '@/i18n/ui'
-import { t, language, setLanguage } from '@/i18n'
+import { errorText, t, language, setLanguage } from '@/i18n'
 import { usePageI18n } from '@/i18n/page'
 import { getExamLabel } from '@/constants/exam'
-import { computed, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { activeUserId, sessionGeneration } from '@/shared/auth/session'
+import { openLogin, navigateProtected, requireLogin } from '@/shared/auth/navigation'
 import { onShareAppMessage, onShow } from '@dcloudio/uni-app'
 import { createAppShareMessage } from '@/constants/share'
 import { userApi } from '@/features/user/api'
-import { toDashboardData, toUserProfile } from '@/api/contracts'
+import { toDashboardData } from '@/api/contracts'
 import { useUserStore } from '@/stores/user'
-import type { DashboardData, UserProfile } from '@/types/user'
+import type { DashboardData } from '@/types/user'
 import type { ExamType } from '@/types/exam'
 
 usePageI18n('pages/profile/index')
 
 const userStore = useUserStore()
-const userInfo = ref<UserProfile>({
-  nickname: '留学同学',
-  avatarUrl: '',
-  targetExam: 'CSCA',
-  targetDate: '',
-  targetDates: {},
-  totalQuestions: 0,
-  correctRate: 0,
-  streakDays: 0,
-  favoriteCount: 0,
-})
+const userInfo = computed(() => userStore.userInfo)
 const dashboard = reactive<DashboardData>({
   userName: '留学同学',
   targetExam: 'CSCA',
@@ -175,6 +188,15 @@ const dashboardLoaded = ref(false)
 const targetDraftExams = ref<ExamType[]>([...userStore.selectedExams])
 const targetDraftDates = reactive<Record<ExamType, string>>({ CSCA: '', HKS: '' })
 const savingTarget = ref(false)
+const editingNickname = ref(false)
+const nicknameDraft = ref('')
+const nicknameFocused = ref(false)
+const nicknameAllowed = ref(true)
+const savingNickname = ref(false)
+const nicknameError = ref('')
+const canSaveNickname = computed(() => userStore.isLogin && editingNickname.value && !savingNickname.value
+  && nicknameAllowed.value && !!nicknameDraft.value.trim() && nicknameDraft.value.trim().length <= 64)
+let profileRevision = 0
 const now = new Date()
 const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
@@ -187,14 +209,16 @@ const selectedExamLabels = computed(() =>
 )
 
 const loadProfile = async () => {
+  const revision = profileRevision
   try {
-    userInfo.value = toUserProfile(await userApi.getUserInfo())
+    const profile = await userApi.getUserInfo()
+    if (revision === profileRevision) userStore.applyProfile(profile)
     profileLoaded.value = true
     targetDraftDates.CSCA = userInfo.value.targetDates.CSCA || ''
     targetDraftDates.HKS = userInfo.value.targetDates.HKS || ''
     targetDraftExams.value = [...userStore.selectedExams]
   } catch {
-    loadError.value = true
+    if (userStore.isLogin) loadError.value = true
   }
 }
 
@@ -203,7 +227,7 @@ const loadDashboard = async () => {
     Object.assign(dashboard, toDashboardData(await userApi.getDashboard()))
     dashboardLoaded.value = true
   } catch {
-    loadError.value = true
+    if (userStore.isLogin) loadError.value = true
   }
 }
 
@@ -211,7 +235,8 @@ const loadAll = async () => {
   if (isLoading.value) return
   isLoading.value = true
   loadError.value = false
-  await Promise.all([loadProfile(), loadDashboard()])
+  await userStore.restoreSession()
+  if (userStore.isLogin) await Promise.all([loadProfile(), loadDashboard()])
   isLoading.value = false
 }
 
@@ -241,6 +266,7 @@ const setBrowseMode = () => {
 }
 
 const saveTarget = async () => {
+  if (!await requireLogin()) return
   const missingExam = targetDraftExams.value.find((exam) => !targetDraftDates[exam])
   if (missingExam) {
     showToast({ title: t('请选择 {exam} 考试日期', { exam: getExamLabel(missingExam) }), icon: 'none' })
@@ -259,7 +285,8 @@ const saveTarget = async () => {
       target_dates: targetDates,
     }
     const updated = await userApi.updateProfile(payload)
-    userInfo.value = toUserProfile(updated)
+    profileRevision++
+    userStore.applyProfile(updated)
     targetDraftDates.CSCA = userInfo.value.targetDates.CSCA || ''
     targetDraftDates.HKS = userInfo.value.targetDates.HKS || ''
     dashboard.targetExam = updated.target_exam
@@ -276,45 +303,81 @@ const chooseAvatar = async (event: any) => {
   const avatarUrl = event.detail?.avatarUrl
   if (!avatarUrl) return
   try {
-    const updated = await userApi.updateProfile({ avatar_url: avatarUrl })
-    userInfo.value = toUserProfile(updated)
+    const updated = await userApi.uploadAvatar(avatarUrl)
+    profileRevision++
+    userStore.applyProfile(updated)
     showToast({ title: '头像已更新', icon: 'success' })
-  } catch {}
+  } catch (error: any) { showToast({ title: error?.message || '头像上传失败，请重试', icon: 'none' }) }
 }
 
-const editNickname = () => {
-  showModal({
-    title: '修改昵称',
-    editable: true,
-    placeholderText: '输入昵称',
-    content: userInfo.value.nickname,
-    success: async (result: any) => {
-      const nickname = String(result.content || '').trim()
-      if (!result.confirm || !nickname || nickname === userInfo.value.nickname) return
-      try {
-        const updated = await userApi.updateProfile({ nickname })
-        userInfo.value = toUserProfile(updated)
-      } catch {}
-    },
-  })
+const editNickname = async () => {
+  if (!userStore.isLogin) { openLogin(); return }
+  profileRevision++
+  nicknameDraft.value = userInfo.value.nickname
+  nicknameError.value = ''
+  nicknameAllowed.value = true
+  editingNickname.value = true
+  await nextTick()
+  if (editingNickname.value) nicknameFocused.value = true
 }
+
+function resetNicknameEditor() {
+  editingNickname.value = false
+  nicknameFocused.value = false
+  nicknameDraft.value = ''
+  nicknameError.value = ''
+  nicknameAllowed.value = true
+}
+
+function cancelNicknameEdit() { if (!savingNickname.value) resetNicknameEditor() }
+function onNicknameInput(event: any) {
+  if (!editingNickname.value || savingNickname.value) return
+  nicknameDraft.value = String(event.detail?.value ?? '')
+  nicknameAllowed.value = true
+  nicknameError.value = ''
+}
+function onNicknameBlur(event: any) {
+  nicknameFocused.value = false
+  if (editingNickname.value && !savingNickname.value) nicknameDraft.value = String(event.detail?.value ?? nicknameDraft.value)
+}
+function reviewNickname(event: any) {
+  if (!editingNickname.value) return
+  nicknameAllowed.value = event.detail?.pass !== false
+  nicknameError.value = nicknameAllowed.value ? '' : t('昵称未通过审核，请修改后重试')
+}
+function confirmNickname(event: any) {
+  if (savingNickname.value) return
+  nicknameDraft.value = String(event.detail?.value ?? nicknameDraft.value)
+  return saveNickname()
+}
+async function saveNickname() {
+  if (!canSaveNickname.value) return
+  const name = nicknameDraft.value.trim()
+  if (name === userInfo.value.nickname) { resetNicknameEditor(); return }
+  const generation = sessionGeneration()
+  savingNickname.value = true
+  nicknameError.value = ''
+  try {
+    const updated = await userApi.updateProfile({ nickname: name })
+    if (generation !== sessionGeneration()) return
+    profileRevision++
+    userStore.applyProfile(updated)
+    resetNicknameEditor()
+    showToast({ title: '昵称已更新', icon: 'success' })
+  } catch (error: any) {
+    if (generation === sessionGeneration()) nicknameError.value = errorText(error?.message || '昵称保存失败，请重试')
+  } finally {
+    if (generation === sessionGeneration()) savingNickname.value = false
+  }
+}
+const loginFromProfile = () => { if (!userStore.isLogin) openLogin() }
+const copyUserCode = () => uni.setClipboardData({ data: userInfo.value.userCode })
 
 const showAbout = () => {
   uni.navigateTo({ url: '/pages/about/index' })
 }
 
-const goPage = (url: string) => {
-  if (url === '/pages/exam/index') {
-    uni.switchTab({ url })
-  } else {
-    uni.navigateTo({ url })
-  }
-}
-
-const goRedo = () => {
-  const examType = targetDraftExams.value[0] || userInfo.value.targetExam
-  uni.navigateTo({ url: `/pages/wrongbook/redo?examType=${examType}` })
-}
+const goPage = (url: string) => navigateProtected(url)
 
 const handleLogout = () => {
   showModal({
@@ -323,26 +386,23 @@ const handleLogout = () => {
     success: (res: any) => {
       if (res.confirm) {
         userStore.logout()
-        userInfo.value = {
-          nickname: '留学同学',
-          avatarUrl: '',
-          targetExam: 'CSCA',
-          targetDate: '',
-          targetDates: {},
-          totalQuestions: 0,
-          correctRate: 0,
-          streakDays: 0,
-          favoriteCount: 0,
-        }
-        targetDraftExams.value = []
-        profileLoaded.value = false
-        dashboardLoaded.value = false
-        loadError.value = false
         showToast({ title: '已退出登录', icon: 'success' })
       }
     },
   })
 }
+
+watch(activeUserId, () => {
+  profileRevision++
+  resetNicknameEditor()
+  savingNickname.value = false
+  profileLoaded.value = false
+  dashboardLoaded.value = false
+  loadError.value = false
+  targetDraftDates.CSCA = ''
+  targetDraftDates.HKS = ''
+  targetDraftExams.value = [...userStore.selectedExams]
+}, { flush: 'sync' })
 
 onShow(async () => {
   targetDraftExams.value = [...userStore.selectedExams]
@@ -393,6 +453,12 @@ onShareAppMessage(createAppShareMessage)
   min-width: 0;
 }
 
+.profile-name-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 14rpx; }
+.profile-name-input { flex: 1; min-width: 180rpx; width: 100%; height: 72rpx; padding: 0 12rpx; border: 1rpx solid var(--app-primary); border-radius: 12rpx; font-size: 34rpx; color: var(--app-text); background: var(--app-surface-quiet); }
+.nickname-hint { display: block; margin-top: 10rpx; color: var(--app-text-weak); font-size: 22rpx; line-height: 1.5; }
+.nickname-hint-error { color: var(--app-danger); }
+.profile-code { color: var(--app-text-weak); font-size: 24rpx; }
+.login-link { display: block; margin-top: 8rpx; color: var(--app-primary); font-size: 26rpx; }
 .profile-name {
   display: block;
   font-size: 36rpx;

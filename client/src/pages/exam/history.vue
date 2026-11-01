@@ -1,4 +1,5 @@
 <template>
+  <c-auth-frame>
   <view class="page app-shell history-page">
     <view class="app-section history-heading-section">
       <view class="history-heading">
@@ -48,6 +49,7 @@
       <c-app-state v-if="!loading && !error && historyPapers.length === 0" state="empty" :title="t('还没有答题记录')" />
     </view>
   </view>
+  </c-auth-frame>
 </template>
 
 <script setup lang="ts">

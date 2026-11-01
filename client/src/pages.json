@@ -7,6 +7,10 @@
       }
     },
     {
+      "path": "pages/login/index",
+      "style": { "navigationBarTitleText": "登录" }
+    },
+    {
       "path": "pages/exam/index",
       "style": {
         "navigationBarTitleText": "刷题"
@@ -140,7 +144,8 @@
       "^c-answer-card$": "@/components/AnswerCard/index.vue",
       "^c-app-state$": "@/components/AppState/index.vue",
       "^c-exam-selection$": "@/components/ExamSelection/index.vue",
-      "^c-ring-chart$": "@/components/RingChart/index.vue"
+      "^c-ring-chart$": "@/components/RingChart/index.vue",
+      "^c-auth-frame$": "@/components/AuthFrame/index.vue"
     }
   }
 }

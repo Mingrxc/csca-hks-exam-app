@@ -1,12 +1,13 @@
 # 工具脚本
 
-更新：2026-10-25。使用现有Conda deng或服务器既有Python环境，不新建环境或安装依赖。
+更新：2026-10-30。使用现有Conda deng或服务器既有Python环境，不新建环境或安装依赖。
 
 | 脚本 | 用途 |
 |---|---|
 | import_questions.py | 默认校验原始题库；--apply按稳定题号写入，--verify-db核对。 |
 | check_database_integrity.py | 只读检查业务归属、外键、重复键、题量及迁移版本，包含反馈表。 |
 | manage_feedback.py | 运营者在服务器读取/导出私密反馈；显式--mark配合--to才更新状态。 |
+| assign_owner_code.py | 先核实本人内部用户ID；--user-id默认只读预览，显式--apply绑定lw000，不授予管理员权限。 |
 | export_schema.py | 根据ORM生成database/schema.sql参考，不连接数据库。 |
 | build_backend_bundle.py | 打包后端、最新迁移、工具、原题和153份活动媒体，生成SHA与清单，不含真实配置/用户/备份/依赖。 |
 | reset_database.py | 默认仅计划；只有明确授权的重建任务才运行--apply，先验证SQL备份再重建到Alembic head。1.5.1不使用。 |

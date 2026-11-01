@@ -1,6 +1,40 @@
 # 服务器配置与部署记录
 
-## 当前版本：V1.5.2（2026-10-26）
+## 当前版本：V1.5.4（2026-11-01）
+
+正式API仍为 `https://api.laowaiyidiantong.icu/api/v1`，HTTPS健康返回1.5.4；MySQL数据库仍为csca_hks_exam，最新迁移 `0011_login_strategy`。本次直接从1.5.2升级，来源为已审阅的本机1.5.4工作树，基础提交984830324e4a357c6928293133a18df5e8400155，包含未提交文件；没有替用户提交、推送或发布微信小程序。
+
+维护时保留73用户、52份试卷、189条答题、80条错题、79条知识统计、21条打卡、2条目标日期、1221题及0收藏/反馈。新增user_code_counters表1行，用户回填唯一lw编号；内容2→4，两份公告1.5.3“撤销AI功能”和1.5.4“优化登录策略”公开。原身份、主键、学习记录与题库保留；数量只代表维护时点。lw000未绑定，管理白名单不扩大。
+
+| 项目 | 本次配置或位置 |
+|---|---|
+| 发布标识 | v1.5.4-20261101-130000-r2 |
+| 后端代码包 | laowai-backend-v1.5.4-20261101-130000-r2.tar.gz，83702字节，100文件 |
+| SHA-256 | 6c0f57cb94940d3840ef04b244a1c407462cc3c48c0f1a7bf2b77218dec335a4 |
+| 原始迁移前备份 | /var/backups/laowai/before-v1.5.4-20261101-125500 |
+| 原始SQL | laowai-20261101T045508Z.sql.gz，配套配置与code.before.tar.gz |
+| 最终切换前备份 | /var/backups/laowai/before-v1.5.4-20261101-130000-r2 |
+| 最终切换前SQL | laowai-20261101T045641Z.sql.gz，配套配置与code.before.tar.gz |
+| 前版兼容代码 | /opt/laowai/rollback/v1.5.4-20261101-130000-r2/csca-hks-exam-app |
+| 当前状态 | /opt/laowai/deployment/current-release.json |
+| 部署记录 | /opt/laowai/deployment/deploy-v1.5.4-20261101-130000-r2.json |
+| HTTPS验收记录 | /opt/laowai/deployment/verification-v1.5.4-20261101-130000-r2.json |
+| 头像目录 | /opt/laowai/user_uploads/avatars，laowai:deploy、0750，服务UMask0077 |
+| 服务覆盖配置 | /etc/systemd/system/laowai-api.service.d/avatars.conf |
+
+基础系统、数据库账号、生产凭据、证书、题库和媒体目录沿用既有配置。Pillow13.0.0和python-multipart0.0.12原已存在，未安装依赖。后端只在127.0.0.1:8000监听，Nginx继续代理正式API。AI公开接口已停用，返回404；私有业务接口要求JWT，微信登录不能在生产环境回退开发身份。
+
+头像为新增持久数据。systemd覆盖配置明确设置 `USER_AVATAR_ROOT=/opt/laowai/user_uploads/avatars` 与 `ReadWritePaths=/opt/laowai/user_uploads/avatars`，代码替换不会删除头像。应用只接收不超过2MiB的PNG/JPEG/WebP，重新编码为最大512像素JPEG；Nginx的client_max_body_size由2m调整至3m，为multipart边界留空间。
+
+`laowai-backup`每日约03:20的数据库/配置备份新增 `.uploads.tar.gz`、metadata与SHA，包含整个 `/opt/laowai/user_uploads`；配置归档同时包含新systemd覆盖目录。扩展后的首份备份 `laowai-20261101T045646Z.uploads.tar.gz` 已生成并确认含头像目录，当时尚无真实头像。备份与健康检查timer均已恢复。仍为本服务器14天保留，无异地副本；原始及r2发布前备份在各自子目录单独保留。
+
+迁移经过0009→0010→0011，首次部署在数据迁移完成后发现ORM与字段注释不一致，自动回退代码且保留新编号。修正0011的add/alter字段注释后，r2先再次备份，再补齐已应用字段的注释，最终Alembic check无新结构操作、完整性clean。后续勿重复清库、重新发号或执行downgrade。原始1.5.2模型不能给新用户填写非空user_code；回退应用必须保留编号模型/事务分配器和迁移历史，不能直接覆盖旧代码或恢复旧SQL而丢失后续记录。r2旧代码目录已经带有该兼容支持，并保留AI停用状态。
+
+21项服务器隔离专项测试通过；迁移注释修复后仅追加1项相关验证。HTTPS验收确认版本、AI404、游客401、两份公告原文、新编号、昵称保存、禁止修改编号、2MiB头像上传、安全JPEG缩放与读取及无效图片拒绝。唯一合成账号和头像已删除，其编号永久退役，不应调低计数器回收。没有重新安装环境、导题、全盘回归或重复媒体哈希。
+
+微信端由用户自行上传/发布1.5.4，并检查uploadFile合法域名包含 `https://api.laowaiyidiantong.icu`，真机验收登录、头像、昵称和退出。服务端部署完成不代表微信后台配置或小程序发布已完成。当前配置副本同步至本机 `.deployment-access/server-configuration.md` 与服务器交付目录。以下各版本为历史，不代表当前版本。
+
+## 历史版本：V1.5.2（2026-10-26）
 
 正式后端已部署提交d58e85f7，健康接口返回1.5.2。发布标识 `v1.5.2-20261026-193000`；数据库名仍为csca_hks_exam，已备份后从0008升级至 `0009_release_1_5_2`。本次迁移只新增定稿公告，不改表结构或学习数据，没有清库、重建或导入题库。
 
@@ -23,7 +57,7 @@ AI支持可选 `language: zh/en`，省略时默认中文；英语界面默认英
 
 本节为当前状态，以下1.5.1及1.5.0内容为历史部署记录；不要据旧章节重复清库、迁移或发布旧公告。
 
-## 当前版本：V1.5.1（2026-10-25）
+## 历史版本：V1.5.1（2026-10-25）
 
 正式API仍为 https://api.laowaiyidiantong.icu/api/v1 ，健康接口现在返回版本1.5.1。部署提交f5ae203b，发布标识 `v1.5.1-20261025-220540`，数据库已从0007增量升级至 `0008_feedback_announcements`；未清库、未重新导入题库，也未改动现有生产凭据和媒体服务。
 

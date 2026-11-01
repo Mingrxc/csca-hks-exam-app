@@ -108,3 +108,7 @@ Feedback drafts and idempotency keys are scoped to the current user; retry/reope
 Announcements use public paginated API calls with explicit loading/empty/error/retry states and text-only detail rendering. The existing admin page can edit versioned drafts and publish/withdraw them. `APP_VERSION` reads manifest.versionName so About and feedback metadata match the build.
 
 The privacy link invokes `wx.openPrivacyContract` only on WeChat and shows an appropriate fallback elsewhere; no custom privacy-authorization flow is introduced. See [release-1.5.1.md](release-1.5.1.md).
+
+## V1.5.4 authentication
+
+Public tabs browse without sign-in. shared/auth/session tracks token, verified user ID and session generation; navigation owns the login prompt and pending destination. Only the login page calls the user store login action. App launch validates an existing token without initiating WeChat login. API responses from earlier sessions are discarded. AuthFrame guards private pages. Profile data is shared through the user store; practice snapshots and preferences are scoped by internal user ID. See release-1.5.4.md for migration and avatar storage.

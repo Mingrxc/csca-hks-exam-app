@@ -1,4 +1,5 @@
 <template>
+  <c-auth-frame>
   <view class="page app-shell">
     <view class="app-section">
       <view class="hero app-heading">
@@ -37,6 +38,7 @@
       <c-app-state v-if="!loading && !error && items.length === 0" state="empty" :title="t('还没有收藏题目')" />
     </view>
   </view>
+  </c-auth-frame>
 </template>
 
 <script setup lang="ts">

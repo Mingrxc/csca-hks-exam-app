@@ -109,6 +109,7 @@ import { useUserStore } from '@/stores/user'
 import { useExamStore } from '@/stores/exam'
 import { useHomePage } from '@/features/home/useHomePage'
 import { useExamNavigation } from '@/features/exam/useExamNavigation'
+import { navigateProtected } from '@/shared/auth/navigation'
 import type { ExamType } from '@/types/exam'
 
 usePageI18n('pages/index/index')
@@ -122,7 +123,7 @@ const now = ref(Date.now())
 const timelinePreview = ref(isTimelinePreview())
 const studyLoading = ref(false)
 const dashboard = computed(() => dashboardState.data.value)
-const displayName = computed(() => dashboard.value?.userName || userStore.userInfo.nickname || '留学同学')
+const displayName = computed(() => userStore.isLogin ? userStore.userInfo.nickname : t('留学同学'))
 const greeting = computed(() => {
   const hour = new Date(now.value).getHours()
   return hour < 11 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好'
@@ -144,8 +145,8 @@ async function loadStudyData() {
   studyLoading.value = true
   dashboardState.error.value = ''
   try {
-    await userStore.login()
-    await loadDashboard(true)
+    await userStore.restoreSession()
+    await loadDashboard(userStore.isLogin)
   } catch {
     dashboardState.error.value = '暂时无法连接，请稍后重试'
   } finally {
@@ -155,12 +156,12 @@ async function loadStudyData() {
 
 const goExam = () => uni.switchTab({ url: '/pages/exam/index' })
 const goProfile = () => uni.switchTab({ url: '/pages/profile/index' })
-const goWrongBook = () => uni.navigateTo({ url: '/pages/wrongbook/index' })
-const goFavorite = () => uni.navigateTo({ url: '/pages/favorite/index' })
-const goHistory = () => uni.navigateTo({ url: '/pages/exam/history' })
-const goPaper = (id: number) => uni.navigateTo({ url: '/pages/exam/result?id=' + id })
+const goWrongBook = () => navigateProtected('/pages/wrongbook/index')
+const goFavorite = () => navigateProtected('/pages/favorite/index')
+const goHistory = () => navigateProtected('/pages/exam/history')
+const goPaper = (id: number) => navigateProtected('/pages/exam/result?id=' + id)
 const goPrimaryAction = () => {
-  if (examStore.hasActiveProgress) uni.navigateTo({ url: '/pages/exam/answer' })
+  if (examStore.hasActiveProgress) navigateProtected('/pages/exam/answer')
   else goPractice('random')
 }
 

@@ -1,4 +1,5 @@
 <template>
+  <c-auth-frame>
   <view class="page app-shell">
     <view v-if="isLoading || loadError" class="app-section"><c-app-state v-if="isLoading" state="loading" :title="t('正在整理本次练习')" /><c-app-state v-else state="error" :title="t('成绩暂时无法加载')" :description="loadError" @retry="loadResult()" /></view>
     <template v-else>
@@ -17,6 +18,7 @@
       <view class="actions"><t-button theme="primary" block shape="round" @click="goHome">{{ t("返回首页") }}</t-button><t-button v-if="wrongQuestions.length" theme="default" variant="outline" block shape="round" @click="retryWrong">{{ t("错题重做") }}</t-button></view>
     </template>
   </view>
+  </c-auth-frame>
 </template>
 <script setup lang="ts">
 import { t } from '@/i18n'

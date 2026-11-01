@@ -79,8 +79,15 @@ CREATE INDEX idx_questions_wrong_rate ON questions (wrong_rate);
 
 CREATE INDEX ix_questions_material_id ON questions (material_id);
 
+CREATE TABLE user_code_counters (
+	id INTEGER NOT NULL AUTO_INCREMENT,
+	next_value INTEGER NOT NULL,
+	PRIMARY KEY (id)
+);
+
 CREATE TABLE users (
 	id INTEGER NOT NULL COMMENT 'User ID' AUTO_INCREMENT,
+	user_code VARCHAR(32) NOT NULL COMMENT 'Permanent public user number; lw000 is reserved',
 	openid VARCHAR(64) NOT NULL COMMENT 'WeChat OpenID',
 	unionid VARCHAR(64) COMMENT 'WeChat UnionID for cross-app identity',
 	nickname VARCHAR(64) COMMENT 'Display name',
@@ -101,6 +108,8 @@ CREATE TABLE users (
 CREATE INDEX idx_users_created ON users (created_at);
 
 CREATE INDEX idx_users_openid ON users (openid);
+
+CREATE UNIQUE INDEX uk_users_user_code ON users (user_code);
 
 CREATE TABLE favorites (
 	id INTEGER NOT NULL COMMENT 'Favorite ID' AUTO_INCREMENT,

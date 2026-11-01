@@ -4,14 +4,17 @@ import { isTimelinePreview } from '@/constants/share'
 import { useUserStore } from '@/stores/user'
 import { useExamStore } from '@/stores/exam'
 import { initializeLanguage } from '@/i18n'
+import { configureLoginPrompt } from '@/shared/auth/session'
+import { promptLogin } from '@/shared/auth/navigation'
 
 const userStore = useUserStore()
 const examStore = useExamStore()
+configureLoginPrompt(() => promptLogin())
 
 onLaunch((options) => {
   initializeLanguage()
   if (isTimelinePreview(options?.scene)) return
-  userStore.login().catch(() => {})
+  userStore.restoreSession().catch(() => {})
 })
 
 onShow(() => {})

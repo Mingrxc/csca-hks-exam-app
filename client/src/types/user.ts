@@ -37,6 +37,8 @@ export interface DashboardData {
 }
 
 export interface UserProfile {
+  id?: number
+  userCode?: string
   objectiveCount?: number
   nickname: string
   avatarUrl: string

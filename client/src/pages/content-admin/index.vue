@@ -1,4 +1,5 @@
 <template>
+  <c-auth-frame>
   <view class="page app-shell">
     <view class="app-section">
       <view class="hero app-heading">
@@ -52,6 +53,7 @@
       </view>
     </view>
   </view>
+  </c-auth-frame>
 </template>
 
 <script setup lang="ts">

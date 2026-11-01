@@ -1,4 +1,5 @@
 <template>
+  <c-auth-frame>
   <view class="page app-shell">
     <view class="app-section">
       <view class="hero app-heading">
@@ -134,6 +135,7 @@
       <t-button class="footer-btn" theme="default" variant="outline" block shape="round" @click="exportPdf">{{ t("导出 PDF") }}</t-button>
     </view>
   </view>
+  </c-auth-frame>
 </template>
 
 <script setup lang="ts">

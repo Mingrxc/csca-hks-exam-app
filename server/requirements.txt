@@ -13,5 +13,7 @@ python-multipart==0.0.12
 alembic==1.13.0
 httpx==0.27.0
 reportlab==4.4.9
+# Already a ReportLab dependency; used directly for avatar validation/normalisation.
+pillow>=9.0.0
 pytest==8.3.0
 pytest-asyncio==0.24.0

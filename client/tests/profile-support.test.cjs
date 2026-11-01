@@ -22,7 +22,7 @@ async function createPage(name, options = {}) {
   const toasts = []
   const scrolls = []
   const hooks = []
-  const user = options.user || { isLogin: true, userInfo: { id: 7 }, login: async () => {} }
+  const user = options.user || { isLogin: true, userInfo: { id: 7 }, restoreSession: async () => {} }
   const categories = ['question', 'bug', 'suggestion', 'other'].map((value) => ({ value, label: value }))
   const imports = {
     vue,
@@ -138,7 +138,7 @@ test('storage errors cannot change a successful server response into a failed su
 })
 
 test('login failure leaves the feedback form disabled', async () => {
-  const { page, calls } = await createPage('feedback/index', { user: { isLogin: false, userInfo: { id: 0 }, login: async () => { throw new Error('offline') } } })
+  const { page, calls } = await createPage('feedback/index', { user: { isLogin: false, userInfo: { id: 0 }, restoreSession: async () => { throw new Error('offline') } } })
   assert.equal(page.loadError.value, true)
   assert.equal(page.canSubmit.value, false)
   await page.submit()
@@ -176,13 +176,13 @@ test('about navigates to updates and opens the official privacy guide without re
   assert.equal(calls.join(','), 'privacy')
 })
 
-test('all shipped client version metadata agrees with 1.5.3', () => {
+test('all shipped client version metadata agrees with 1.5.4', () => {
   const root = path.join(__dirname, '..')
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'src/manifest.json'), 'utf8'))
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
   const lock = JSON.parse(fs.readFileSync(path.join(root, 'package-lock.json'), 'utf8'))
-  assert.equal(manifest.versionName, '1.5.3')
-  assert.equal(manifest.versionCode, '153')
+  assert.equal(manifest.versionName, '1.5.4')
+  assert.equal(manifest.versionCode, '154')
   assert.equal(pkg.version, manifest.versionName)
   assert.equal(lock.version, manifest.versionName)
   assert.equal(lock.packages[''].version, manifest.versionName)

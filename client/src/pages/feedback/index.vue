@@ -1,4 +1,5 @@
 <template>
+  <c-auth-frame>
   <view class="page app-shell">
     <view class="app-section" v-if="initializing"><view class="app-card"><c-app-state state="loading" :title="t('正在准备反馈')" /></view></view>
     <view class="app-section" v-else-if="loadError"><view class="app-card"><c-app-state state="error" :title="t('暂时无法提交反馈')" :description="t('请检查登录和网络状态后重试。')" @retry="initialize" /></view></view>
@@ -33,6 +34,7 @@
       </view>
     </view>
   </view>
+  </c-auth-frame>
 </template>
 
 <script setup lang="ts">
@@ -57,7 +59,7 @@ const loadError = ref(false)
 const sending = ref(false)
 const receipt = ref<FeedbackReceipt | null>(null)
 let pageVisible = true
-const canSubmit = computed(() => !initializing.value && !loadError.value && !sending.value && !!content.value.trim() && content.value.length <= 1000)
+const canSubmit = computed(() => userStore.isLogin && ownerId.value === userStore.userInfo.id && !initializing.value && !loadError.value && !sending.value && !!content.value.trim() && content.value.length <= 1000)
 const draftKey = () => `feedback_draft_v1_${ownerId.value}`
 const createRequestId = () => `fb_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 14)}`
 
@@ -76,8 +78,8 @@ async function initialize() {
   requestId.value = ''
   receipt.value = null
   try {
-    if (!userStore.isLogin || !userStore.userInfo.id) await userStore.login()
-    if (!userStore.userInfo.id) throw new Error('User unavailable')
+    await userStore.restoreSession()
+    if (!userStore.isLogin || !userStore.userInfo.id) { ownerId.value = 0; return }
     ownerId.value = userStore.userInfo.id
     let saved: any
     try { saved = uni.getStorageSync(draftKey()) } catch {}
@@ -108,8 +110,8 @@ function selectCategory(value: FeedbackCategory) {
 }
 
 async function submit() {
-  if (!canSubmit.value) return
   if (ownerId.value !== userStore.userInfo.id || !userStore.isLogin) { await initialize(); return }
+  if (!canSubmit.value) return
   if (!requestId.value) requestId.value = createRequestId()
   persistDraft()
   sending.value = true

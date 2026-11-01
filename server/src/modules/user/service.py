@@ -19,7 +19,7 @@ from src.modules.wrongbook.models import WrongBook
 async def exchange_wx_code(code: str, transport=None) -> str:
     """Exchange a WeChat login code for an OpenID, with an explicit local fallback."""
     if not settings.WX_APPID or not settings.WX_SECRET:
-        if settings.AUTH_ALLOW_DEV_OPENID:
+        if settings.AUTH_ALLOW_DEV_OPENID and not settings.is_production:
             return settings.DEV_OPENID
         raise AppException(50301, "微信登录尚未配置", status_code=503)
 
@@ -37,17 +37,17 @@ async def exchange_wx_code(code: str, transport=None) -> str:
             response.raise_for_status()
             payload = response.json()
     except (httpx.HTTPError, ValueError) as exc:
-        if settings.AUTH_ALLOW_DEV_OPENID:
+        if settings.AUTH_ALLOW_DEV_OPENID and not settings.is_production:
             return settings.DEV_OPENID
         raise AppException(50201, "微信登录服务暂时不可用", status_code=502) from exc
 
     if payload.get("errcode"):
-        if settings.AUTH_ALLOW_DEV_OPENID:
+        if settings.AUTH_ALLOW_DEV_OPENID and not settings.is_production:
             return settings.DEV_OPENID
         raise AppException(40101, "微信登录凭证无效或已过期", status_code=401)
     openid = payload.get("openid")
     if not openid:
-        if settings.AUTH_ALLOW_DEV_OPENID:
+        if settings.AUTH_ALLOW_DEV_OPENID and not settings.is_production:
             return settings.DEV_OPENID
         raise AppException(50202, "微信登录响应缺少用户标识", status_code=502)
     return openid
@@ -56,7 +56,7 @@ async def exchange_wx_code(code: str, transport=None) -> str:
 def get_or_create_user_by_openid(
     db: Session,
     openid: str,
-    nickname: str = "考霸同学",
+    nickname: str = "留学同学",
 ) -> User:
     user = db.query(User).filter(User.openid == openid).first()
     if user:
@@ -73,6 +73,13 @@ def get_or_create_user_by_openid(
             return existing
         raise
     db.refresh(user)
+    return user
+
+
+def get_user_by_openid(db: Session, openid: str) -> User:
+    user = db.query(User).filter(User.openid == openid).first()
+    if user is None:
+        raise AppException(40102, "登录状态已失效，请重新登录", status_code=401)
     return user
 
 
@@ -137,6 +144,7 @@ def serialize_user(
 
     return {
         "id": user.id,
+        "user_code": user.user_code,
         "openid": user.openid,
         "nickname": user.nickname,
         "avatar_url": user.avatar_url,
@@ -225,8 +233,12 @@ def update_user_profile(
     payload: UserProfileUpdate,
 ) -> dict:
     """Update a profile and its per-exam targets in one service-owned transaction."""
-    user = get_or_create_user_by_openid(db, openid)
+    user = get_user_by_openid(db, openid)
     data = payload.model_dump(exclude_unset=True)
+    if "nickname" in data and data["nickname"] is None:
+        raise AppException(42201, "昵称不能为空", status_code=422)
+    if "avatar_url" in data and data["avatar_url"] != user.avatar_url:
+        raise AppException(42202, "请通过头像上传功能更新头像", status_code=422)
     target_dates = data.pop("target_dates", None)
     for key in ("nickname", "avatar_url", "target_exam", "target_date"):
         if key in data:
