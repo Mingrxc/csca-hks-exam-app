@@ -45,15 +45,16 @@ function responseError(statusCode: number, payload: any): ApiRequestError {
     statusCode, code: payload?.code, requestId: payload?.request_id, cause: payload,
   })
 }
-function networkError(error: any, requestId: string) {
+function networkError(error: any, requestId: string, operation: 'request' | 'upload' = 'request') {
   const raw = String(error?.errMsg || '')
+  const domainBlocked = /url not in domain list/i.test(raw)
   const message = !raw ? '网络异常' : raw.includes('timeout') ? '请求超时'
-    : raw.includes('url not in domain list') ? '域名未配置'
+    : domainBlocked ? operation === 'upload' ? '上传域名未配置' : '域名未配置'
     : /SSL|TLS/.test(raw) ? '证书校验失败'
     : raw.includes('ERR_CONNECTION_REFUSED') ? '无法连接服务器，请确认后端已启动'
     : /network is down|ERR_INTERNET_DISCONNECTED/.test(raw) ? '网络不可用，请检查网络连接'
     : raw.replace(/^(request:)?fail\s*/i, '').slice(0, 80)
-  return new ApiRequestError(message, { requestId, cause: error })
+  return new ApiRequestError(message, { requestId, cause: error, ...(domainBlocked ? { code: 'DOMAIN_NOT_CONFIGURED' } : {}) })
 }
 function unauthorized(prompt = true) {
   if (prompt) notifyLoginRequired()
@@ -124,7 +125,7 @@ export function upload<T>(url: string, filePath: string): Promise<T> {
       handleFailure(error, token)
       reject(error)
     },
-    fail: error => reject(networkError(error, requestId)),
+    fail: error => reject(generation !== sessionGeneration() ? staleSession() : networkError(error, requestId, 'upload')),
   }))
 }
 

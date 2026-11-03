@@ -87,7 +87,7 @@ export const english: Record<string, string> = {
   '选词成段': 'Complete a passage', '集合与不等式': 'Sets and inequalities',
   '首页': 'Home', '刷题': 'Practice', '我的': 'Me',
   '答题': 'Answer questions', '练习结果': 'Results', '错题详情': 'Review question', '公告详情': 'Announcement',
-  '网络异常': 'Network error', '域名未配置': 'Server domain is not configured', '证书校验失败': 'Certificate verification failed',
+  '网络异常': 'Network error', '域名未配置': 'Server domain is not configured', '上传域名未配置': 'Upload server domain is not configured', '证书校验失败': 'Certificate verification failed',
   '请求超时': 'Request timed out', '无法连接服务器，请确认后端已启动': 'Unable to connect to the server',
   '网络不可用，请检查网络连接': 'You are offline. Check your connection.', '请求失败 ({status})': 'Request failed ({status})',
   '微信登录未返回临时凭证': 'WeChat sign-in did not return a code', '加载中...': 'Loading...',

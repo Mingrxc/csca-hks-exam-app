@@ -1,9 +1,14 @@
 import { language } from '@/i18n'
 export function adminDate(value?: string | null) {
   if (!value) return '—'
-  const date = new Date(/(?:Z|[+-]\d\d:\d\d)$/.test(value) ? value : value + 'Z')
-  if (!Number.isFinite(date.getTime())) return '—'
-  return new Intl.DateTimeFormat(language.value === 'en' ? 'en-GB' : 'zh-CN', {
-    timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-  }).format(date)
+  const iso = value.trim().replace(' ', 'T')
+  const timestamp = new Date(/(?:Z|[+-]\d\d:\d\d)$/i.test(iso) ? iso : iso + 'Z').getTime()
+  if (!Number.isFinite(timestamp)) return '—'
+  // Some WeChat runtimes lack Intl or its timezone data. Use UTC accessors after
+  // a fixed UTC+8 shift, independently of both Intl and the device's timezone.
+  const date = new Date(timestamp + 8 * 60 * 60 * 1000)
+  const pad = (part: number) => String(part).padStart(2, '0')
+  const year = date.getUTCFullYear(), month = pad(date.getUTCMonth() + 1), day = pad(date.getUTCDate())
+  const calendar = language.value === 'en' ? `${day}/${month}/${year}` : `${year}/${month}/${day}`
+  return `${calendar} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`
 }

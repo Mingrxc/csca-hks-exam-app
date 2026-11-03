@@ -1,6 +1,38 @@
 # 服务器配置与部署记录
 
-## 当前运行：首页签到已部署（2026-11-01 19:33，V1.5.5 / 0014）
+## 微信头像上传域名待核对（2026-11-03）
+
+已发布小程序更换头像报“域名未配置”。当前前端上传URL为https://api.laowaiyidiantong.icu/api/v1/user/avatar，微信uploadFile合法域名需要单独配置。用户在微信公众平台“开发设置 → 服务器域名 → uploadFile合法域名”填写 `https://api.laowaiyidiantong.icu`，不带/api/v1或/avatar路径；保留已有request/downloadFile配置。配置后退出小程序重新进入测试头像上传；更新服务器代码不能补齐微信白名单。本轮未登录或修改平台配置，具体白名单状态尚未核验。
+
+同日正式管理员用户列表及lw005搜索只读检查均HTTP200、约27ms/14ms；本机已修复列表日期对Intl的兼容性问题并重建微信产物，需用户重新上传/审核/发布前端。本次无后端业务变更或部署、数据库写入/迁移、角色调整、服务重启、Nginx/8088/隧道修改，既有生产1.6.0/0014保持不变。
+
+## 当前运行：V1.6.0（2026-11-03 10:14）
+
+正式API仍为 `https://api.laowaiyidiantong.icu/api/v1`，健康返回1.6.0，数据库csca_hks_exam/head0014_release_1_5_5不变。部署基础提交49fd912f865db4e2ed90f1d6238a871d64f1fe29的后端业务与此前签到版一致；本次修正API和前端package/lock/manifest版本元数据为1.6.0，versionCode160，并同步已有版本断言。实际发布为该提交加未提交版本元数据修正，无Git提交/推送。
+
+用户明确8088用于小组展示、此次不用处理。仅备份并替换小程序后端、重启laowai-api；未修改/重载/重启Nginx，未操作8088站点、SSH隧道或防火墙。没有安装依赖、清库、导题、执行迁移、重绑管理员或新增1.6.0公告。
+
+| 项目 | 本次配置或位置 |
+|---|---|
+| 发布标识 | v1.6.0-20261103-101332 |
+| 后端包 | laowai-backend-v1.6.0-20261103-101332.tar.gz，91312字节，110文件 |
+| SHA-256 | 04a748412c921f126285168ade079438803d4a6d03a89523705f5d1da637396d |
+| 更新前备份 | /var/backups/laowai/before-v1.6.0-20261103-101332 |
+| SQL | laowai-20261103T021406Z.sql.gz，含配置/头像归档、SHA/metadata及code.before.tar.gz |
+| 旧代码 | /opt/laowai/rollback/v1.6.0-20261103-101332/csca-hks-exam-app |
+| 当前状态 | /opt/laowai/deployment/current-release.json |
+| 部署详情 | /opt/laowai/deployment/deploy-v1.6.0-20261103-101332.json |
+| HTTPS验收 | /opt/laowai/deployment/verification-v1.6.0-20261103-101332.json |
+
+维护前后原业务表记录数量保持：76用户、62试卷、266答题、116错题、87知识统计、23打卡、2目标日期、1221题、5内容、1计数行、1owner、0只读成员、5管理审计及0收藏/反馈。lw005原temporary标记/创建时间、全部公告元数据保留，未创建合成账号或写真实签到、管理权限和内容。数量仅代表维护时点，后续业务可正常增长。
+
+服务器1项健康/路由专项、前端1项版本一致性检查通过，Alembic check无新操作，完整性clean。HTTPS确认版本1.6.0、AI404、游客管理和签到401、lw005仍为owner且成员管理200、签到看板含本周七天及公告可读。没有因业务代码未变而重跑旧全盘验证或媒体哈希。
+
+备份验证通过，现有备份和保留规则继续沿用；API、备份/健康timer恢复active。凭据、数据库连接、媒体/题库/头像配置和其他共享服务未改。用既有本机环境完成一次微信生产构建，client/dist/build/mp-weixin版本1.6.0；微信上传/审核/发布及手机验收由用户完成。
+
+README、memory、release-1.6.0.md和本配置同步，本机副本 `.deployment-access/server-configuration.md`，服务器副本 `/opt/laowai/deployment/server-configuration.md`、`/home/deploy/laowai-deployment-docs/server-configuration.md`。以下各版本为历史。
+
+## 历史部署：首页签到（2026-11-01 19:33，V1.5.5 / 0014）
 
 正式API已提供POST `/api/v1/user/check-in`，GET `/api/v1/user/dashboard`含check_in。使用既有streak_records及用户连续天数字段，没有结构变更或迁移，版本仍1.5.5，head仍 `0014_release_1_5_5`。本次发布aef540d5基础上的未提交签到工作树，不是只部署该旧提交。没有前端构建、Git提交/推送或微信发布，既有client/dist/build/mp-weixin可供用户试用与后续发布。
 

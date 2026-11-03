@@ -116,6 +116,24 @@ test('an earlier overlapping refresh cannot replace a newer result or end its sp
   assert.equal(page.data.value[0], '新请求')
 })
 
+test('failed user-list requests end loading and allow retry', async t => {
+  const env = environment('viewer')
+  t.after(env.dispose)
+  let failing = true
+  const page = env.page({ items: [], total: 0 }, async () => {
+    if (failing) throw { message: '请求超时' }
+    return { items: [{ user_code: 'lw007' }], total: 1 }
+  })
+  await page.load()
+  assert.equal(page.loading.value, false)
+  assert.equal(page.error.value, '请求超时')
+  failing = false
+  await page.load()
+  assert.equal(page.loading.value, false)
+  assert.equal(page.error.value, '')
+  assert.equal(page.data.value.items[0].user_code, 'lw007')
+})
+
 test('the real user store exposes the management entry only for verified administrator sessions', () => {
   const pinia = require('pinia')
   pinia.setActivePinia(pinia.createPinia())

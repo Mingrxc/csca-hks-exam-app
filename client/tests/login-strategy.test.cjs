@@ -28,6 +28,36 @@ const profile = (id = 7) => ({ id, user_code: `lw00${id}`, nickname: '中文昵�
   correct_rate: 75, streak_days: 1, favorite_count: 0 })
 const success = (options, data) => options.success({ statusCode: 200, data: { code: 0, data } })
 
+test('avatar uploads use the API host and distinguish the uploadFile domain allowlist', async () => {
+  const env = environment()
+  env.session.establishSession('upload-token', 7)
+  let upload
+  env.uni.uploadFile = options => { upload = options; options.fail({ errMsg: 'uploadFile:fail url not in domain list' }) }
+  const userApi = env.load('features/user/api').userApi
+  await assert.rejects(userApi.uploadAvatar('wxfile://selected-avatar.jpg'), error =>
+    error.code === 'DOMAIN_NOT_CONFIGURED' && error.message === '上传域名未配置')
+  assert.equal(upload.url, 'https://api.example.com/api/v1/user/avatar')
+  assert.equal(upload.filePath, 'wxfile://selected-avatar.jpg')
+  assert.equal(upload.name, 'file')
+  assert.equal(upload.header.Authorization, 'Bearer upload-token')
+  assert.equal(env.session.getToken(), 'upload-token')
+  env.load('i18n').setLanguage('en')
+  assert.equal(env.load('i18n').errorText('上传域名未配置'), 'Upload server domain is not configured')
+})
+
+test('a failed avatar upload from an old session cannot report a new account error', async () => {
+  const env = environment()
+  env.session.establishSession('old-upload-token', 7)
+  let upload
+  env.uni.uploadFile = options => { upload = options }
+  const pending = env.api.upload('/user/avatar', 'wxfile://avatar.jpg')
+  env.session.clearSession()
+  env.session.establishSession('other-token', 8)
+  upload.fail({ errMsg: 'uploadFile:fail url not in domain list' })
+  await assert.rejects(pending, error => error.code === 'SESSION_CHANGED')
+  assert.equal(env.session.getToken(), 'other-token')
+})
+
 test('guest requests never invoke WeChat login or send protected network calls', async () => {
   const env = environment()
   const user = env.load('stores/user').useUserStore()

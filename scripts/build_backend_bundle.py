@@ -53,6 +53,7 @@ def main() -> None:
     include(PROJECT / "docs" / "release-1.5.1.md")
     include(PROJECT / "docs" / "release-1.5.4.md")
     include(PROJECT / "docs" / "release-1.5.5.md")
+    include(PROJECT / "docs" / "release-1.6.0.md")
     sources = sorted((WORKSPACE / "original_question_bank").rglob("questions.json"))
     for path in sources:
         include(path)

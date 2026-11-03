@@ -24,6 +24,7 @@
 
 - 页面不得直接调用 `uni.request`、`uni.downloadFile` 或拼接 API 根地址。
 - GET 网络失败最多重试一次；写请求不自动重试。
+- 微信头像使用uploadFile上传到当前API域名，微信后台uploadFile合法域名必须单独配置，request合法域名不能替代。url not in domain list返回DOMAIN_NOT_CONFIGURED，上传提示“上传域名未配置”，普通请求仍提示“域名未配置”；不关闭域名校验或伪造成功，上传成功/失败回调均丢弃旧会话响应。
 - 传输层只读取现有token；没有token或收到401时拒绝请求，不自动调用微信登录或重试登录。公开接口显式指定requireAuth:false。
 - 用户store负责显式登录与有效会话恢复，shared/auth负责登录提示与后续导航。所有私有响应检查会话代次，丢弃退出/切换账号之前的响应。
 - 管理角色来自用户资料的admin_role，每次管理页面显示时刷新；40341会清除管理状态，普通用户的登录态保留。useAdminPage清除失效角色的私有内存数据，写操作另要求isOwner，服务器仍是最终权限来源。
