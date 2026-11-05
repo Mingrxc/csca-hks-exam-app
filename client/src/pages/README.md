@@ -12,7 +12,7 @@
 | 刷题 | `exam/answer` | 答题页（复用 `QuestionItem` / `AnswerCard` / `CountdownBar`） |
 | 刷题 | `exam/result` | 成绩报告页（分数、用时统计、错题列表） |
 | 补充 | `favorite/index` | 收藏题目列表与取消收藏 |
-| 补充 | `content-admin/index` | 主管理员维护内容和版本公告，只读管理员仅查看全文 |
+| 补充 | `content-admin/index` | 主管理员保存草稿、发布、编辑、确认撤下内容及公告；只读管理员仅查看全文 |
 | 个人 | `login/index` | 主动微信登录、头像选择和昵称保存 |
 | 个人 | `profile/index` | 个人中心（头像、昵称原位编辑及保存、统计、目标设置） |
 | 个人 | `feedback/index` | 私密文字反馈，用户隔离草稿、失败重试与回执 |

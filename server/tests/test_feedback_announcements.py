@@ -159,11 +159,12 @@ def test_empty_content_reads_do_not_create_demo_data(support_client, db_session)
     assert db_session.query(ContentItem).count() == 0
 
 
-def test_admin_can_publish_and_withdraw_an_update_without_exposing_drafts(support_client, db_session):
-    draft = make_content(db_session, is_active=0, published_at=None)
+@pytest.mark.parametrize("published_at", [None, datetime(2099, 1, 1)])
+def test_admin_can_publish_and_withdraw_an_update_without_exposing_drafts(support_client, db_session, published_at):
+    draft = make_content(db_session, is_active=0, published_at=published_at)
     url = f"/api/v1/content/{draft.id}"
     assert support_client.put(url, json={"is_active": True}, headers=auth()).status_code == 403
-    published = support_client.put(url, json={"is_active": True}, headers=auth("owner"))
+    published = support_client.put(url, json={"is_active": True, "published_at": None}, headers=auth("owner"))
     assert published.status_code == 200
     assert published.json()["data"]["published_at"]
     assert support_client.get("/api/v1/content/announcements").json()["data"]["total"] == 1

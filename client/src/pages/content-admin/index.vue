@@ -23,11 +23,11 @@
         <input v-model="form.title" class="native-field" :disabled="saving" maxlength="128" :placeholder="t('标题')" />
         <input v-model="form.summary" class="native-field" :disabled="saving" maxlength="255" :placeholder="t('摘要')" />
         <textarea v-model="form.body" class="native-field native-body" :disabled="saving" maxlength="12000" :placeholder="t('正文')" />
-        <view class="switch-row"><text>{{ form.is_active ? t("发布展示") : t("仅保存草稿") }}</text><switch :checked="form.is_active" :disabled="saving" color="#b86b4b" @change="togglePublished" /></view>
         <view class="form-actions">
           <t-button theme="default" variant="outline" shape="round" :disabled="saving" @click="reset">{{ t("新建") }}</t-button>
-          <t-button theme="primary" shape="round" :loading="saving" :disabled="saving" @click="save">
-            {{ form.is_active ? t("保存并发布") : t("保存草稿") }}
+          <t-button v-if="!form.is_active" theme="default" variant="outline" shape="round" :disabled="saving" @click="save(false)">{{ t("保存草稿") }}</t-button>
+          <t-button theme="primary" shape="round" :loading="saving" :disabled="saving" @click="save(true)">
+            {{ form.is_active ? t("保存修改") : t("发布") }}
           </t-button>
         </view>
       </view>
@@ -44,8 +44,10 @@
         <text class="content-summary">{{ item.summary }}</text>
         <text class="admin-body" selectable>{{ item.body }}</text>
         <view v-if="user.isOwner" class="content-actions">
-          <t-button theme="default" variant="outline" size="small" shape="round" @click="edit(item)">{{ t("编辑") }}</t-button>
-          <t-button theme="danger" variant="outline" size="small" shape="round" @click="remove(item.id)">{{ t("删除") }}</t-button>
+          <t-button theme="default" variant="outline" size="small" shape="round" :disabled="saving" @click="edit(item)">{{ t("编辑") }}</t-button>
+          <t-button v-if="!item.is_active" theme="primary" size="small" shape="round" :disabled="saving" @click="publish(item)">{{ t("发布") }}</t-button>
+          <t-button v-else theme="default" variant="outline" size="small" shape="round" :disabled="saving" @click="withdraw(item)">{{ t("撤下") }}</t-button>
+          <t-button theme="danger" variant="outline" size="small" shape="round" :disabled="saving" @click="remove(item.id)">{{ t("删除") }}</t-button>
         </view>
       </view>
     </view>
@@ -104,8 +106,6 @@ const toggleAnnouncement = (event: any) => {
   }
 }
 
-const togglePublished = (event: any) => { form.is_active = !!event.detail.value }
-
 const reset = () => {
   if (!user.isOwner || saving.value) return
   editingId.value = null
@@ -131,7 +131,7 @@ const edit = (item: ApiContentItem) => {
   isAnnouncement.value = !!item.release_version
 }
 
-const save = async () => {
+const save = async (publish: boolean) => {
   if (!user.isOwner || saving.value) return
   if (!form.title.trim() || !form.summary.trim() || !form.body.trim()) {
     showToast({ title: '请填写完整内容', icon: 'none' })
@@ -141,9 +141,31 @@ const save = async () => {
     showToast({ title: '请填写正确版本号，例如 1.5.1', icon: 'none' })
     return
   }
-  const payload = { ...form, release_version: isAnnouncement.value ? form.release_version.trim() : null }
+  const publishing = publish && (!editingId.value || !form.is_active)
+  const payload = { ...form, is_active: publish, published_at: publishing ? null : form.published_at,
+    release_version: isAnnouncement.value ? form.release_version.trim() : null }
   const result = await write(() => editingId.value ? contentApi.update(editingId.value, payload) : contentApi.create(payload))
-  if (result) { reset(); await load(); showToast({ title: '已保存', icon: 'success' }) }
+  if (result) { reset(); await load(); showToast({ title: publishing ? '已发布' : '已保存', icon: 'success' }) }
+}
+
+const updatePublication = async (item: ApiContentItem, active: boolean) => {
+  if (!user.isOwner || saving.value) return
+  const result = await write(() => contentApi.update(item.id, { is_active: active, ...(active ? { published_at: null } : {}) }))
+  if (!result) return
+  if (editingId.value === item.id) {
+    form.is_active = result.is_active
+    form.published_at = result.published_at || null
+  }
+  await load()
+  showToast({ title: active ? '已发布' : '已撤下', icon: 'success' })
+}
+
+const publish = (item: ApiContentItem) => updatePublication(item, true)
+const withdraw = (item: ApiContentItem) => {
+  if (!user.isOwner || saving.value) return
+  showModal({ title: '撤下内容', content: '确定撤下这条内容吗？',
+    success: async result => { if (result.confirm) await updatePublication(item, false) },
+  })
 }
 
 const remove = (id: number) => {
@@ -232,6 +254,7 @@ watch([activeUserId, adminRole], () => {
 .form-actions,
 .content-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 12rpx;
 }

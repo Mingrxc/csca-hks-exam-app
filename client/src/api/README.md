@@ -18,6 +18,7 @@
 
 ## 约束
 
+- 内容管理明确区分保存草稿（is_active=false）与发布（is_active=true）。新建/草稿发布传published_at=null，由现有后端赋当前UTC时间；编辑已发布内容保留原日期，列表发布/撤下只更新状态字段。更新公告需notice分类及release_version；写操作仍仅owner可执行，成功返回才刷新/重置，失败保留编辑输入。
 - `GET /user/dashboard` 的 `check_in` 返回北京时间 `today`、`checked_in`、`streak_days` 和周一至周日七项 `week`（`date` / `checked`）；旧后端缺少字段时显示未知天数，不伪造打卡状态。
 - `POST /user/check-in` 无需请求体，仅允许已登录且仍存在的账号；返回同一签到结构。用户身份来自token、日期来自服务器；重复请求幂等。手动签到和实际答题复用 `streak_records` 的用户/日期唯一记录，手动签到初始 `question_count=0`，后续答题正常累计题数。无需新增表或迁移，后端代码须更新后接口才可用。
 - 首页签到及看板刷新丢弃旧会话响应，较早/并发的看板响应不能覆盖签到成功结果；不在客户端持久化或补造签到记录。
