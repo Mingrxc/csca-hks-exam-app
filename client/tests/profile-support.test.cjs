@@ -11,7 +11,7 @@ const APP_VERSION = require('../src/manifest.json').versionName
 
 async function createPage(name, options = {}) {
   const filename = path.join(__dirname, `../src/pages/${name}.vue`)
-  // Match the WeChat branch of this page, without running a browser or WeChat.
+  // 直接验证微信分支，测试环境无需启动开发者工具。
   const source = fs.readFileSync(filename, 'utf8').replace(/\/\/ #ifndef MP-WEIXIN[\s\S]*?\/\/ #endif/g, '')
   const { descriptor } = parse(source, { filename })
   const compiled = compileScript(descriptor, { id: 'profile-support-test' })

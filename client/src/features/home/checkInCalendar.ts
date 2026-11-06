@@ -1,4 +1,4 @@
-/** Calendar dates use Beijing time, independently of the device's timezone. */
+// 签到日期与服务端一致，按北京时间计算。
 export function beijingDate(now: number): string {
   return new Date(now + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
 }

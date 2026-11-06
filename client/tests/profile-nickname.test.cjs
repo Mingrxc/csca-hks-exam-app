@@ -46,7 +46,7 @@ test('nickname edits stay in place; cancel preserves profile and WeChat quick-fi
   assert.equal(env.user.userInfo.nickname, '原来的昵称')
   assert.equal(env.calls.length, 0)
   await env.page.editNickname()
-  // Native nickname quick-fill may deliver its final value on blur.
+  // 微信昵称快捷填写可能在失焦时才给出最终值。
   env.page.onNicknameBlur(input('  微信昵称  '))
   await env.page.saveNickname()
   assert.equal(env.calls[0].nickname, '微信昵称')

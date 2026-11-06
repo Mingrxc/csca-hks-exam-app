@@ -1,5 +1,3 @@
-"""AI 问答业务逻辑."""
-
 from __future__ import annotations
 
 from textwrap import dedent

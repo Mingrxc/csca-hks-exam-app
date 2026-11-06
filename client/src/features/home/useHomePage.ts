@@ -25,7 +25,7 @@ export function useHomePage() {
     const revision = checkInRevision
     const refreshCheckIn = !checkInState.loading.value
     const result = await dashboardState.execute(async () => toDashboardData(await userApi.getDashboard()))
-    // A dashboard response started before/during check-in must not undo its result.
+    // 较早发出的看板请求可能最后返回，避免它覆盖本次签到。
     if (result && refreshCheckIn && revision === checkInRevision) {
       checkInState.data.value = result.checkIn
       checkInState.error.value = ''

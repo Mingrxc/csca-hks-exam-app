@@ -43,18 +43,3 @@ export interface DashboardData {
   favoriteCount: number
   recentPapers: RecentPaper[]
 }
-
-export interface UserProfile {
-  id?: number
-  userCode?: string
-  objectiveCount?: number
-  nickname: string
-  avatarUrl: string
-  targetExam: ExamType
-  targetDate: string
-  targetDates: ExamTargetDates
-  totalQuestions: number
-  correctRate: number
-  streakDays: number
-  favoriteCount: number
-}

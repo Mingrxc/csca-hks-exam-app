@@ -1,5 +1,3 @@
-"""Alembic migration environment."""
-
 from logging.config import fileConfig
 
 from alembic import context
@@ -7,7 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from src.config.database import Base, sync_url
 
-# Register all tables on Base.metadata before Alembic compares schemas.
+# 先注册所有 ORM 表，Alembic 才能比较完整的结构。
 from src.modules.admin.models import AdminAudit, AdminMember, AdminOwner  # noqa: F401
 from src.modules.content.models import ContentItem  # noqa: F401
 from src.modules.feedback.models import Feedback  # noqa: F401

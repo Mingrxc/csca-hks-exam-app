@@ -1,5 +1,3 @@
-"""pytest 配置和 fixtures"""
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
@@ -9,7 +7,7 @@ from sqlalchemy.pool import StaticPool
 from main import app
 from src.config.database import Base
 
-# Import models so SQLAlchemy registers every table used by service tests.
+# 加载模型后再建表，确保隔离库包含测试使用的全部关系。
 from src.modules.content.models import ContentItem  # noqa: F401
 from src.modules.feedback.models import Feedback  # noqa: F401
 from src.modules.favorite.models import Favorite  # noqa: F401

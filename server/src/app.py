@@ -1,5 +1,3 @@
-"""Application factory."""
-
 import logging
 from time import perf_counter
 

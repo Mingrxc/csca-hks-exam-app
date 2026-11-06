@@ -1,4 +1,3 @@
-"""User module SQLAlchemy models."""
 from sqlalchemy import Column, Date, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint, event
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.sql import func

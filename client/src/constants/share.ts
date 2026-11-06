@@ -6,7 +6,7 @@ export function createAppShareMessage() {
   return {
     title: APP_SHARE_TITLE,
     path: '/pages/index/index',
-    // 固定图片避免默认页面截图包含用户的学习记录或聊天内容。
+    // 固定图片避免默认页面截图包含用户的学习记录或问答内容。
     imageUrl: APP_ICON_PATH,
   }
 }

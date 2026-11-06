@@ -1,7 +1,7 @@
-"""New-bank contracts, media isolation, grouped selection and self-assessment."""
 from contextlib import contextmanager
 from dataclasses import replace
 from functools import lru_cache
+import json
 from pathlib import Path
 import sys
 
@@ -20,13 +20,14 @@ from src.modules.user.service import get_dashboard
 from src.modules.wrongbook.models import WrongBook
 
 ROOT = Path(__file__).resolve().parents[2]
+BANK_ROOT = ROOT.parent / "original_question_bank"
 sys.path.insert(0, str(ROOT / "scripts"))
 from import_questions import load_questions, upsert_questions
 
 
 @lru_cache
 def bank():
-    return load_questions(ROOT.parent / "original_question_bank")
+    return load_questions(BANK_ROOT)
 
 
 def make_question(**overrides):
@@ -49,13 +50,24 @@ def setup_paper(db, questions, mode="practice"):
 def test_complete_bank_preserves_source_and_excludes_all_spoken_tasks():
     questions, report = bank()
     assert not report.invalid and report.duplicate_in_source == 0
-    assert len(questions) == 1221
-    assert sum(q.exam_type == "HKS" for q in questions) == 671
-    assert report.skipped_resources["deferred_oral_questions"] == 99
-    assert len({q.bank_id for q in questions}) == len(questions)
+    expected_ids = set()
+    deferred_count = 0
+    # 题库在仓库外独立更新，按源题编号核对本次实际覆盖范围。
+    for path in BANK_ROOT.rglob("questions.json"):
+        if {"_assets", "_management"}.intersection(path.relative_to(BANK_ROOT).parts):
+            continue
+        for item in json.loads(path.read_text(encoding="utf-8")):
+            if item.get("subject") == "口语" or item.get("response_mode") in {"oral", "oral_translation"}:
+                deferred_count += 1
+            else:
+                expected_ids.add(item["question_id"])
+    assert {q.exam_type for q in questions} == {"CSCA", "HKS"}
+    assert report.skipped_resources["deferred_oral_questions"] == deferred_count > 0
+    assert {q.bank_id for q in questions} == expected_ids
+    assert len(questions) == len(expected_ids)
     assert all(q.source_data["question_id"] == q.bank_id for q in questions)
     assert not any(q.response_mode in {"oral", "oral_translation"} for q in questions)
-    assert sum(q.response_mode in {"written_response", "essay", "short_answer", "translation"} for q in questions) == 81
+    assert {"written_response", "essay", "short_answer", "translation"} <= {q.response_mode for q in questions}
     image_question = next(q for q in questions if any(o.get("image") for o in q.options))
     assert image_question.options[0]["image"]
     assert max(len(q.answer) for q in questions) > 256

@@ -1,4 +1,3 @@
-"""Persist normalised avatar images outside the source checkout."""
 from io import BytesIO
 from pathlib import Path
 import re

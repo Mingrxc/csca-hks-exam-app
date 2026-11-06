@@ -1,4 +1,3 @@
-"""Targeted V1.5.4 checks; all data and uploads are isolated from real services."""
 from io import BytesIO
 import importlib.util
 from pathlib import Path
@@ -142,7 +141,7 @@ def test_owner_binding_previews_and_never_overwrites_another_owner(db_session):
 
 
 def test_migration_preserves_existing_ids_records_and_publishes_exact_notice():
-    # Independent pre-0011 schema; never connects to the configured MySQL database.
+    # 在独立 SQLite 中模拟 0011 之前的表结构。
     engine = sa.create_engine("sqlite:///:memory:")
     with engine.begin() as connection:
         connection.execute(sa.text("CREATE TABLE users (id INTEGER PRIMARY KEY, nickname TEXT)"))

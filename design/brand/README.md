@@ -1,7 +1,5 @@
-# 品牌图标原稿
+# 品牌资产
 
-`icon-original.png` 是原始 1254 × 1254 PNG 图标，完整保留原始文件，供后续设计或重新导出使用。
+`icon-original.png` 是 1254 × 1254 图标原稿。运行图 [icon.png](../../client/src/static/brand/icon.png) 为 384 × 384，供微信分享、关于页和朋友圈预览使用。
 
-小程序实际使用 `client/src/static/brand/icon.png`，为同一设计的 384 × 384 PNG，约 140 KiB。原稿位于前端源码目录之外，不随小程序代码包发布。
-
-好友分享、朋友圈分享和朋友圈预览通过 `client/src/constants/brand.ts` 的 `APP_ICON_PATH` 统一引用运行图片。修改资源后，应检查构建产物中的媒体大小和主包体积，并进行真机分享验收。
+`ai.png`、`ai-active.png` 是待接回 AI 问答的旧导航图标。它们保留在设计目录，接回标签栏时再由小程序使用。

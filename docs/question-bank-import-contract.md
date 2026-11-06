@@ -52,8 +52,8 @@ python -m alembic check
 python -m pytest -q
 ```
 
-reset_database默认只输出计划。实际执行先成功生成SQL备份与SHA-256，再重建业务表和Alembic状态，升级到0007_question_bank_v2并导入题库；不更改MySQL服务、账号或真实配置。非本地主机另需显式--allow-remote。
+`reset_database.py` 默认只输出计划。显式重建先生成并校验 SQL 备份，再重建业务表和 Alembic 状态、升级至当前迁移头并导入题库。非本地主机另需显式传入 `--allow-remote`。
 
-后续题目修订用import_questions.py --apply。export_schema.py从ORM生成结构参考；正式初始化使用Alembic。build_backend_bundle.py包含新版后端、迁移、题目及活动题实际引用的153个媒体文件，不含真实环境配置、备份或用户数据。保留包内相对目录。
+后续题目修订用 `import_questions.py --apply`。`export_schema.py` 从 ORM 生成结构参考，初始化使用 Alembic。`build_backend_bundle.py` 保留后端、迁移、原题和活动题引用媒体的相对目录，清单记录本次实际题量与媒体数。
 
 本地验收不代表已经发布。音频播放验证不代替逐条人工听审。开放题自评不是官方评分或AI评阅。

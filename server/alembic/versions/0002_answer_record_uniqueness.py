@@ -42,7 +42,7 @@ def upgrade() -> None:
     op.execute("ALTER TABLE streak_records RENAME INDEX idx_user TO idx_streak_user")
     op.execute("ALTER TABLE streak_records RENAME INDEX idx_date TO idx_streak_date")
 
-    # Keep the newest record for each natural key before adding the constraint.
+    # 加唯一约束前，每份试卷的同一题只保留最新答题记录。
     op.execute(
         """
         DELETE older

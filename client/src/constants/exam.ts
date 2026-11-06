@@ -8,7 +8,7 @@ import type {
 } from '@/types/exam'
 import { getLanguage, levelLabel, t } from '@/i18n'
 
-// Preserve the existing API/database identifier; show the correct exam name.
+// 界面显示 HSK，接口和数据库仍使用 HKS。
 export function getExamLabel(examType: string): string {
   return examType === 'HKS' ? 'HSK' : examType
 }
@@ -16,7 +16,7 @@ export function getExamLabel(examType: string): string {
 export function getPaperTitle(title: string): string {
   const normalized = title.replace(/\bHKS\b/g, 'HSK')
   if (getLanguage() !== 'en') return normalized
-  // Only generated labels change on screen; stored titles stay unchanged.
+  // 组卷标题只在展示时翻译，保留服务端原值。
   return normalized.split(' ').map(part => {
     const level = part.match(/^(\d+(?:-\d+)?)级$/)?.[1]
     return level ? levelLabel(level) : part.split('/').map(label => t(label)).join('/')
@@ -77,7 +77,7 @@ export const DIFFICULTY_OPTIONS: Array<{ label: string; value: DifficultyFilter 
 export const QUESTION_COUNT_OPTIONS = [10, 20, 30, 50]
 export const TIME_LIMIT_OPTIONS = [30, 45, 60, 90, 105, 120]
 
-// Available categories and timed profiles are provided by the backend bank.
+// 错题本读取分类失败时使用这两组本地选项。
 export const CSCA_SUBJECT_OPTIONS = [
   '数学',
   '物理',
@@ -87,22 +87,6 @@ export const CSCA_SUBJECT_OPTIONS = [
 ]
 
 export const HSK_KNOWLEDGE_OPTIONS = [
-  '听力理解',
-  '阅读理解',
-  '书写表达',
-  '翻译表达',
-  '词汇语法',
-]
-
-export const HSK_CATEGORY_OPTIONS = [
-  '听力',
-  '阅读',
-  '书写',
-  '写作',
-  '翻译',
-]
-
-export const WRONG_BOOK_KNOWLEDGE_POINTS = [
   '听力理解',
   '阅读理解',
   '书写表达',
@@ -121,10 +105,6 @@ export const WRONG_REASONS = [
 
 export function getSpecialLabel(examType: ExamType): string {
   return examType === 'CSCA' ? '科目' : '知识点'
-}
-
-export function getSpecialOptions(examType: ExamType): string[] {
-  return examType === 'CSCA' ? CSCA_SUBJECT_OPTIONS : HSK_KNOWLEDGE_OPTIONS
 }
 
 export function getQuestionDomain(question: { examType?: ExamType; subject?: string; knowledgePoint?: string }): string {

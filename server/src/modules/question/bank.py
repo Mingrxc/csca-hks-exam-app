@@ -1,4 +1,3 @@
-"""Shared bank policy, media mapping and task semantics."""
 from pathlib import Path, PurePosixPath
 from urllib.parse import quote
 
@@ -9,7 +8,7 @@ DEFERRED_MODES = {"oral", "oral_translation"}
 SELF_REVIEW_MODES = {"written_response", "essay", "short_answer", "translation"}
 LEVELS = ["1", "2", "3", "4", "5", "6", "7-9"]
 
-# Timed practice profiles for the available non-oral bank; not official full papers.
+# 限时练习的题量按现有非口语题库配置。
 PRACTICE_PROFILES = {
     "1": {"听力": 20, "阅读": 20},
     "2": {"听力": 20, "阅读": 20, "书写": 10},

@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { userApi } from '@/features/user/api'
-import { getExamLabel } from '@/constants/exam'
 import { resolveMediaUrl } from '@/api/client'
 import { accessToken, activeUserId, adminRole, setAdminRole, clearSession, establishSession, sessionGeneration } from '@/shared/auth/session'
 import type { ApiUser } from '@/api/contracts'
@@ -83,16 +82,9 @@ export const useUserStore = defineStore('user', () => {
     selectedExams.value = normalize(exams).slice(0, 2)
     try { uni.setStorageSync(selectionKey(), selectedExams.value) } catch {}
   }
-  function toggleSelectedExam(exam: ExamType) {
-    const next = selectedExams.value.includes(exam) ? selectedExams.value.filter(value => value !== exam) : [...selectedExams.value, exam]
-    setSelectedExams(next)
-  }
   return { token: accessToken, openid, userInfo, isLogin, busy, selectedExams, adminRole,
     isAdmin: computed(() => isLogin.value && adminRole.value !== 'user'),
     isOwner: computed(() => isLogin.value && adminRole.value === 'owner'),
-    isBrowseMode: computed(() => selectedExams.value.length === 0),
-    selectedExamText: computed(() => selectedExams.value.length ? selectedExams.value.map(getExamLabel).join(' / ') : '随便看看'),
     primaryExam: computed<ExamType>(() => selectedExams.value[0] || userInfo.value.targetExam),
-    correctRate: computed(() => userInfo.value.correctRate),
-    setSelectedExams, toggleSelectedExam, setBrowseMode: () => setSelectedExams([]), applyProfile, restoreSession, refreshProfile, login, logout }
+    setSelectedExams, setBrowseMode: () => setSelectedExams([]), applyProfile, restoreSession, refreshProfile, login, logout }
 })

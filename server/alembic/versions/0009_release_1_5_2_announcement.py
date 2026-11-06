@@ -41,8 +41,7 @@ def upgrade():
         "release_version": "1.5.2", "published_at": now, "is_active": 1,
         "sort_order": 0, "created_at": now, "updated_at": now,
     }
-    # Also works for offline SQL generation. Keep any pre-existing 1.5.2 record,
-    # including an intentionally unpublished or operator-edited announcement.
+    # 同版记录可能已编辑或撤下，离线 SQL 也应原样保留。
     exists = sa.exists(sa.select(announcements.c.release_version).where(
         announcements.c.category == "notice", announcements.c.release_version == "1.5.2",
     ))
@@ -52,5 +51,5 @@ def upgrade():
 
 
 def downgrade():
-    # Announcements are editorial history. A code rollback must not erase them.
+    # 应用回退时保留已形成的公告历史。
     pass

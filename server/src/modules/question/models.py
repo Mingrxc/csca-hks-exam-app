@@ -1,5 +1,3 @@
-"""Question bank SQLAlchemy models."""
-
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.mysql import TINYINT

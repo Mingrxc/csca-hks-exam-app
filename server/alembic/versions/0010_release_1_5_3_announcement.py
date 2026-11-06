@@ -31,7 +31,7 @@ def upgrade():
         "release_version": "1.5.3", "published_at": now, "is_active": 1,
         "sort_order": 0, "created_at": now, "updated_at": now,
     }
-    # Preserve an existing same-version record, including a withdrawn draft.
+    # 同版公告可能已撤下，迁移时保留现有记录。
     exists = sa.exists(sa.select(announcements.c.release_version).where(
         announcements.c.category == "notice", announcements.c.release_version == "1.5.3",
     ))
@@ -41,5 +41,5 @@ def upgrade():
 
 
 def downgrade():
-    # Code rollback must not delete editorial history.
+    # 应用回退时保留已形成的公告历史。
     pass

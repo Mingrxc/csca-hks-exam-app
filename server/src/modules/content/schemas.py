@@ -1,5 +1,3 @@
-"""首页内容模块 Pydantic 模型"""
-
 from datetime import datetime
 from enum import Enum
 from typing import Optional

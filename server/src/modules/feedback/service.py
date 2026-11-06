@@ -29,7 +29,7 @@ def check_replay(item: Feedback, payload: FeedbackCreate) -> dict:
 
 
 def submit_feedback(db: Session, user_id: int, payload: FeedbackCreate) -> dict:
-    # Serialize submissions per user on MySQL, including the frequency checks.
+    # 先锁用户，再读重试记录和频率计数，避免同一用户并发绕过限制。
     db.query(User).filter(User.id == user_id).with_for_update().one()
     existing = db.query(Feedback).filter_by(user_id=user_id, request_id=payload.request_id).first()
     if existing:

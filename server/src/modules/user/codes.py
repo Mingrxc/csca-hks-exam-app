@@ -1,4 +1,3 @@
-"""Allocate permanent public user numbers using a transactional counter."""
 import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
@@ -8,7 +7,7 @@ def allocate_user_code(connection) -> str:
     from src.modules.user.models import UserCodeCounter
 
     counter = UserCodeCounter.__table__
-    # Bootstrapping is also needed by isolated create_all test databases.
+    # 测试库直接用 ORM 建表，首次发号时补上计数行。
     if connection.dialect.name == "mysql":
         statement = mysql_insert(counter).values(id=1, next_value=1).on_duplicate_key_update(id=1)
     else:

@@ -31,7 +31,7 @@ Dependencies point downward. Shared code cannot import pages or feature-specific
 ## State ownership
 
 - Pinia stores hold state that must survive page changes or app lifecycle transitions. The user store owns authentication and selected exams. The exam store owns the active paper and its recoverable progress.
-- Home, practice and profile share `userStore.selectedExams`: zero selections means browsing, one means a single goal, and two means both goals. `ExamSelection` emits independent toggles. `useExamNavigation` asks which exam to practice when there are zero or two goals; the session choice does not change the stored goals. Active paper recovery retains its original exam type.
+- Profile edits `userStore.selectedExams`. `useExamNavigation` asks which exam to practice when there are zero or two goals and keeps the stored goals when choosing a session. Active paper recovery retains its original exam type.
 - Feature composables own page-scoped server state such as loading, error, empty, and loaded data.
 - Pages compose views and navigation. They do not implement authentication, raw networking, or reusable request-state machinery.
 - Components receive data through props and emit user intent; they do not fetch server data.
@@ -40,11 +40,11 @@ Dependencies point downward. Shared code cannot import pages or feature-specific
 
 The profile page offers Simplified Chinese / English without requiring login. `i18n/index.ts` keeps a reactive locale and a local `app_language_v1` preference; first launch follows WeChat language, and an explicit choice takes priority. `i18n/page.ts` updates the active native navigation title and three native tabs (Home, Practice, Me), and refreshes cached pages when shown. A locale change does not navigate or reset practice or feedback state.
 
-Translate interface copy and common taxonomy labels at display time with `t()`, keeping raw filter values and API identifiers stable. Keep original question material, detailed bank knowledge points, scoring text, user content and announcement titles/bodies unchanged. Native prompts use `i18n/ui.ts`, which preserves editable user text. Version1.5.3 removes the AI page, client API wrapper and all AI entry points. See [interface-language.md](interface-language.md) and [release-1.5.3.md](release-1.5.3.md).
+Translate interface copy and common taxonomy labels at display time with `t()`, keeping raw filter values and API identifiers stable. Keep original question material, detailed bank knowledge points, scoring text, user content and announcement titles/bodies unchanged. Native prompts use `i18n/ui.ts`, which preserves editable user text. See [interface-language.md](interface-language.md).
 
 ## Active exam recovery
 
-`useExamStore` writes a versioned `exam_active_progress_v2` snapshot after every meaningful change and when the app enters the background. The snapshot includes:
+`useExamStore` writes an account-scoped `exam_active_progress_v3_<userId>` snapshot after meaningful changes and when the app enters the background. The snapshot includes:
 
 - paper identity, configuration, and the redacted question payload;
 - current question and selected answers;
@@ -58,7 +58,7 @@ The snapshot only contains fields already delivered to the client. Both modes st
 
 ## Shared UI states
 
-`AppState` supplies consistent loading, empty, and retryable error presentation. `confirmAction` supplies promise-based confirmation. Existing `QuestionItem`, `AnswerCard`, `CountdownBar`, and `RingChart` cover question display, answer navigation, timed progress, and result visualization.
+`AppState` supplies consistent loading, empty, and retryable error presentation. `confirmAction` supplies promise-based confirmation. `QuestionItem`, `AnswerCard`, and `CountdownBar` cover question display, answer navigation, and timed progress.
 
 New screens should reuse these foundations before adding page-local variants.
 
@@ -80,10 +80,10 @@ Page styles may define layout, but should not introduce a second brand palette o
 - Background `#F7F1E8`, card surface `#FFFAF3`, primary terracotta `#B86B4B`, charcoal text `#2F2926`, and sage accent `#7E9A80`.
 - Use quiet solid surfaces, light borders and shadows, readable sans-serif text, and serif accents for dashboard numbers.
 - Keep the native navigation and three tabs: 首页、刷题、我的 (updated in1.5.3).
-- Home prioritizes goals, a resume/start action, live study metrics, review tools and recent practice. News remains a preparation state until real content is available.
+- Home prioritizes the current week's check-ins, the resume or start action, and study metrics.
 - Display HSK in UI text through `getExamLabel` / `getPaperTitle`; preserve the existing `HKS` backend identifier.
 - `AppState` supports `compact` for inline cards. Failed data requests should expose retry, not fabricate zero metrics or successful empty lists.
-- AI is withdrawn in1.5.3: no conversation page, navigation item, question-to-AI actions or preview promotion. Backend implementation is retained without a mounted public route.
+- The [AI page source](../client/src/pages/ai/README.md) and client adapter are retained for reactivation. The page is excluded from `pages.json` and the backend router is unmounted.
 - Vite uses the already available esbuild minifier, so local builds do not require the absent optional terser package.
 
 ## Adding a feature
@@ -97,7 +97,7 @@ Page styles may define layout, but should not introduce a second brand palette o
 
 ## New bank UI (2026-10-22)
 
-Catalog data drives version, level, subject, module and knowledge-point controls. Oral and oral-translation tasks are deferred. QuestionItem supports audio lifecycle, image stems/options, written drafts, explicit submission and self-review. API media paths resolve through the configured API origin. Result pages reuse QuestionItem for complete material and solution review. Objective accuracy and self-assessed scores are displayed independently. Version2 snapshots avoid restoring stale IDs after the database rebuild.
+Catalog data drives version, level, subject, module and knowledge-point controls. Oral and oral-translation tasks are deferred. QuestionItem supports audio lifecycle, image stems/options, written drafts, explicit submission and self-review. API media paths resolve through the configured API origin. Result pages reuse QuestionItem for complete material and solution review. Objective accuracy and self-assessed scores are displayed independently.
 
 ## Profile support pages (1.5.1)
 
@@ -111,7 +111,7 @@ The privacy link invokes `wx.openPrivacyContract` only on WeChat and shows an ap
 
 ## V1.5.4 authentication
 
-Public tabs browse without sign-in. shared/auth/session tracks token, verified user ID and session generation; navigation owns the login prompt and pending destination. Only the login page calls the user store login action. App launch validates an existing token without initiating WeChat login. API responses from earlier sessions are discarded. AuthFrame guards private pages. Profile data is shared through the user store; practice snapshots and preferences are scoped by internal user ID. See release-1.5.4.md for migration and avatar storage.
+Public tabs browse without sign-in. `shared/auth/session` tracks token, verified user ID and session generation. `shared/auth/navigation` owns the login prompt and pending destination. Registered pages go through the login page to call the user store login action. App launch validates an existing token. API responses from earlier sessions are discarded. AuthFrame guards private pages. The user store shares profile data, and practice snapshots and preferences are scoped by internal user ID. See [the login release](release-1.5.4.md) for migration and avatar storage.
 
 ## Management (1.5.5 trial)
 

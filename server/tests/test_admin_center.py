@@ -1,4 +1,3 @@
-"""Targeted authorization, metrics, bootstrap and migration checks in isolated SQLite."""
 from datetime import timedelta
 import importlib.util
 from pathlib import Path
@@ -34,7 +33,7 @@ def admin_env(db_session, client, monkeypatch):
     content = ContentItem(category="notice", title="草稿", summary="摘要", body="未发布全文", is_active=0)
     db_session.add_all([feedback, content])
     db_session.commit()
-    # Legacy allowlist must grant no access, even to a real logged-in user.
+    # 旧白名单里的账号即使已登录，也必须由数据库角色授权。
     monkeypatch.setattr(settings, "CONTENT_ADMIN_OPENIDS", "outsider")
     def database():
         try:

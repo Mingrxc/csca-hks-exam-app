@@ -1,35 +1,10 @@
-# 工具脚本
+# 项目维护脚本
 
-更新：2026-10-30。使用现有Conda deng或服务器既有Python环境，不新建环境或安装依赖。
+在仓库根目录使用项目 Python 环境执行。涉及数据库的脚本沿用后端配置，变更前核对目标库。
 
-| 脚本 | 用途 |
-|---|---|
-| bootstrap_admin_owner.py | 默认只读预览本人账号；核实后同时提供--expected-user-id和--apply；正式模式绑定lw000，--temporary保留试用账号原编号，不自动运行。 |
-| import_questions.py | 默认校验原始题库；--apply按稳定题号写入，--verify-db核对。 |
-| check_database_integrity.py | 只读检查业务归属、外键、重复键、题量及迁移版本，包含反馈表。 |
-| manage_feedback.py | 运营者在服务器读取/导出私密反馈；显式--mark配合--to才更新状态。 |
-| assign_owner_code.py | 先核实本人内部用户ID；--user-id默认只读预览，显式--apply绑定lw000，不授予管理员权限。 |
-| export_schema.py | 根据ORM生成database/schema.sql参考，不连接数据库。 |
-| build_backend_bundle.py | 打包后端、最新迁移、工具、原题和153份活动媒体，生成SHA与清单，不含真实配置/用户/备份/依赖。 |
-| reset_database.py | 默认仅计划；只有明确授权的重建任务才运行--apply，先验证SQL备份再重建到Alembic head。1.5.1不使用。 |
-
-项目根目录的只读检查和反馈维护：
-
-```powershell
-conda activate deng
-python scripts/check_database_integrity.py
-python scripts/manage_feedback.py --status unread
-python scripts/manage_feedback.py --mark 12 --to read
-```
-
-反馈可通过--page/--page-size分页，--output导出当前页到指定仓库外私有JSON路径。反馈原文与导出不得提交Git。CLI要求运营者拥有服务器及数据库配置访问权限；1.5.5的HTTP管理权限由数据库角色控制，旧CONTENT_ADMIN_OPENIDS白名单不再授予权限。主管理员首次绑定和试用步骤见docs/release-1.5.5.md。
-
-后端打包：
-
-```powershell
-python scripts/build_backend_bundle.py
-```
-
-题库来源为同级original_question_bank，产物在同级deployment-artifacts。新打包清单标记0008_feedback_announcements，包含manage_feedback和1.5.1发布说明；20261022旧包不含本轮代码。打包不上传服务器或写数据库。
-
-1.5.1部署只增量执行Alembic，保留现有题库/用户/学习数据。详见[发布说明](../docs/release-1.5.1.md)。
+- `import_questions.py` 从同级 `original_question_bank/` 校验题库，`--apply` 写入，`--verify-db` 读取题库计数。源格式见[题库契约](../docs/question-bank-import-contract.md)。
+- `check_database_integrity.py` 只读检查题目、业务归属、重复键和外键。`export_schema.py` 离线生成 `database/schema.sql`。
+- `build_backend_bundle.py` 将后端、迁移、测试、题库和引用的素材打包到同级 `deployment-artifacts/`。仓库根 `.env.example` 随包放到 `server/`，真实配置不入包。
+- `bootstrap_admin_owner.py` 预览或绑定唯一主管理员，`assign_owner_code.py` 独立维护保留编号。`manage_feedback.py` 支持私密反馈查询，显式指定 `--mark` 与 `--to` 才更新状态。
+- `reset_database.py` 默认只预览重建步骤，仅在明确要重建时使用 `--apply`，并先完成备份。
+- `start_public_dev.ps1` 和 `start_public_dev.cmd` 使用已安装的 cloudflared 启动联调。参数与进程环境变量见[网络说明](../docs/network-environments.md)。

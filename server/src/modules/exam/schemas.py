@@ -1,5 +1,3 @@
-"""考试模块 Pydantic 模型"""
-
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from typing import Optional
 

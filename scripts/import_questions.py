@@ -1,12 +1,3 @@
-"""Validate and import the sibling original_question_bank into questions.
-
-Default mode is a dry run:
-    server/.venv/Scripts/python.exe scripts/import_questions.py
-
-Write to the configured database explicitly:
-    server/.venv/Scripts/python.exe scripts/import_questions.py --apply
-"""
-
 from __future__ import annotations
 
 import argparse

@@ -1,14 +1,6 @@
-"""用户模块 Pydantic 模型"""
-
 from pydantic import BaseModel, ConfigDict, Field
 from datetime import date, datetime
 from typing import Literal, Optional
-
-
-class UserCreate(BaseModel):
-    openid: str
-    nickname: Optional[str] = None
-    avatar_url: Optional[str] = None
 
 
 class UserResponse(BaseModel):

@@ -1,5 +1,3 @@
-"""Question-bank API routes."""
-
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from fastapi.responses import FileResponse

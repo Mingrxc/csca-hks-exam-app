@@ -1,5 +1,3 @@
-"""User API routes."""
-
 from fastapi import APIRouter, Depends, File, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session

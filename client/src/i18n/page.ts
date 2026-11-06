@@ -14,6 +14,7 @@ const pageTitles: Record<string, string> = {
   'pages/exam/answer': '答题中',
   'pages/exam/result': '成绩报告',
   'pages/exam/history': '历史试卷',
+  'pages/ai/index': 'AI问答',
   'pages/profile/index': '我的',
   'pages/favorite/index': '收藏题目',
   'pages/wrongbook/index': '错题本',
@@ -39,7 +40,7 @@ export function updatePageChrome(route: string): void {
   }
 }
 
-/** No navigation or state reset: cached pages refresh their own chrome when shown. */
+// 缓存页重新显示时更新导航文案，避免跳转导致状态丢失。
 export function usePageI18n(route: string) {
   onShow(() => updatePageChrome(route))
   watch(language, () => updatePageChrome(route))

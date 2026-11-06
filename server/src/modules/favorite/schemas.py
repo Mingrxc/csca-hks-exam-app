@@ -1,5 +1,3 @@
-"""收藏模块 Pydantic 模型"""
-
 from datetime import datetime
 from typing import Optional
 

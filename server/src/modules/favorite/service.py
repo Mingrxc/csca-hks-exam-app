@@ -1,5 +1,3 @@
-"""收藏业务逻辑."""
-
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 

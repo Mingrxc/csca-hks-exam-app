@@ -16,7 +16,7 @@ export function showModal(options: Parameters<typeof uni.showModal>[0]) {
   return uni.showModal({
     ...options,
     title: t(options.title || ''),
-    // Editable content is user data, such as a nickname.
+    // 可编辑内容是昵称等用户输入，按原文展示。
     content: options.editable ? options.content : t(options.content || ''),
     placeholderText: t(options.placeholderText || ''),
     confirmText: t(options.confirmText || '确定'),

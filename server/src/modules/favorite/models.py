@@ -1,5 +1,3 @@
-"""Favorite-question SQLAlchemy models."""
-
 from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint
 from sqlalchemy.sql import func
 

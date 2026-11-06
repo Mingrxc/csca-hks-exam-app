@@ -37,7 +37,7 @@ def upgrade():
         "updated_at": now,
     }
     target = sa.and_(announcements.c.category == "notice", announcements.c.release_version == "1.5.5")
-    # 0012 is already deployed: update its draft in place, keeping its ID and creation time.
+    # 更新 0012 创建的草稿，保留公告编号和创建时间。
     op.execute(announcements.update().where(target).values(**values))
     values.update(sort_order=0, created_at=now)
     exists = sa.exists(sa.select(announcements.c.release_version).where(target))
@@ -47,5 +47,5 @@ def upgrade():
 
 
 def downgrade():
-    # An application rollback must not restore obsolete wording or remove the notice.
+    # 应用回退时保留已经定稿的公告。
     pass

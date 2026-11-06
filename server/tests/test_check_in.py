@@ -1,4 +1,3 @@
-"""Check-in and answering share daily records; tests never use the real database."""
 from datetime import date, datetime, timezone
 
 import pytest

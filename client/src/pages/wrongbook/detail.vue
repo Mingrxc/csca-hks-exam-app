@@ -171,7 +171,7 @@ const markMastered = async () => {
     question.value.mastered = payload.is_mastered
     showToast({ title: payload.is_mastered ? '已标记为掌握' : '已取消标记', icon: 'success' })
   } catch {
-    // The shared request layer already displays the error message.
+    // 请求层已显示保存失败提示。
   }
 }
 

@@ -14,7 +14,7 @@ export function useExamNavigation() {
       return
     }
 
-    // A paper has one exam type; choosing this session does not change study goals.
+    // 本次试卷只选一个考试类型，长期备考偏好另行保存。
     const exams: ExamType[] = ['HKS', 'CSCA']
     showActionSheet({
       itemList: exams.map((exam) => `${getExamLabel(exam)} ${t(action)}`),

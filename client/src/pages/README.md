@@ -1,41 +1,5 @@
-# 页面目录
+# 页面
 
-| 模块 | 页面 | 说明 |
-|------|------|------|
-| 管理 | `admin/index` | 已授权账号的数据概览，普通用户隐藏入口 |
-| 管理 | `admin/users` | 用户编号/昵称查询、学习统计与分页，只读 |
-| 管理 | `admin/feedback` | 管理员可看反馈全文，仅主管理员改状态 |
-| 管理 | `admin/members` | 主管理员按lw编号添加/撤销只读管理员 |
-| 首页 | `index/index` | 连续学习天数、本周七天打卡、手动签到、继续练习及学习统计；资讯仍为筹备状态 |
-| 刷题 | `exam/index` | 组卷策略入口、历史试卷和学习数据（Tab 主页） |
-| 刷题 | `exam/paper` | 组卷配置页（考试类型/题量/难度/知识点/模式/限时） |
-| 刷题 | `exam/answer` | 答题页（复用 `QuestionItem` / `AnswerCard` / `CountdownBar`） |
-| 刷题 | `exam/result` | 成绩报告页（分数、用时统计、错题列表） |
-| 补充 | `favorite/index` | 收藏题目列表与取消收藏 |
-| 补充 | `content-admin/index` | 主管理员保存草稿、发布、编辑、确认撤下内容及公告；只读管理员仅查看全文 |
-| 个人 | `login/index` | 主动微信登录、头像选择和昵称保存 |
-| 个人 | `profile/index` | 个人中心（头像、昵称原位编辑及保存、统计、目标设置） |
-| 个人 | `feedback/index` | 私密文字反馈，用户隔离草稿、失败重试与回执 |
-| 个人 | `about/index` | 品牌图标、名称、实际版本（当前1.5.4）、介绍、更新公告与隐私保护指引 |
-| 个人 | `about/announcements` | 已发布更新公告的分页列表 |
-| 个人 | `about/announcement` | 纯文本公告详情 |
-| 补充 | `wrongbook/index` | 错题本列表 |
-| 补充 | `wrongbook/detail` | 错题详情 |
-| 补充 | `wrongbook/redo` | 错题重做页 |
+`../pages.json` 决定实际路由和标签。首页、刷题、我的可供游客浏览，收藏、历史、答题、错题重做、反馈和管理入口按登录状态处理。
 
-组卷设置、正常答题及错题重做页均为整页上下滚动，底部操作区跟随内容，不吸底；答题两页切题后回到页面顶部，隐藏页面不触发滚动。答题卡继续使用弹层。
-
-首页不再显示HSK/CSCA快捷选择或目标日期/倒计时。签到卡按北京时间展示周一至周日状态；登录后点击签到，当天答题也自动打卡，两者共用同一天记录。游客点击签到进入既有登录提示，不产生游客记录。考试目标仍可在“我的”维护，首页保留开始/继续练习入口。相关API见 `src/api/README.md`，需要服务器更新后手动签到才可入库。
-
-## 页面路由
-
-由 `pages.json` 统一管理，TabBar 包含首页、刷题、我的三个入口；中英文标签随语言切换同步更新。1.5.3已移除AI页面及所有前端入口。
-
-## 共享层
-
-- `src/constants/`：题型、难度、组卷策略等共享配置
-- `src/features/`：领域 API 和页面级服务端状态
-- `src/shared/`：领域无关 composable 与 UI 工具
-- `src/types/`：前端共享类型
-
-1.5.4三个Tab允许游客浏览，登录拦截在业务卡片/操作触发，私有页面使用AuthFrame兜底；公开关于/公告/语言不拦截。
+刷题从 [exam](exam/README.md) 进入，复习相关页面在 [wrongbook](wrongbook/README.md) 和 [favorite](favorite/README.md)。资料与登录见 [profile](profile/README.md)、[login](login/README.md)。公告和运营入口在 [about](about/README.md)、[admin](admin/README.md)、[content-admin](content-admin/README.md)。[ai](ai/README.md) 保留待接回源码，页面未注册。

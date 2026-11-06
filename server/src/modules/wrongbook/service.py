@@ -1,5 +1,3 @@
-"""错题本业务逻辑."""
-
 from datetime import datetime
 from html import escape
 from io import BytesIO

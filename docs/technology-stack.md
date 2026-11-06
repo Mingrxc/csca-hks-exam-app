@@ -6,7 +6,7 @@
 
 项目本体：`D:\Projects\Deng\csca-hks-exam-app`
 
-本文依据当前仓库源码、依赖锁定文件及既有服务器部署记录整理。前端精确依赖版本取自 `client/package-lock.json`；后端依赖版本取自 `server/requirements.txt`，不代表本次重新检查了服务器安装清单。2026-10-30本地1.5.3已撤销AI功能，尚未部署；正式服务器最新既有记录为2026-10-26的1.5.2。本次没有安装新依赖。
+本文汇总仓库技术栈和历史部署记录。当前依赖、配置和启动方式见 `client/package-lock.json`、`server/requirements.txt` 与[仓库入口](../README.md)。发布和服务器状态按记录所属日期阅读。
 
 1.5.4新增主动微信登录、唯一lw编号、Pillow头像持久化上传及账号缓存隔离；最新迁移0011_login_strategy，尚未部署。用户主键与学习记录保留，管理员页面留待后续。
 
@@ -19,7 +19,7 @@
 整体采用前后端分离架构：uni-app 编译微信小程序前端，FastAPI 提供单体模块化后端服务，MySQL 保存业务数据，Nginx 提供 HTTPS 入口和题目媒体访问。
 
 ```text
-微信小程序 / 本地H5预览
+微信小程序
         │ HTTPS + JSON + JWT
         ▼
       Nginx
@@ -32,7 +32,7 @@
 原始题库JSON → Python校验/导入工具 → MySQL题目表
 ```
 
-当前后端按业务模块组织，并非微服务拆分。前端主要交付微信小程序，H5用于本地预览与界面验收；依赖中存在其他uni-app平台包，不表示已发布对应平台产品。
+后端按业务模块组织。前端开发和发布使用微信小程序构建目标。
 
 ## 2. 前端技术栈
 
@@ -220,7 +220,7 @@ feedback               私密用户反馈
 | 题库维护 | Python校验、导入、完整性检查、结构导出工具 |
 | 部署包 | Python标准库tar/gzip、SHA-256、文件清单 |
 
-最近一次1.5.1验收记录为2026-10-25：后端71项、前端22项通过，微信小程序构建通过；本地H5验收覆盖反馈提交、公告及手机宽度布局。本次整理文档没有重跑业务测试。
+2026-10-25 的 1.5.1 验收记录为后端 71 项、前端 22 项测试和微信小程序构建通过。
 
 `@dcloudio/uni-automator`已列入开发依赖，但不将其列入依赖等同于已建立完整小程序自动化测试或CI流水线。
 
@@ -232,7 +232,6 @@ feedback               私密用户反馈
 | 本地Python环境 | Conda `deng`，本次核对为Python`3.11.16` |
 | 本地Node.js | 本次核对为`v24.21.0`，由npm执行前端脚本 |
 | 小程序调试发布 | 微信开发者工具 |
-| H5开发预览 | Vite本地开发服务 |
 | 云服务器 | 腾讯云上海轻量应用服务器 |
 | 服务器操作系统 | 部署记录为Debian`13.7` |
 | 服务器Python | 既有虚拟环境，部署记录为Python`3.13.5` |
@@ -249,31 +248,26 @@ feedback               私密用户反馈
 
 反馈及内容管理使用有效JWT。1.5.5权限由admin_owner/admin_members数据库记录控制，viewer只读、owner独占管理写入，旧CONTENT_ADMIN_OPENIDS不再授予权限。业务数据按用户隔离；正式环境关闭开发身份。文档不记录实际密钥、密码或私有OpenID。
 
-## 9. 已声明但非当前核心运行链路的依赖与配置
+## 9. 上传、加密与兼容配置
 
 | 项目 | 声明版本或配置 | 当前状态 |
 |---|---|---|
-| Redis客户端 | `redis==5.1.0` | 依赖及配置存在，核心业务尚未使用Redis缓存或队列 |
-| 异步MySQL驱动 | `aiomysql==0.2.0` | 依赖存在，当前实际数据库链路是同步PyMySQL |
-| 密码散列 | `passlib[bcrypt]==1.7.4` | 依赖存在，当前主要登录方式是微信OpenID与JWT |
-| 表单/文件解析 | `python-multipart==0.0.12` | 依赖存在，当前反馈为JSON文字提交，不代表已有图片上传链路 |
+| 表单与文件解析 | `python-multipart==0.0.12` | 头像上传使用 multipart，反馈使用 JSON |
 | 加密依赖 | `cryptography==50.0.1` | requirements声明的加密相关依赖 |
-| 对象存储 | OSS配置项 | 预留配置，当前题库媒体实际由服务器本地文件和Nginx提供 |
-
-后续若接入Redis、OSS、录音上传或AI知识库，需要另行实现并验证，不能根据依赖或配置项存在就认定功能已接通。
+| 历史兼容配置 | `REDIS_*`、`OSS_*` | 允许读取旧环境文件。业务使用 MySQL，头像使用持久化目录，题库媒体由本地文件或配置的媒体前缀提供 |
 
 ## 10. 版本与维护依据
 
-- 应用版本：`client/src/manifest.json`，当前`versionName=1.5.1`、`versionCode=151`。
+- 应用版本由 `client/src/manifest.json`、`client/package.json` 和 `server/src/app.py` 维护。
 - 前端精确依赖：[package-lock.json](../client/package-lock.json)；依赖声明与命令：[package.json](../client/package.json)。
 - 后端依赖声明：[requirements.txt](../server/requirements.txt)。
 - 架构约定：[前端架构](frontend-architecture.md)、[后端架构](backend-architecture.md)。
 - 题库契约：[question-bank-import-contract.md](question-bank-import-contract.md)。
 - 数据库说明：[database/README.md](../database/README.md)。
-- 最近发布记录：[release-1.5.1.md](release-1.5.1.md)、[服务器配置记录](server-configuration.md)。
+- 发布历史见[文档索引](README.md)和[服务器配置记录](server-configuration.md)。
 
 ## 11. 可直接复制的简版介绍
 
 ```text
-老外1点通是一款面向留学生的HSK与CSCA备考微信小程序，采用前后端分离架构。前端使用uni-app、Vue 3、TypeScript/JavaScript、Pinia、TDesign UniApp和SCSS，通过Vite与esbuild构建。后端使用Python、FastAPI、Uvicorn、Pydantic、SQLAlchemy、PyMySQL和Alembic，数据库为MySQL 8.4。微信登录基于OpenID与JWT，错题PDF由ReportLab生成；AI功能在1.5.3撤销，后端实现保留但接口未挂载。题库使用JSON原稿与Python导入工具，音频图片由Nginx经HTTPS提供。服务部署在腾讯云Debian服务器，通过Nginx和systemd管理；测试采用pytest、SQLite和Node.js内置测试工具。本地开发复用Conda deng环境。Redis、异步MySQL驱动和OSS配置目前为预留项。
+老外一点通是面向留学生的 HSK 与 CSCA 备考微信小程序。前端使用 uni-app、Vue 3、Pinia、TDesign UniApp 和 Vite，后端使用 FastAPI、Pydantic、SQLAlchemy、PyMySQL 和 Alembic。题库通过 JSON 导入 MySQL，微信登录基于 OpenID 与 JWT，错题 PDF 由 ReportLab 生成。AI 问答的前后端源码保留待接回。测试使用 pytest、SQLite 和 Node.js 内置测试工具。
 ```

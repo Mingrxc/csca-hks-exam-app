@@ -1,21 +1,6 @@
 # 项目文档
 
-| 目录 | 内容 |
-|------|------|
-| `prompt/` | 原始 PRD 需求文档和技术方案 |
-| `api/` | 接口文档（后续接入 Swagger 自动生成） |
-| `architecture/` | 架构设计、ER 图、流程图 |
-
-当前维护入口：
-
-- [1.5.5 管理中心试用版](release-1.5.5.md)：只读管理员、主管理员绑定、数据总览、反馈全文及权限迁移。
-
-- [1.5.4 登录策略](release-1.5.4.md)：游客浏览、主动登录、永久编号、资料上传及增量迁移。
-
-- [项目技术栈说明](technology-stack.md)：整体架构、依赖版本、数据库、AI、测试及部署，可直接复制。
-- [1.5.3 撤销AI功能](release-1.5.3.md)：三项导航、AI接口停用、定稿公告及增量部署。
-- [中英界面切换](interface-language.md)：语言设置、翻译边界、AI 参数与本次发布注意事项。
-- [1.5.2 公告与发布说明](release-1.5.2.md)：已定稿文案、公告数据迁移和版本统一。
-- [1.5.1 更新与增量发布](release-1.5.1.md)：AI、私密反馈、关于与公告，包含服务器读取反馈的方式。
-- [前端架构](frontend-architecture.md)、[后端架构](backend-architecture.md)。
-- [新版题库契约](question-bank-import-contract.md)、[服务器配置历史](server-configuration.md)。
+- [前端架构](frontend-architecture.md)说明页面、领域模块和会话边界，[后端架构](backend-architecture.md)说明路由、事务与数据库约束。
+- [题库契约](question-bank-import-contract.md)用于维护原题、素材和导入，[网络环境](network-environments.md)用于开发者工具和微信真机联调。
+- [服务器配置](server-configuration.md)与 [release-*.md](release-1.6.0.md) 记录各版配置和发布背景。代码入口和当前运行步骤以[根目录](../README.md)为准。
+- [prompt](prompt/README.md) 保留原始需求与方案。

@@ -1,14 +1,6 @@
-"""AI 问答模块 Pydantic 模型"""
-
-from enum import Enum
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
-
-
-class ChatRole(str, Enum):
-    USER = "user"
-    ASSISTANT = "assistant"
 
 
 class ChatMessage(BaseModel):

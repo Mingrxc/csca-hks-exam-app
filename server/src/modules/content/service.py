@@ -1,5 +1,3 @@
-"""首页内容业务逻辑."""
-
 from datetime import timezone
 
 from sqlalchemy import or_

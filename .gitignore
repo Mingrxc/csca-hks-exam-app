@@ -1,53 +1,38 @@
-# Python
+# 本地记忆和环境配置
+/CODEX_MEMORY.md
+.env
+.env.*
+!.env.example
+!.env.*.example
+project.private.config.json
+
+# Python 环境与测试产物
+.venv/
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
 .pytest_cache/
-.test-cache/
-.test-tmp/
 .pytest-cache/
 .pytest-tmp/
+.test-cache/
+.test-tmp/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
-server/.venv/
 
-# Node / uni-app
+# 前端依赖、缓存和构建产物
 node_modules/
-client/node_modules/
-client/dist/
-dist/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+.vite/
+/client/dist/
 
-# Environment files
-.env
-.env.*
-server/.env
-client/.env
-client/.env.*
-# Keep sanitized templates under version control.
-!**/.env.example
+# 本地联调工具和数据库备份
+/server/.dev/
+/server/tools/
+/database/backups/
+*.log
 
-# IDE / OS
+# 编辑器和系统文件
 .vscode/
 .idea/
 Thumbs.db
 Desktop.ini
-
-# Logs
-*.log
-
-# Local tunnel binary and runtime state
-server/tools/
-server/.dev/
-
-# Local database backups
-database/backups/
-
-# Local project overview
-/README.md

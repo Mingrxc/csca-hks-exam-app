@@ -31,7 +31,7 @@ def upgrade():
     op.create_index("idx_feedback_status_created", "feedback", ["status", "created_at"])
     op.add_column("content_items", sa.Column("release_version", sa.String(24), nullable=True, comment="App version for update announcements"))
     op.add_column("content_items", sa.Column("published_at", sa.DateTime(), nullable=True, comment="Publication time in UTC"))
-    # Prepare release notes as an unpublished draft. Publishing is an explicit admin action.
+    # 迁移先保存公告草稿，发布时间由管理员决定。
     drafts = sa.table("content_items", sa.column("category", sa.String()), sa.column("title", sa.String()),
                       sa.column("summary", sa.String()), sa.column("body", sa.Text()),
                       sa.column("release_version", sa.String()), sa.column("is_active", sa.Integer()),

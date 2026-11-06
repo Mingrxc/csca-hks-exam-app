@@ -1,5 +1,3 @@
-"""题库模块 Pydantic 模型"""
-
 from datetime import datetime
 from typing import List, Literal, Optional
 from enum import Enum
@@ -10,13 +8,6 @@ from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 class ExamType(str, Enum):
     CSCA = "CSCA"
     HKS = "HKS"
-
-
-class QuestionType(str, Enum):
-    SINGLE = "single"
-    MULTI = "multi"
-    JUDGE = "judge"
-    FILL = "fill"
 
 
 class Difficulty(str, Enum):

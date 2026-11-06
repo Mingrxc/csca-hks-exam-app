@@ -1,5 +1,3 @@
-"""Home-content SQLAlchemy models."""
-
 from sqlalchemy import Column, DateTime, Enum as SAEnum, Index, Integer, String, Text
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.sql import func

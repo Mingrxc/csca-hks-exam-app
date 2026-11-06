@@ -1,5 +1,3 @@
-"""Shared API response envelope."""
-
 from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel

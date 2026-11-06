@@ -297,7 +297,7 @@ const saveTarget = async () => {
     dashboard.targetDate = updated.target_date || ''
     showToast({ title: '目标已更新', icon: 'success' })
   } catch {
-    // request layer handles toast
+    // 请求层已显示错误，编辑内容留待重试。
   } finally {
     savingTarget.value = false
   }

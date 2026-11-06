@@ -1,31 +1,5 @@
-# API 接口封装
+# API 传输与数据转换
 
-## 边界
+`client.ts` 负责 API 地址、鉴权、错误、超时、媒体地址及上传下载。GET 在网络失败时最多重试一次，401 清理会话。私有请求用会话代次拦截旧账号响应。
 
-`client.ts` 是唯一的请求、上传与下载传输层，负责环境地址、认证、超时、安全重试、统一错误和请求 ID。业务接口按领域放在 `src/features/*/api.ts`；`index.ts` 只保留兼容导出，新代码应直接依赖所属 feature。
-
-## 领域模块
-
-| 模块 | 说明 |
-|------|------|
-| `adminApi` | 角色校验后的总览、用户列表、管理员授权/撤销及反馈查看/处理 |
-| `userApi` | 微信登录、用户信息、学习看板、每日签到、资料修改 |
-| `questionApi` | 题库查询、智能组卷、历史试卷 |
-| `examApi` | 提交答案、获取成绩报告 |
-| `wrongBookApi` | 错题列表、详情、掌握标记、举一反三、导出 PDF |
-| `favoriteApi` | 收藏题目列表、状态、切换收藏 |
-| `contentApi` | 首页资讯列表、内容管理 CRUD |
-
-## 约束
-
-- 内容管理明确区分保存草稿（is_active=false）与发布（is_active=true）。新建/草稿发布传published_at=null，由现有后端赋当前UTC时间；编辑已发布内容保留原日期，列表发布/撤下只更新状态字段。更新公告需notice分类及release_version；写操作仍仅owner可执行，成功返回才刷新/重置，失败保留编辑输入。
-- `GET /user/dashboard` 的 `check_in` 返回北京时间 `today`、`checked_in`、`streak_days` 和周一至周日七项 `week`（`date` / `checked`）；旧后端缺少字段时显示未知天数，不伪造打卡状态。
-- `POST /user/check-in` 无需请求体，仅允许已登录且仍存在的账号；返回同一签到结构。用户身份来自token、日期来自服务器；重复请求幂等。手动签到和实际答题复用 `streak_records` 的用户/日期唯一记录，手动签到初始 `question_count=0`，后续答题正常累计题数。无需新增表或迁移，后端代码须更新后接口才可用。
-- 首页签到及看板刷新丢弃旧会话响应，较早/并发的看板响应不能覆盖签到成功结果；不在客户端持久化或补造签到记录。
-
-- 页面不得直接调用 `uni.request`、`uni.downloadFile` 或拼接 API 根地址。
-- GET 网络失败最多重试一次；写请求不自动重试。
-- 微信头像使用uploadFile上传到当前API域名，微信后台uploadFile合法域名必须单独配置，request合法域名不能替代。url not in domain list返回DOMAIN_NOT_CONFIGURED，上传提示“上传域名未配置”，普通请求仍提示“域名未配置”；不关闭域名校验或伪造成功，上传成功/失败回调均丢弃旧会话响应。
-- 传输层只读取现有token；没有token或收到401时拒绝请求，不自动调用微信登录或重试登录。公开接口显式指定requireAuth:false。
-- 用户store负责显式登录与有效会话恢复，shared/auth负责登录提示与后续导航。所有私有响应检查会话代次，丢弃退出/切换账号之前的响应。
-- 管理角色来自用户资料的admin_role，每次管理页面显示时刷新；40341会清除管理状态，普通用户的登录态保留。useAdminPage清除失效角色的私有内存数据，写操作另要求isOwner，服务器仍是最终权限来源。
+`contracts.ts` 保存后端返回类型，并将看板、试卷、题目和错题字段转换为页面使用的模型。新增业务请求从 [所属领域](../features/README.md) 的 `api.ts` 接入，页面复用此处的传输层。

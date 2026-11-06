@@ -1,4 +1,3 @@
-"""Generate the SQL schema reference from application models without DB access."""
 from pathlib import Path
 import os
 import sys

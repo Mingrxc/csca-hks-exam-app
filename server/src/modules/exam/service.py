@@ -1,5 +1,3 @@
-"""考试业务逻辑."""
-
 from collections import defaultdict
 
 from sqlalchemy.exc import IntegrityError

@@ -9,7 +9,6 @@ export const contentApi = {
     url: `/content/announcements/${id}`, requireAuth: false, showLoading: false,
   }),
   listHome: () => request<ApiContentItem[]>({ url: '/content/home', showLoading: false, requireAuth: false }),
-  get: (id: number) => request<ApiContentItem>({ url: `/content/${id}`, requireAuth: false }),
   listAdmin: () => request<ApiContentItem[]>({ url: '/content/list' }),
   create: (data: Record<string, unknown>) => request<ApiContentItem>({ url: '/content', method: 'POST', data }),
   update: (id: number, data: Record<string, unknown>) =>

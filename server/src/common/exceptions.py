@@ -1,5 +1,3 @@
-"""Application exception types and normalized FastAPI handlers."""
-
 import logging
 
 from fastapi import HTTPException, Request

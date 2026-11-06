@@ -1,5 +1,3 @@
-"""Feedback is private to the operator, separate from learning records."""
-
 from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 
 from src.common.time import utc_now_naive

@@ -7,7 +7,7 @@ import type {
   ResultReviewQuestion,
   ResultWrongQuestion,
 } from '@/types/exam'
-import type { CheckInStatus, DashboardData, ExamTargetDates, UserProfile } from '@/types/user'
+import type { CheckInStatus, DashboardData, ExamTargetDates } from '@/types/user'
 import type { RelatedQuestion, WrongBookDetail, WrongBookListItem } from '@/types/wrongbook'
 import { DIFFICULTY_MAP, QUESTION_TYPE_MAP } from '@/constants/exam'
 import { resolveMediaUrl } from './client'
@@ -306,23 +306,6 @@ export function toDashboardData(item: ApiDashboard): DashboardData {
       score: paper.score,
       date: paper.finished_at?.slice(0, 10) || '',
     })),
-  }
-}
-
-export function toUserProfile(item: ApiUser): UserProfile {
-  return {
-    id: item.id,
-    userCode: item.user_code,
-    objectiveCount: item.total_objective,
-    nickname: item.nickname,
-    avatarUrl: resolveMediaUrl(item.avatar_url) || '',
-    targetExam: item.target_exam,
-    targetDate: item.target_date || '',
-    targetDates: normalizeTargetDates(item.target_dates, item.target_exam, item.target_date),
-    totalQuestions: item.total_questions,
-    correctRate: item.correct_rate,
-    streakDays: item.streak_days,
-    favoriteCount: item.favorite_count,
   }
 }
 

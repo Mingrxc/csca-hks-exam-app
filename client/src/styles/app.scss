@@ -470,9 +470,3 @@ button:focus-visible { outline: 2px solid var(--app-primary); outline-offset: 3p
 .app-heading-title { display: block; color: var(--app-text); font-size: var(--app-font-xl); line-height: 1.35; font-weight: 600; }
 .app-heading-desc { display: block; margin-top: 10rpx; color: var(--app-text-weak); font-size: var(--app-font-sm); line-height: 1.6; }
 .app-number { font-family: var(--app-number-font); font-variant-numeric: tabular-nums; }
-.app-pill { min-height: 64rpx; padding: 12rpx 26rpx; border: 1rpx solid var(--app-border); border-radius: 999px; background: var(--app-surface); color: var(--app-text-weak); font-size: var(--app-font-sm); line-height: 1.5; }
-.app-pill--active { border-color: var(--app-primary); background: var(--app-primary); color: #fffaf3; }
-
-/* #ifdef H5 */
-.app-shell, .app-page { max-width: 480px; margin-left: auto; margin-right: auto; }
-/* #endif */

@@ -1,5 +1,3 @@
-"""Build a backend release from an explicit allowlist, without local settings."""
-
 from __future__ import annotations
 
 import gzip
@@ -32,14 +30,16 @@ def main() -> None:
     OUTPUT.mkdir(parents=True, exist_ok=True)
     payload: dict[str, bytes] = {}
 
-    def include(path: Path) -> None:
+    def include(path: Path, *, archive_path: str | None = None) -> None:
         if path.is_symlink():
             raise ValueError(f"Symlink refused: {path.name}")
-        relative = path.resolve().relative_to(WORKSPACE).as_posix()
+        relative = archive_path or path.resolve().relative_to(WORKSPACE).as_posix()
         payload[relative] = path.read_bytes()
 
-    for name in ("main.py", "requirements.txt", "alembic.ini", "pytest.ini", ".env.example"):
+    for name in ("main.py", "requirements.txt", "alembic.ini", "pytest.ini"):
         include(PROJECT / "server" / name)
+    # 保持部署包里的模板与后端工作目录相邻。
+    include(PROJECT / ".env.example", archive_path=f"{PROJECT.name}/server/.env.example")
     for directory in ("src", "alembic", "tests"):
         for path in sorted((PROJECT / "server" / directory).rglob("*")):
             if path.is_file() and path.suffix in {".py", ".mako"}:
@@ -80,9 +80,8 @@ JWT_SECRET_KEY=REPLACE_WITH_GENERATED_RANDOM_JWT_SECRET
 JWT_EXPIRE_HOURS=72
 WX_APPID=REPLACE_WITH_WECHAT_APPID
 WX_SECRET=REPLACE_WITH_WECHAT_APPSECRET
-CONTENT_ADMIN_OPENIDS=
 
-# Leave the AI key empty until the real AI integration is configured.
+# AI 路由接回后再填写模型密钥。
 QWEN_API_KEY=
 QWEN_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 QWEN_MODEL=qwen3.8-27b
@@ -92,7 +91,6 @@ QWEN_TIMEOUT_SECONDS=45
 """
     payload["csca-hks-exam-app/server/.env.production.example"] = production_template.encode("utf-8")
 
-    questions, report = load_questions(WORKSPACE / "original_question_bank")
     manifest = {
         "release": RELEASE,
         "intended_server": "Debian 13, x86_64, MySQL 8.4",

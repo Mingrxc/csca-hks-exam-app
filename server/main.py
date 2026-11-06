@@ -1,5 +1,3 @@
-"""留学考霸 — FastAPI 应用入口"""
-
 from src.app import create_app
 
 app = create_app()

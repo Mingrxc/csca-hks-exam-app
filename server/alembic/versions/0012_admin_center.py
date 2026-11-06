@@ -34,7 +34,7 @@ def upgrade():
         sa.ForeignKeyConstraint(["actor_user_id"], ["users.id"], name="fk_admin_audit_actor", ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["target_user_id"], ["users.id"], name="fk_admin_audit_target", ondelete="SET NULL"))
     op.create_index("idx_admin_audit_created", "admin_audit_logs", ["created_at"])
-    # Trial release: prepare a draft only; the owner decides when to publish it.
+    # 试用版公告先存草稿，由主管理员决定何时发布。
     entries = sa.table("content_items", sa.column("category", sa.String()), sa.column("title", sa.String()),
         sa.column("summary", sa.String()), sa.column("body", sa.Text()), sa.column("release_version", sa.String()),
         sa.column("is_active", sa.Integer()), sa.column("sort_order", sa.Integer()),

@@ -1,6 +1,6 @@
 import { request } from '@/api/client'
 import type {
-  ApiCatalogItem, ApiExamResult, ApiHistoryPaper, ApiPaper, ApiQuestion, ApiSpecialOption, ApiSubmitAnswerResult,
+  ApiCatalogItem, ApiExamResult, ApiHistoryPaper, ApiPaper, ApiSpecialOption, ApiSubmitAnswerResult,
 } from '@/api/contracts'
 import type { ExamType } from '@/types/exam'
 
@@ -15,7 +15,6 @@ export const questionApi = {
   generatePaper: (config: Record<string, unknown>) => request<ApiPaper>({
     url: '/question/generate-paper', method: 'POST', data: config,
   }),
-  getQuestionDetail: (id: number) => request<ApiQuestion>({ url: `/question/${id}` }),
 }
 
 export const examApi = {

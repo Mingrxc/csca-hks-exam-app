@@ -239,8 +239,7 @@ function Wait-PublicApi([string]$apiBaseUrl) {
       }
     } catch {}
 
-    # Some local DNS providers cache a newly issued Quick Tunnel hostname late.
-    # Resolve through a public DNS server and use curl's --resolve for the probe.
+    # 本机 DNS 可能还未解析新隧道，探活使用公共 DNS 查到的地址。
     try {
       $uri = [Uri]$endpoint
       $addresses = @(

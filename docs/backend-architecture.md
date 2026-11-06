@@ -77,7 +77,7 @@ Stable source question_id maps to unique questions.bank_id. Corrections update t
 
 ## Feedback, announcements and AI rules (1.5.1)
 
-- Private feedback and content administration require an explicit valid JWT, without the anonymous development fallback. Admin access uses `CONTENT_ADMIN_OPENIDS`.
+- Private feedback and content administration require a valid JWT. Management access comes from current database roles, and writes require the owner role.
 - Feedback ownership comes from the token. Submissions use a per-user idempotency key, a user-row lock and bounded frequency checks; public receipts contain no feedback body or user identifiers. Only admins can list or change feedback status.
 - Versioned announcements reuse `content_items`. Public lists and details filter inactive and future publications; normal reads no longer seed demo content. Migration0008 adds the new table/columns and an unpublished release-notes draft, preserving learning data.
 - Only the backend constructs AI system messages. User-supplied question/topic/context stays in a user message; inbound chat roles are restricted to user/assistant. HKS is displayed as HSK in the prompt.

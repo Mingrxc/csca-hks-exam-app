@@ -1,5 +1,3 @@
-"""Request-scoped context shared by logging and API responses."""
-
 from contextvars import ContextVar, Token
 from re import fullmatch
 from uuid import uuid4

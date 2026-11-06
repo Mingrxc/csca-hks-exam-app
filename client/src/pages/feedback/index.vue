@@ -64,7 +64,9 @@ function persistDraft() {
   if (!ownerId.value || ownerId.value !== userStore.userInfo.id || receipt.value) return
   try {
     uni.setStorageSync(draftKey(), { category: category.value, content: content.value, requestId: requestId.value, appVersion: APP_VERSION })
-  } catch { /* Storage failure must not turn a successful server submission into failure. */ }
+  } catch {
+    // 服务端已收件，草稿缓存清理失败时仍显示提交成功。
+  }
 }
 
 async function initialize() {

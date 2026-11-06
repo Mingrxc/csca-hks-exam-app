@@ -5,7 +5,7 @@ const { parse, compileScript } = require('@vue/compiler-sfc')
 const { transformSync } = require('esbuild')
 const root = path.resolve(__dirname, '../../src')
 
-// One cache per test keeps the reactive locale shared by real consumers.
+// 同一用例的源码模块共用缓存，保持响应式语言状态一致。
 function createLoader(mocks = {}, globals = {}) {
   const cache = new Map()
   function load(file) {

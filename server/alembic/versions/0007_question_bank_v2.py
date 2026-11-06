@@ -43,4 +43,4 @@ def downgrade():
     op.drop_constraint("bank_id", "questions", type_="unique")
     for name in ["source_data", "max_score", "scoring_mode", "response_mode", "material_id", "knowledge_module", "level", "exam_version", "bank_id"]:
         op.drop_column("questions", name)
-    # Keep TEXT answers on downgrade to avoid truncating existing long responses.
+    # 回退时保留 TEXT，避免截断已经保存的长答案。

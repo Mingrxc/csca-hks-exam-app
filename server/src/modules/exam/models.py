@@ -1,5 +1,3 @@
-"""Exam answer SQLAlchemy models."""
-
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.mysql import TINYINT

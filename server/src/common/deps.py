@@ -1,5 +1,3 @@
-"""Shared FastAPI dependencies."""
-
 from typing import Optional
 
 from fastapi import Depends, Header, HTTPException
@@ -39,8 +37,7 @@ def get_authenticated_user_id(
 ) -> int:
     from src.modules.user.models import User
 
-    # A locking first read also keeps feedback quota checks current on MySQL's
-    # REPEATABLE READ isolation level after waiting for another submission.
+    # 先加用户锁，反馈限额检查才能读取上一笔提交后的数据。
     user = db.query(User).filter(User.openid == openid).with_for_update().first()
     if not user:
         raise HTTPException(status_code=401, detail="登录状态已失效，请重新登录")
@@ -60,7 +57,7 @@ def get_owner_user(db: Session = Depends(get_db), openid: str = Depends(get_auth
     from src.modules.admin.models import AdminOwner
     from src.modules.user.service import get_user_by_openid
     user = get_user_by_openid(db, openid)
-    # Serialize owner writes; permissions always come from current database state.
+    # 锁住主管理员记录，让写入和权限变更按顺序执行。
     owner = db.query(AdminOwner).filter(AdminOwner.id == 1).with_for_update().first()
     if not owner or owner.user_id != user.id:
         raise AppException(40342, "仅主管理员可以执行此操作", status_code=403)

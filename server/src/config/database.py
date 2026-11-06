@@ -1,5 +1,3 @@
-"""Synchronous SQLAlchemy configuration used by the application and Alembic."""
-
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import declarative_base, sessionmaker

@@ -1,5 +1,3 @@
-"""Home-content API routes."""
-
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 

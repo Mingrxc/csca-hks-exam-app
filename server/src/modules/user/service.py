@@ -1,5 +1,3 @@
-"""用户业务逻辑."""
-
 from datetime import date, datetime, time, timedelta
 
 import httpx
@@ -175,9 +173,8 @@ def current_streak_days(user: User, today: date | None = None) -> int:
 def record_daily_activity(db: Session, user: User, activity_on: date | None = None,
                           *, answered: bool = False) -> None:
     """Share a daily record between manual check-in and answering; caller commits."""
-    # Both writers lock the same user, then read the daily row with a current read
-    # so MySQL REPEATABLE READ cannot duplicate a concurrent first check-in. Leave
-    # pending answer writes for the caller's commit/conflict-retry transaction.
+    # 签到和答题先锁同一用户，再读日记录，避免并发首次打卡重复插入。
+    # 答题写入由调用方提交，以便唯一键冲突时沿用原事务重试。
     with db.no_autoflush:
         streak_days, last_streak_at = (
             db.query(User.streak_days, User.last_streak_at)
@@ -238,7 +235,7 @@ def get_check_in(db: Session, user: User, today: date | None = None) -> dict:
 def check_in(db: Session, openid: str) -> dict:
     user = get_user_by_openid(db, openid)
     record_daily_activity(db, user)
-    # Keep the same Beijing date even if a request happens to cross midnight.
+    # 用同一北京时间日期，避免请求跨零点时写入和返回不同日期。
     checked_on = user.last_streak_at
     db.commit()
     return get_check_in(db, user, checked_on)

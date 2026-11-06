@@ -8,7 +8,9 @@ export const language = locale
 
 export function initializeLanguage(): Language {
   let saved: unknown
-  try { saved = uni.getStorageSync(LANGUAGE_STORAGE_KEY) } catch { /* Fall back to WeChat language. */ }
+  try { saved = uni.getStorageSync(LANGUAGE_STORAGE_KEY) } catch {
+    // 读不到本地偏好时继续检测设备语言。
+  }
   if (saved === 'zh' || saved === 'en') {
     locale.value = saved
     return saved
@@ -29,17 +31,18 @@ export function getLanguage(): Language {
 export function setLanguage(value: Language): void {
   if (value !== 'zh' && value !== 'en') return
   locale.value = value
-  try { uni.setStorageSync(LANGUAGE_STORAGE_KEY, value) } catch { /* Keep the in-memory choice. */ }
+  try { uni.setStorageSync(LANGUAGE_STORAGE_KEY, value) } catch {
+    // 写缓存失败仍保留本次运行的语言选择。
+  }
 }
 
-/** Translate interface copy only. Never pass question, announcement or user content here. */
 export function t(message: string | null | undefined, params: Record<string, string | number> = {}): string {
   const key = message || ''
   const translated = locale.value === 'en' ? english[key] || key : key
   return translated.replace(/\{(\w+)\}/g, (match, key) => String(params[key] ?? match))
 }
 
-/** Backend errors are interface copy; unknown Chinese errors get a usable English fallback. */
+// 英文界面为未收录的中文错误显示通用提示。
 export function errorText(message: string): string {
   if (locale.value !== 'en') return message
   const status = message.match(/^请求失败 \((\d+)\)$/)?.[1]

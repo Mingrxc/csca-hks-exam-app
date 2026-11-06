@@ -169,8 +169,6 @@
       "^c-countdown-bar$": "@/components/CountdownBar/index.vue",
       "^c-answer-card$": "@/components/AnswerCard/index.vue",
       "^c-app-state$": "@/components/AppState/index.vue",
-      "^c-exam-selection$": "@/components/ExamSelection/index.vue",
-      "^c-ring-chart$": "@/components/RingChart/index.vue",
       "^c-auth-frame$": "@/components/AuthFrame/index.vue",
       "^c-admin-frame$": "@/components/AdminFrame/index.vue",
       "^c-admin-pager$": "@/components/AdminPager/index.vue"

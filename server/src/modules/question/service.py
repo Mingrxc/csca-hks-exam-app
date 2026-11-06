@@ -1,5 +1,3 @@
-"""题库业务逻辑."""
-
 import random
 
 from sqlalchemy import func
@@ -179,7 +177,7 @@ def generate_paper(db: Session, user_id: int, payload: GeneratePaperRequest) -> 
             questions = select_questions(candidates, count, strict=True)
     else:
         if payload.strategy.value != "progressive" and payload.difficulty.value != "all":
-            # Keep complete materials: a mixed-difficulty group is not split by a filter.
+            # 共享材料可能横跨难度等级，筛选时保留完整题组。
             blocked = {q.material_id for q in candidates if q.material_id and q.difficulty != payload.difficulty.value}
             candidates = [q for q in candidates if q.difficulty == payload.difficulty.value and q.material_id not in blocked]
         questions = select_questions(candidates, payload.question_count)
@@ -284,7 +282,7 @@ def select_questions(candidates, count, strict=False):
         return [by_id[qid] for qid in random.sample(list(by_id), min(count, len(candidates))) ]
     groups = group_questions(candidates)
     groups = random.sample(groups, len(groups))
-    # Subset selection preserves whole groups while matching the requested size where possible.
+    # 用完整题组凑目标题量，避免拆开共享材料。
     sizes = {0: []}
     for index, group in enumerate(groups):
         for total, indices in list(sizes.items()):
